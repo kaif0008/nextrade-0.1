@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management - Nextrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #f72585;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        h1 {
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 2rem;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        h1 i {
+            color: var(--primary);
+        }
+
+        .search-bar {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(67, 97, 238, 0.2);
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-field {
+            position: relative;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(67, 97, 238, 0.2);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+        }
+
+        .product-list {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            overflow: hidden;
+        }
+
+        .product-card h3 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .product-card p {
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-price {
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .product-actions button {
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .edit-btn {
+            background: var(--success);
+        }
+
+        .edit-btn:hover {
+            background: #3ab7d8;
+        }
+
+        .delete-btn {
+            background: var(--secondary);
+        }
+
+        .delete-btn:hover {
+            background: #e51773;
+        }
+
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+            
+            .form-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .product-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-boxes"></i> Product Management</h1>
+        
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search products...">
+        </div>
+        
+        <div class="form-group">
+            <div class="input-field">
+                <i class="fas fa-tag"></i>
+                <input type="text" id="productName" placeholder="Product Name" required>
+            </div>
+            
+            <div class="input-field">
+                <i class="fas fa-rupee-sign"></i>
+                <input type="number" id="productPrice" placeholder="Price in ₹" required>
+            </div>
+            
+            <div class="input-field">
+                <i class="fas fa-list"></i>
+                <select id="productCategory" required>
+                    <option value="">Select Category</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Groceries">Groceries</option>
+                    <option value="Home Appliances">Home Appliances</option>
+                    <option value="Furniture">Furniture</option>
+                    <option value="Books">Books</option>
+                    <option value="Toys">Toys</option>
+                    <option value="Beauty">Beauty Products</option>
+                    <option value="Sports">Sports Equipment</option>
+                    <option value="Jewelry">Jewelry</option>
+                    <option value="Automotive">Automotive</option>
+                    <option value="Health">Health & Wellness</option>
+                    <option value="Office">Office Supplies</option>
+                    <option value="Pet Supplies">Pet Supplies</option>
+                    <option value="Baby Care">Baby Care</option>
+                    <option value="Fashion">Fashion Accessories</option>
+                    <option value="Kitchenware">Kitchenware</option>
+                    <option value="Gardening">Gardening Tools</option>
+                    <option value="Stationery">Stationery</option>
+                    <option value="Footwear">Footwear</option>
+                </select>
+            </div>
+            
+            <div class="input-field">
+                <i class="fas fa-image"></i>
+                <input type="text" id="productImage" placeholder="Image URL (optional)">
+            </div>
+            
+            <button id="addProductBtn"><i class="fas fa-plus"></i> Add Product</button>
+        </div>
+        
+        <h2>Product List</h2>
+        <div class="product-list" id="productList">
+            <!-- Products will be loaded dynamically -->
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        Product added successfully!
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addProductBtn = document.getElementById('addProductBtn');
+            const productList = document.getElementById('productList');
+            const notification = document.getElementById('notification');
+            const searchInput = document.getElementById('searchInput');
+            
+            // Load products from server
+            loadProducts();
+            
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                loadProducts(searchInput.value);
+            });
+            
+            // Add product function
+            addProductBtn.addEventListener('click', async function() {
+                const name = document.getElementById('productName').value.trim();
+                const price = document.getElementById('productPrice').value.trim();
+                const category = document.getElementById('productCategory').value.trim();
+                const imageUrl = document.getElementById('productImage').value.trim();
+                
+                if (name && price && category) {
+                    try {
+                        const response = await fetch('/api/products', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name,
+                                price,
+                                category,
+                                image: imageUrl
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Clear form
+                            document.getElementById('productName').value = '';
+                            document.getElementById('productPrice').value = '';
+                            document.getElementById('productCategory').value = '';
+                            document.getElementById('productImage').value = '';
+                            
+                            // Reload products
+                            loadProducts();
+                            
+                            // Show notification
+                            showNotification('Product added successfully!');
+                        } else {
+                            alert('Error adding product: ' + data.message);
+                        }
+                    } catch (error) {
+                        alert('Error adding product');
+                        console.error(error);
+                    }
+                } else {
+                    alert('Please fill all required fields');
+                }
+            });
+            
+            // Load products from server
+            async function loadProducts(searchTerm = '') {
+                try {
+                    const response = await fetch(`/api/products?search=${encodeURIComponent(searchTerm)}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        displayProducts(data.products);
+                    } else {
+                        console.error('Error loading products:', data.message);
+                        displayProducts([]);
+                    }
+                } catch (error) {
+                    console.error('Error loading products:', error);
+                    displayProducts([]);
+                }
+            }
+            
+            // Display all products
+            function displayProducts(products) {
+                productList.innerHTML = '';
+                
+                if (products.length === 0) {
+                    productList.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--gray);">No products found</p>';
+                    return;
+                }
+                
+                products.forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product-card';
+                    productCard.innerHTML = `
+                        <div class="product-image">
+                            ${product.image ? 
+                                `<img src="${product.image}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;">` : 
+                                `<i class="fas fa-image" style="font-size:2rem;"></i>`}
+                        </div>
+                        <h3>${product.name}</h3>
+                        <p><span class="rupee-icon">₹</span> <span class="product-price">${product.price}</span></p>
+                        <p><i class="fas fa-tag"></i> ${product.category}</p>
+                        <div class="product-actions">
+                            <button class="edit-btn" onclick="editProduct('${product._id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="delete-btn" onclick="deleteProduct('${product._id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    `;
+                    productList.appendChild(productCard);
+                });
+            }
+            
+            // Show notification
+            function showNotification(message) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Edit product
+            window.editProduct = function(id) {
+                // Find the product in the displayed list
+                const productElements = document.querySelectorAll('.product-card');
+                for (const element of productElements) {
+                    if (element.querySelector('.delete-btn').getAttribute('onclick').includes(id)) {
+                        const name = element.querySelector('h3').textContent;
+                        const price = element.querySelector('.product-price').textContent;
+                        const category = element.querySelector('p:nth-of-type(2)').textContent.replace(' ', '');
+                        const image = element.querySelector('.product-image img')?.src || '';
+                        
+                        document.getElementById('productName').value = name;
+                        document.getElementById('productPrice').value = price;
+                        document.getElementById('productCategory').value = category;
+                        document.getElementById('productImage').value = image;
+                        
+                        // Delete the product
+                        deleteProduct(id);
+                        
+                        showNotification('Product loaded for editing');
+                        break;
+                    }
+                }
+            };
+            
+            // Delete product
+            window.deleteProduct = async function(id) {
+                if (confirm('Are you sure you want to delete this product?')) {
+                    try {
+                        const response = await fetch(`/api/products/${id}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            loadProducts(searchInput.value);
+                            showNotification('Product deleted successfully');
+                        } else {
+                            alert('Error deleting product: ' + data.message);
+                        }
+                    } catch (error) {
+                        alert('Error deleting product');
+                        console.error(error);
+                    }
+                }
+            };
+        });
+    </script>
+</body>
+</html>

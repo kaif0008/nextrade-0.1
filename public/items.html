@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexTrade | Wholesale Products</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --accent: #f72585;
+      --success: #4cc9f0;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      --gradient: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
+    }
+
+    /* Rest of your existing CSS remains exactly the same */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    /* Header Styles */
+    header {
+      background: white;
+      color: var(--dark);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: var(--dark);
+    }
+
+    .logo-icon {
+      font-size: 2rem;
+      margin-right: 0.5rem;
+      color: var(--primary);
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .logo-text span {
+      color: var(--primary);
+    }
+
+    .tagline {
+      font-size: 0.7rem;
+      opacity: 0.8;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    nav a {
+      color: var(--dark);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    nav a:hover {
+      color: var(--primary);
+    }
+
+    .btn-login {
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      transition: all 0.3s;
+      color: var(--primary);
+    }
+
+    .btn-login:hover {
+      background: rgba(67, 97, 238, 0.1);
+    }
+
+    .btn-nav {
+      padding: 0.5rem 1.5rem;
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+
+    .btn-signup {
+      background: var(--gradient);
+      color: white;
+    }
+
+    .btn-signup:hover {
+      background: var(--secondary);
+    }
+
+    /* Products Grid */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-bottom: 3px solid var(--accent);
+    }
+
+    .product-info {
+      padding: 1.5rem;
+    }
+
+    .product-category {
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-title {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+
+    .product-price {
+      color: var(--success);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 1rem 0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: #ff0a78;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--success);
+      color: white;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+      background: #3aa8d8;
+      transform: translateY(-2px);
+    }
+
+    /* Cart Styles */
+    .cart-icon {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .cart-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--success);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+
+    .cart-sidebar {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100vh;
+      background: white;
+      box-shadow: var(--shadow);
+      transition: right 0.3s;
+      z-index: 2000;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-sidebar.active {
+      right: 0;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cart-header h2 {
+      color: var(--dark);
+    }
+
+    .close-cart {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cart-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .cart-item-info h4 {
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+
+    .cart-item-info p {
+      color: #666;
+    }
+
+    .cart-total {
+      padding-top: 1.5rem;
+      border-top: 2px solid #eee;
+    }
+
+    .cart-total h3 {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      color: var(--dark);
+    }
+
+    .checkout-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .checkout-btn:hover {
+      background: #3aa8d8;
+      transform: translateY(-2px);
+    }
+
+    /* Footer */
+    footer {
+      background: #0f172a;
+      color: white;
+      padding: 4rem 0 2rem;
+    }
+
+    .footer-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer-logo {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .footer-tagline {
+      margin-top: 1rem;
+      opacity: 0.8;
+      color: #94a3b8;
+    }
+
+    .footer-links {
+      flex: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+    }
+
+    .footer-column {
+      min-width: 150px;
+    }
+
+    .footer-column h3 {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      color: #38bdf8;
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-column a {
+      color: #cbd5e1;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .footer-column a:hover {
+      color: #38bdf8;
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2rem;
+      border-top: 1px solid #334155;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .footer-social a {
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .footer-social a:hover {
+      background: #38bdf8;
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-arrow-trend-up"></i>
+        </div>
+        <div>
+          <div class="logo-text">Nex<span>Trade</span></div>
+          <div class="tagline">The Nexus of efficient Business</div>
+        </div>
+      </a>
+      
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="wholesalers.html">Wholesalers</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="login.html" class="btn-login">Login</a></li>
+          <li><a href="signup.html" class="btn-nav btn-signup">Sign Up</a></li>
+          <li>
+            <div class="cart-icon" onclick="toggleCart()">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="cart-count">0</span>
+            </div>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="section-title">
+      <h2>Wholesale Products</h2>
+      <p>Quality products at competitive wholesale prices</p>
+    </div>
+
+    <div class="products-grid" id="products-container"></div>
+  </main>
+
+  <!-- Cart Sidebar -->
+  <div class="cart-sidebar">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button class="close-cart" onclick="toggleCart()">&times;</button>
+    </div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-total">
+      <h3>Total: <span id="cart-total">₹0.00</span></h3>
+      <a href="cart.html" class="checkout-btn">Proceed to Checkout</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <a href="index.html" class="logo">
+            <i class="fas fa-arrow-trend-up logo-icon"></i>
+            <div>
+              <div class="logo-text">Nex<span>Trade</span></div>
+            </div>
+          </a>
+          <p class="footer-tagline">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-column">
+            <h3>Company</h3>
+            <ul>
+              <li><a href="about.html">About Us</a></li>
+              <li><a href="careers.html">Careers</a></li>
+              <li><a href="blog.html">Blog</a></li>
+              <li><a href="press.html">Press</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-column">
+            <h3>Resources</h3>
+            <ul>
+              <li><a href="help-center.html">Help Center</a></li>
+              <li><a href="wholesaler-guide.html">Wholesaler Guide</a></li>
+              <li><a href="shopkeeper-guide.html">Shopkeeper Guide</a></li>
+              <li><a href="faq.html">FAQs</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-column">
+            <h3>Legal</h3>
+            <ul>
+              <li><a href="privacy.html">Privacy Policy</a></li>
+              <li><a href="terms.html">Terms of Service</a></li>
+              <li><a href="security.html">Security</a></li>
+              <li><a href="cookie-policy.html">Cookie Policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2023 NexTrade. All rights reserved.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Product Data
+    const products = [
+      { id: 1, name: 'Organic Apples (1kg)', price: 120, category: 'Fruits', image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce' },
+      { id: 2, name: 'Whole Wheat Bread (500g)', price: 45, category: 'Bakery', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587' },
+      { id: 3, name: 'Fresh Carrots (1kg)', price: 35, category: 'Vegetables', image: 'https://images.unsplash.com/photo-1582515073490-39981397c445' },
+      { id: 4, name: 'Strawberries (250g)', price: 90, category: 'Fruits', image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783' },
+      { id: 5, name: 'Orange Juice (1L)', price: 85, category: 'Beverages', image: 'https://images.unsplash.com/photo-1571689936115-f29bba9d3b5b' },
+      { id: 6, name: 'Greek Yogurt (200g)', price: 55, category: 'Dairy', image: 'https://images.unsplash.com/photo-1600082791133-27b1c556d8b8' },
+      { id: 7, name: 'Fresh Lettuce', price: 30, category: 'Vegetables', image: 'https://images.unsplash.com/photo-1625944223083-b6eb07d234d2' },
+      { id: 8, name: 'Egg Carton (12 eggs)', price: 65, category: 'Dairy', image: 'https://images.unsplash.com/photo-158332411366-70df0f4deaab' },
+      { id: 9, name: 'Spaghetti Pasta (500g)', price: 75, category: 'Pantry', image: 'https://images.unsplash.com/photo-1616361726316-0c3372dc349e' },
+      { id: 10, name: 'Cheddar Cheese (200g)', price: 110, category: 'Dairy', image: 'https://images.unsplash.com/photo-1585238342027-8967f912afbb' },
+      { id: 11, name: 'Cucumber (1kg)', price: 25, category: 'Vegetables', image: 'https://images.unsplash.com/photo-1625944691231-0c045e0d3a8c' },
+      { id: 12, name: 'Bananas (1 dozen)', price: 50, category: 'Fruits', image: 'https://images.unsplash.com/photo-1574226516831-e1dff420e12b' }
+    ];
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // Render Products
+    function renderProducts() {
+      const container = document.getElementById('products-container');
+      container.innerHTML = products.map(product => `
+        <div class="product-card">
+          <img src="${product.image}" class="product-image" alt="${product.name}">
+          <div class="product-info">
+            <span class="product-category">
+              <i class="fas fa-${getCategoryIcon(product.category)}"></i>
+              ${product.category}
+            </span>
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-price">₹${product.price}</p>
+            <button class="btn btn-primary add-to-cart" data-id="${product.id}">
+              <i class="fas fa-cart-plus"></i> Add to Cart
+            </button>
+            <a href="checkout.html?product=${encodeURIComponent(product.name)}" class="btn btn-secondary">
+              <i class="fas fa-bolt"></i> Buy Now
+            </a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getCategoryIcon(category) {
+      const icons = {
+        'Fruits': 'apple-alt',
+        'Vegetables': 'carrot',
+        'Dairy': 'cheese',
+        'Bakery': 'bread-slice',
+        'Beverages': 'glass-whiskey',
+        'Pantry': 'shopping-basket'
+      };
+      return icons[category] || 'tag';
+    }
+
+    // Cart Functions
+    function updateCartCount() {
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.querySelector('.cart-count').textContent = count;
+    }
+
+    function toggleCart() {
+      document.querySelector('.cart-sidebar').classList.toggle('active');
+    }
+
+    function updateCartDisplay() {
+      const cartItemsEl = document.getElementById('cart-items');
+      const cartTotalEl = document.getElementById('cart-total');
+      
+      cartItemsEl.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <img src="${item.image}" alt="${item.name}">
+          <div class="cart-item-info">
+            <h4>${item.name}</h4>
+            <p>₹${item.price} x ${item.quantity}</p>
+          </div>
+        </div>
+      `).join('');
+      
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      cartTotalEl.textContent = `₹${total.toFixed(2)}`;
+    }
+
+    // Event Listeners
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
+        const productId = parseInt(e.target.closest('button').dataset.id);
+        const product = products.find(p => p.id === productId);
+        const existingItem = cart.find(item => item.id === productId);
+        
+        if (existingItem) {
+          existingItem.quantity++;
+        } else {
+          cart.push({ ...product, quantity: 1 });
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        updateCartDisplay();
+      }
+    });
+
+    // Initialize
+    renderProducts();
+    updateCartCount();
+    updateCartDisplay();
+  </script>
+</body>
+</html>

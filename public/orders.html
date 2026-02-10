@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Orders - Nextrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #f72585;
+            --success: #4cc9f0;
+            --warning: #f4a261;
+            --danger: #e76f51;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--dark);
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        h1 i {
+            color: var(--primary);
+        }
+
+        .order-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .order-item {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0,0,0,0.03);
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+            animation: cardEntry 0.6s ease;
+        }
+
+        @keyframes cardEntry {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .order-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .order-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .order-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .order-details h3 {
+            grid-column: 1 / -1;
+            color: var(--dark);
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--gray);
+        }
+
+        .detail-item i {
+            color: var(--primary);
+            width: 20px;
+            text-align: center;
+        }
+
+        .status {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            width: fit-content;
+            font-size: 0.9rem;
+        }
+
+        .status.pending { background: rgba(244, 162, 97, 0.2); color: var(--warning) }
+        .status.shipped { background: rgba(76, 201, 240, 0.2); color: var(--success) }
+        .status.delivered { background: rgba(67, 97, 238, 0.2); color: var(--primary) }
+        .status.cancelled { background: rgba(231, 111, 81, 0.2); color: var(--danger) }
+
+        .no-orders {
+            text-align: center;
+            padding: 4rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            color: var(--gray);
+            font-size: 1.2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: var(--light);
+            color: var(--primary);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .order-item {
+                grid-template-columns: 1fr;
+            }
+            
+            .order-item img {
+                height: 200px;
+            }
+
+            .back-btn {
+                top: 20px;
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.location.href='dashboard.html'" title="Back to Dashboard">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+    <div class="container">
+        <h1><i class="fas fa-clipboard-list"></i> Order History</h1>
+        
+        <div class="order-list" id="order-list">
+            <!-- Orders will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        async function loadOrders() {
+            const container = document.getElementById('order-list');
+            const statusStyles = {
+                pending: 'pending',
+                processing: 'pending',
+                shipped: 'shipped',
+                delivered: 'delivered',
+                cancelled: 'cancelled'
+            };
+    
+            try {
+                const response = await fetch('/api/orders');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+    
+                const orders = result.orders;
+    
+                if (orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-orders">
+                            <i class="fas fa-box-open fa-2x" style="margin-bottom: 1rem; color: var(--primary)"></i>
+                            <p>No orders placed yet</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = orders.map(order => `
+                        <div class="order-item">
+                            <img src="${order.image || 'https://source.unsplash.com/random/800x600?product'}" alt="${order.productName}">
+                            <div class="order-details">
+                                <h3>${order.productName}</h3>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span>Quantity: ${order.quantity}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-tag"></i>
+                                    <span>Price: ₹${(order.price * order.quantity).toFixed(2)}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <span>${new Date(order.orderDate).toLocaleDateString()} at ${new Date(order.orderDate).toLocaleTimeString()}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-truck"></i>
+                                    <span class="status ${statusStyles[order.status.toLowerCase()]}">${order.status}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-user"></i>
+                                    <span>${order.customerName}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span>${order.phone}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>${order.email}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>${order.address}</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span>${order.paymentMethod} (${order.paymentStatus})</span>
+                                </div>
+                                
+                                ${order.review ? `
+                                <div class="detail-item">
+                                    <i class="fas fa-comment"></i>
+                                    <span>${order.review}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                container.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 1rem; color: var(--danger)"></i>
+                        <p>Error loading orders. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+    
+        // Load orders when page loads
+        document.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</body>
+</html>
