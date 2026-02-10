@@ -139,6 +139,59 @@ router.post('/login', async (req, res) => {
   });
 });
 
+// Get all registered wholesalers
+router.get('/wholesalers', async (req, res) => {
+    try {
+        const wholesalers = await User.find(
+            { role: 'wholesaler' },
+            { password: 0 } // exclude password
+        );
+
+        res.json({
+            success: true,
+            wholesalers
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch wholesalers'
+        });
+    }
+});
+
+// Get products of a specific wholesaler
+router.get('/products/wholesaler/:id', async (req, res) => {
+  try {
+    const products = await Product.find({
+      wholesalerId: req.params.id
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      products
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch products'
+    });
+  }
+});
+
+// Get logged-in wholesaler products ONLY
+router.get('/products/my', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'wholesaler') {
+    return res.status(403).json({ success: false });
+  }
+
+  const products = await Product.find({
+    wholesalerId: req.user.id
+  }).sort({ createdAt: -1 });
+
+  res.json({ success: true, products });
+});
+
+
 // ---------- PRODUCTS ----------
 router.post('/products', authMiddleware, async (req, res) => {
   if (req.user.role !== 'wholesaler') {
@@ -163,13 +216,36 @@ router.get('/products', async (req, res) => {
 });
 
 router.delete('/products/:id', authMiddleware, async (req, res) => {
-  if (req.user.role !== 'wholesaler') {
-    return res.status(403).json({ success: false, message: 'Not allowed' });
+  const product = await Product.findOne({
+    _id: req.params.id,
+    wholesalerId: req.user.id
+  });
+
+  if (!product) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not allowed'
+    });
   }
 
-  await Product.findByIdAndDelete(req.params.id);
-  res.json({ success: true, message: 'Product deleted' });
+  await product.deleteOne();
+  res.json({ success: true });
 });
+
+router.put('/products/:id', authMiddleware, async (req, res) => {
+  const product = await Product.findOneAndUpdate(
+    { _id: req.params.id, wholesalerId: req.user.id },
+    req.body,
+    { new: true }
+  );
+
+  if (!product) {
+    return res.status(403).json({ success: false });
+  }
+
+  res.json({ success: true, product });
+});
+
 
 // ---------- ORDERS ----------
 router.post('/orders', async (req, res) => {

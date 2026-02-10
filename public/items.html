@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NexTrade | Wholesale Products</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css">
   <style>
@@ -414,7 +417,7 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -427,6 +430,7 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <header>
@@ -440,14 +444,18 @@
           <div class="tagline">The Nexus of efficient Business</div>
         </div>
       </a>
-      
+
       <nav>
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="wholesalers.html">Wholesalers</a></li>
           <li><a href="contact.html">Contact Us</a></li>
-          <li><a href="login.html" class="btn-login">Login</a></li>
-          <li><a href="signup.html" class="btn-nav btn-signup">Sign Up</a></li>
+
+          <li><a href="login.html" class="btn-login" id="loginBtn">Login</a></li>
+          <li><a href="signup.html" class="btn-nav btn-signup" id="signupBtn">Sign Up</a></li>
+
+          <li><a href="dashboard.html" id="dashboardBtn" style="display:none;">Dashboard</a></li>
+
           <li>
             <div class="cart-icon" onclick="toggleCart()">
               <i class="fas fa-shopping-cart"></i>
@@ -456,6 +464,7 @@
           </li>
         </ul>
       </nav>
+
     </div>
   </header>
 
@@ -542,111 +551,122 @@
   </footer>
 
   <script>
-    // Product Data
-    const products = [
-      { id: 1, name: 'Organic Apples (1kg)', price: 120, category: 'Fruits', image: 'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce' },
-      { id: 2, name: 'Whole Wheat Bread (500g)', price: 45, category: 'Bakery', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587' },
-      { id: 3, name: 'Fresh Carrots (1kg)', price: 35, category: 'Vegetables', image: 'https://images.unsplash.com/photo-1582515073490-39981397c445' },
-      { id: 4, name: 'Strawberries (250g)', price: 90, category: 'Fruits', image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783' },
-      { id: 5, name: 'Orange Juice (1L)', price: 85, category: 'Beverages', image: 'https://images.unsplash.com/photo-1571689936115-f29bba9d3b5b' },
-      { id: 6, name: 'Greek Yogurt (200g)', price: 55, category: 'Dairy', image: 'https://images.unsplash.com/photo-1600082791133-27b1c556d8b8' },
-      { id: 7, name: 'Fresh Lettuce', price: 30, category: 'Vegetables', image: 'https://images.unsplash.com/photo-1625944223083-b6eb07d234d2' },
-      { id: 8, name: 'Egg Carton (12 eggs)', price: 65, category: 'Dairy', image: 'https://images.unsplash.com/photo-158332411366-70df0f4deaab' },
-      { id: 9, name: 'Spaghetti Pasta (500g)', price: 75, category: 'Pantry', image: 'https://images.unsplash.com/photo-1616361726316-0c3372dc349e' },
-      { id: 10, name: 'Cheddar Cheese (200g)', price: 110, category: 'Dairy', image: 'https://images.unsplash.com/photo-1585238342027-8967f912afbb' },
-      { id: 11, name: 'Cucumber (1kg)', price: 25, category: 'Vegetables', image: 'https://images.unsplash.com/photo-1625944691231-0c045e0d3a8c' },
-      { id: 12, name: 'Bananas (1 dozen)', price: 50, category: 'Fruits', image: 'https://images.unsplash.com/photo-1574226516831-e1dff420e12b' }
-    ];
+    const params = new URLSearchParams(window.location.search);
+    const wholesalerId = params.get("id");
 
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-    // Render Products
-    function renderProducts() {
-      const container = document.getElementById('products-container');
-      container.innerHTML = products.map(product => `
-        <div class="product-card">
-          <img src="${product.image}" class="product-image" alt="${product.name}">
-          <div class="product-info">
-            <span class="product-category">
-              <i class="fas fa-${getCategoryIcon(product.category)}"></i>
-              ${product.category}
-            </span>
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-price">₹${product.price}</p>
-            <button class="btn btn-primary add-to-cart" data-id="${product.id}">
-              <i class="fas fa-cart-plus"></i> Add to Cart
-            </button>
-            <a href="checkout.html?product=${encodeURIComponent(product.name)}" class="btn btn-secondary">
-              <i class="fas fa-bolt"></i> Buy Now
-            </a>
-          </div>
-        </div>
-      `).join('');
+    if (!wholesalerId) {
+      alert("Invalid wholesaler");
+      location.href = "wholesalers.html";
     }
 
-    function getCategoryIcon(category) {
-      const icons = {
-        'Fruits': 'apple-alt',
-        'Vegetables': 'carrot',
-        'Dairy': 'cheese',
-        'Bakery': 'bread-slice',
-        'Beverages': 'glass-whiskey',
-        'Pantry': 'shopping-basket'
-      };
-      return icons[category] || 'tag';
-    }
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    // Cart Functions
-    function updateCartCount() {
-      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-      document.querySelector('.cart-count').textContent = count;
-    }
+    async function loadProducts() {
+      try {
+        const res = await fetch(`/api/products/wholesaler/${wholesalerId}`);
+        const data = await res.json();
 
-    function toggleCart() {
-      document.querySelector('.cart-sidebar').classList.toggle('active');
-    }
-
-    function updateCartDisplay() {
-      const cartItemsEl = document.getElementById('cart-items');
-      const cartTotalEl = document.getElementById('cart-total');
-      
-      cartItemsEl.innerHTML = cart.map(item => `
-        <div class="cart-item">
-          <img src="${item.image}" alt="${item.name}">
-          <div class="cart-item-info">
-            <h4>${item.name}</h4>
-            <p>₹${item.price} x ${item.quantity}</p>
-          </div>
-        </div>
-      `).join('');
-      
-      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      cartTotalEl.textContent = `₹${total.toFixed(2)}`;
-    }
-
-    // Event Listeners
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('add-to-cart') || e.target.closest('.add-to-cart')) {
-        const productId = parseInt(e.target.closest('button').dataset.id);
-        const product = products.find(p => p.id === productId);
-        const existingItem = cart.find(item => item.id === productId);
-        
-        if (existingItem) {
-          existingItem.quantity++;
-        } else {
-          cart.push({ ...product, quantity: 1 });
+        if (!data.success) {
+          throw new Error("Failed to load products");
         }
-        
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        updateCartDisplay();
+
+        renderProducts(data.products);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("products-container").innerHTML =
+          "<p>No products found.</p>";
       }
+    }
+
+    function renderProducts(products) {
+      const container = document.getElementById("products-container");
+
+      if (products.length === 0) {
+        container.innerHTML = "<p>No products available.</p>";
+        return;
+      }
+
+      container.innerHTML = products.map(product => `
+    <div class="product-card">
+      <img src="${product.image || 'images/default-product.jpg'}"
+           class="product-image">
+
+      <div class="product-info">
+        <span class="product-category">
+          <i class="fas fa-tag"></i> ${product.category || 'General'}
+        </span>
+
+        <h3 class="product-title">${product.name}</h3>
+        <p class="product-price">₹${product.price}</p>
+
+        <button class="btn btn-primary add-to-cart"
+          data-id="${product._id}"
+          data-name="${product.name}"
+          data-price="${product.price}"
+          data-image="${product.image}">
+          <i class="fas fa-cart-plus"></i> Add to Cart
+        </button>
+      </div>
+    </div>
+  `).join("");
+    }
+
+    /* CART */
+    document.addEventListener("click", e => {
+      const btn = e.target.closest(".add-to-cart");
+      if (!btn) return;
+
+      const product = {
+        id: btn.dataset.id,
+        name: btn.dataset.name,
+        price: Number(btn.dataset.price),
+        image: btn.dataset.image,
+        quantity: 1
+      };
+
+      const existing = cart.find(p => p.id === product.id);
+      if (existing) {
+        existing.quantity++;
+      } else {
+        cart.push(product);
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartCount();
     });
 
-    // Initialize
-    renderProducts();
+    function updateCartCount() {
+      const count = cart.reduce((s, i) => s + i.quantity, 0);
+      document.querySelector(".cart-count").textContent = count;
+    }
+
+    loadProducts();
     updateCartCount();
-    updateCartDisplay();
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = localStorage.getItem("token");
+
+      const loginBtn = document.getElementById("loginBtn");
+      const signupBtn = document.getElementById("signupBtn");
+      const dashboardBtn = document.getElementById("dashboardBtn");
+
+      if (user && token) {
+        // Logged-in user
+        if (loginBtn) loginBtn.style.display = "none";
+        if (signupBtn) signupBtn.style.display = "none";
+        if (dashboardBtn) dashboardBtn.style.display = "inline-block";
+      } else {
+        // Guest user
+        if (loginBtn) loginBtn.style.display = "inline-block";
+        if (signupBtn) signupBtn.style.display = "inline-block";
+        if (dashboardBtn) dashboardBtn.style.display = "none";
+      }
+    });
+  </script>
+
+
 </body>
+
 </html>
