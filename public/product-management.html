@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Management - Nextrade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -41,7 +44,7 @@
             padding: 2rem;
             border-radius: 16px;
             box-shadow: var(--card-shadow);
-            border: 1px solid rgba(0,0,0,0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
         h1 {
@@ -116,7 +119,8 @@
             color: var(--gray);
         }
 
-        input, select {
+        input,
+        select {
             width: 100%;
             padding: 1rem 1rem 1rem 3rem;
             border: 2px solid var(--border);
@@ -125,7 +129,8 @@
             transition: all 0.3s;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 15px rgba(67, 97, 238, 0.2);
@@ -172,7 +177,7 @@
 
         .product-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
         .product-image {
@@ -261,42 +266,43 @@
             body {
                 padding: 1rem;
             }
-            
+
             .container {
                 padding: 1.5rem;
             }
-            
+
             .form-group {
                 grid-template-columns: 1fr;
             }
-            
+
             .product-list {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1><i class="fas fa-boxes"></i> Product Management</h1>
-        
+
         <!-- Search Bar -->
         <div class="search-bar">
             <i class="fas fa-search"></i>
             <input type="text" id="searchInput" placeholder="Search products...">
         </div>
-        
+
         <div class="form-group">
             <div class="input-field">
                 <i class="fas fa-tag"></i>
                 <input type="text" id="productName" placeholder="Product Name" required>
             </div>
-            
+
             <div class="input-field">
                 <i class="fas fa-rupee-sign"></i>
                 <input type="number" id="productPrice" placeholder="Price in ₹" required>
             </div>
-            
+
             <div class="input-field">
                 <i class="fas fa-list"></i>
                 <select id="productCategory" required>
@@ -323,198 +329,184 @@
                     <option value="Footwear">Footwear</option>
                 </select>
             </div>
-            
+
             <div class="input-field">
                 <i class="fas fa-image"></i>
                 <input type="text" id="productImage" placeholder="Image URL (optional)">
             </div>
-            
+
             <button id="addProductBtn"><i class="fas fa-plus"></i> Add Product</button>
         </div>
-        
+
         <h2>Product List</h2>
         <div class="product-list" id="productList">
             <!-- Products will be loaded dynamically -->
         </div>
     </div>
-    
+
     <div class="notification" id="notification">
         <i class="fas fa-check-circle"></i>
         Product added successfully!
     </div>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("Please login again");
+                window.location.href = "login.html";
+                return;
+            }
+
             const addProductBtn = document.getElementById('addProductBtn');
             const productList = document.getElementById('productList');
             const notification = document.getElementById('notification');
             const searchInput = document.getElementById('searchInput');
-            
-            // Load products from server
+
+            let editingProductId = null;
+            let currentProducts = [];
+
             loadProducts();
-            
-            // Search functionality
-            searchInput.addEventListener('input', function() {
-                loadProducts(searchInput.value);
+
+            searchInput.addEventListener('input', () => {
+                const value = searchInput.value.toLowerCase();
+                displayProducts(currentProducts.filter(p =>
+                    p.name.toLowerCase().includes(value)
+                ));
             });
-            
-            // Add product function
-            addProductBtn.addEventListener('click', async function() {
-                const name = document.getElementById('productName').value.trim();
-                const price = document.getElementById('productPrice').value.trim();
-                const category = document.getElementById('productCategory').value.trim();
-                const imageUrl = document.getElementById('productImage').value.trim();
-                
-                if (name && price && category) {
-                    try {
-                        const response = await fetch('/api/products', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                name,
-                                price,
-                                category,
-                                image: imageUrl
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            // Clear form
-                            document.getElementById('productName').value = '';
-                            document.getElementById('productPrice').value = '';
-                            document.getElementById('productCategory').value = '';
-                            document.getElementById('productImage').value = '';
-                            
-                            // Reload products
-                            loadProducts();
-                            
-                            // Show notification
-                            showNotification('Product added successfully!');
-                        } else {
-                            alert('Error adding product: ' + data.message);
-                        }
-                    } catch (error) {
-                        alert('Error adding product');
-                        console.error(error);
-                    }
-                } else {
-                    alert('Please fill all required fields');
-                }
-            });
-            
-            // Load products from server
-            async function loadProducts(searchTerm = '') {
-                try {
-                    const response = await fetch(`/api/products?search=${encodeURIComponent(searchTerm)}`);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        displayProducts(data.products);
-                    } else {
-                        console.error('Error loading products:', data.message);
-                        displayProducts([]);
-                    }
-                } catch (error) {
-                    console.error('Error loading products:', error);
-                    displayProducts([]);
-                }
-            }
-            
-            // Display all products
-            function displayProducts(products) {
-                productList.innerHTML = '';
-                
-                if (products.length === 0) {
-                    productList.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--gray);">No products found</p>';
+
+            addProductBtn.addEventListener('click', async () => {
+                const name = productName.value.trim();
+                const price = productPrice.value.trim();
+                const category = productCategory.value;
+                const image = productImage.value.trim();
+
+                if (!name || !price || !category) {
+                    alert("Fill all required fields");
                     return;
                 }
-                
-                products.forEach(product => {
-                    const productCard = document.createElement('div');
-                    productCard.className = 'product-card';
-                    productCard.innerHTML = `
-                        <div class="product-image">
-                            ${product.image ? 
-                                `<img src="${product.image}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;">` : 
-                                `<i class="fas fa-image" style="font-size:2rem;"></i>`}
-                        </div>
-                        <h3>${product.name}</h3>
-                        <p><span class="rupee-icon">₹</span> <span class="product-price">${product.price}</span></p>
-                        <p><i class="fas fa-tag"></i> ${product.category}</p>
-                        <div class="product-actions">
-                            <button class="edit-btn" onclick="editProduct('${product._id}')">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="delete-btn" onclick="deleteProduct('${product._id}')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </div>
-                    `;
-                    productList.appendChild(productCard);
+
+                const url = editingProductId
+                    ? `/api/products/${editingProductId}`
+                    : `/api/products`;
+
+                const method = editingProductId ? "PUT" : "POST";
+
+                try {
+                    const res = await fetch(url, {
+                        method,
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ name, price, category, image })
+                    });
+
+                    const data = await res.json();
+                    if (!data.success) throw new Error();
+
+                    resetForm();
+                    editingProductId = null;
+                    loadProducts();
+                    showNotification(editingProductId ? "Product updated" : "Product added");
+
+                } catch {
+                    alert("Operation failed");
+                }
+            });
+
+            async function loadProducts() {
+                try {
+                    const res = await fetch('/api/products/my', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+
+                    const data = await res.json();
+                    if (!data.success) throw new Error();
+
+                    currentProducts = data.products;
+                    displayProducts(currentProducts);
+
+                } catch {
+                    productList.innerHTML = "<p>No products found</p>";
+                }
+            }
+
+            function displayProducts(products) {
+                productList.innerHTML = "";
+
+                if (products.length === 0) {
+                    productList.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#6c757d;">No products found</p>`;
+                    return;
+                }
+
+                products.forEach(p => {
+                    productList.innerHTML += `
+        <div class="product-card">
+          <div class="product-image">
+            ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : `<i class="fas fa-image"></i>`}
+          </div>
+          <h3>${p.name}</h3>
+          <p><span class="product-price">₹${p.price}</span></p>
+          <p><i class="fas fa-tag"></i> ${p.category}</p>
+          <div class="product-actions">
+            <button class="edit-btn" onclick="editProduct('${p._id}')"><i class="fas fa-edit"></i> Edit</button>
+            <button class="delete-btn" onclick="deleteProduct('${p._id}')"><i class="fas fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      `;
                 });
             }
-            
-            // Show notification
-            function showNotification(message) {
-                notification.textContent = message;
-                notification.classList.add('show');
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
+
+            window.editProduct = function (id) {
+                const product = currentProducts.find(p => p._id === id);
+                if (!product) return;
+
+                editingProductId = id;
+                productName.value = product.name;
+                productPrice.value = product.price;
+                productCategory.value = product.category;
+                productImage.value = product.image || "";
+
+                showNotification("Editing product");
+            };
+
+            window.deleteProduct = async function (id) {
+                if (!confirm("Delete this product?")) return;
+
+                try {
+                    const res = await fetch(`/api/products/${id}`, {
+                        method: "DELETE",
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+
+                    const data = await res.json();
+                    if (!data.success) throw new Error();
+
+                    loadProducts();
+                    showNotification("Product deleted");
+
+                } catch {
+                    alert("Delete failed");
+                }
+            };
+
+            function resetForm() {
+                productName.value = "";
+                productPrice.value = "";
+                productCategory.value = "";
+                productImage.value = "";
             }
-            
-            // Edit product
-            window.editProduct = function(id) {
-                // Find the product in the displayed list
-                const productElements = document.querySelectorAll('.product-card');
-                for (const element of productElements) {
-                    if (element.querySelector('.delete-btn').getAttribute('onclick').includes(id)) {
-                        const name = element.querySelector('h3').textContent;
-                        const price = element.querySelector('.product-price').textContent;
-                        const category = element.querySelector('p:nth-of-type(2)').textContent.replace(' ', '');
-                        const image = element.querySelector('.product-image img')?.src || '';
-                        
-                        document.getElementById('productName').value = name;
-                        document.getElementById('productPrice').value = price;
-                        document.getElementById('productCategory').value = category;
-                        document.getElementById('productImage').value = image;
-                        
-                        // Delete the product
-                        deleteProduct(id);
-                        
-                        showNotification('Product loaded for editing');
-                        break;
-                    }
-                }
-            };
-            
-            // Delete product
-            window.deleteProduct = async function(id) {
-                if (confirm('Are you sure you want to delete this product?')) {
-                    try {
-                        const response = await fetch(`/api/products/${id}`, {
-                            method: 'DELETE'
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            loadProducts(searchInput.value);
-                            showNotification('Product deleted successfully');
-                        } else {
-                            alert('Error deleting product: ' + data.message);
-                        }
-                    } catch (error) {
-                        alert('Error deleting product');
-                        console.error(error);
-                    }
-                }
-            };
+
+            function showNotification(msg) {
+                notification.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+                notification.classList.add("show");
+                setTimeout(() => notification.classList.remove("show"), 3000);
+            }
         });
     </script>
+
 </body>
+
 </html>

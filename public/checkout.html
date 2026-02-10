@@ -144,151 +144,114 @@
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get("id");
-    const productName = urlParams.get("product");
-    let productPrice = parseFloat(urlParams.get("price"));
-    const productImage = urlParams.get("image") || 'https://source.unsplash.com/random/800x600?product';
+  const checkoutCart = JSON.parse(localStorage.getItem("checkout_cart"));
+  const params = new URLSearchParams(window.location.search);
 
-    if (isNaN(productPrice)) {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const product = cart.find(item => item.id == productId);
-      if (product) productPrice = product.price;
-    }
+  let items = [];
+  let totalAmount = 0;
+  let displayName = "";
 
-    document.getElementById("product-name").textContent = productName || "Unknown Product";
-    if (isNaN(productPrice) || productPrice <= 0) {
-      document.getElementById("product-price").textContent = "Price not available";
-      document.getElementById("submit-btn").disabled = true;
+  // ===============================
+  // ✅ ORDER ALL ITEMS
+  // ===============================
+  if (checkoutCart && checkoutCart.length > 0) {
+    items = checkoutCart;
+
+    totalAmount = checkoutCart.reduce(
+      (sum, item) => sum + (item.price * item.quantity),
+      0
+    );
+
+    displayName = `Multiple Items (${checkoutCart.length})`;
+  }
+
+  // ===============================
+  // ✅ BUY NOW (SINGLE ITEM)
+  // ===============================
+  else {
+    const name = params.get("product");
+    const price = parseFloat(params.get("price"));
+
+    if (!name || isNaN(price) || price <= 0) {
       alert("Invalid price. Please return to cart.");
-    } else {
-      document.getElementById("product-price").textContent = `₹${productPrice.toFixed(2)}`;
+      window.location.href = "cart.html";
+      throw new Error("Invalid checkout state");
     }
 
-    document.getElementById("checkout-form").addEventListener("submit", async function(e) {
-      e.preventDefault();
+    items = [{ name, price, quantity: 1 }];
+    totalAmount = price;
+    displayName = name;
+  }
 
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const phone = document.getElementById("phone").value;
-      const address = document.getElementById("address").value;
-      const review = document.getElementById("review").value;
-      const submitBtn = document.getElementById("submit-btn");
-      const successMessage = document.getElementById("success-message");
+  // ===============================
+  // UI UPDATE
+  // ===============================
+  document.getElementById("product-name").textContent = displayName;
+  document.getElementById("product-price").textContent = `₹${totalAmount.toFixed(2)}`;
 
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  // ===============================
+  // PAYMENT
+  // ===============================
+  document.getElementById("checkout-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-      try {
-        // STEP 1: Create Razorpay order on server
-        const orderRes = await fetch('/api/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: productPrice * 100 }) // Amount in paise
-        });
+    const submitBtn = document.getElementById("submit-btn");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "Processing...";
 
-        if (!orderRes.ok) {
-          const errorData = await orderRes.json();
-          throw new Error(errorData.message || "Order creation failed");
-        }
+    try {
+      // Create Razorpay order
+      const orderRes = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: totalAmount * 100 })
+      });
 
-        const orderData = await orderRes.json();
-        if (!orderData.id) {
-          throw new Error("Order creation failed - no order ID returned");
-        }
+      const orderData = await orderRes.json();
 
-        // STEP 2: Get Razorpay key from server
-        const keyRes = await fetch('/api/get-razorpay-key');
-        if (!keyRes.ok) {
-          throw new Error("Failed to get payment key");
-        }
-        const keyData = await keyRes.json();
-        const razorpayKey = keyData.key;
+      const keyRes = await fetch("/api/get-razorpay-key");
+      const keyData = await keyRes.json();
 
-        // STEP 3: Open Razorpay checkout
-        const options = {
-          key: razorpayKey, // Use the key from server response
-          amount: orderData.amount,
-          currency: "INR",
-          name: "NexTrade",
-          description: productName,
-          image: "https://yourcdn.com/logo.png",
-          order_id: orderData.id,
-          handler: async function (response) {
-            try {
-              // STEP 4: Save order details
-              const finalOrder = {
-                productName,
-                price: productPrice,
-                quantity: 1,
-                image: productImage,
-                orderDate: new Date(),
-                status: "Processing",
+      const options = {
+        key: keyData.key,
+        amount: orderData.amount,
+        currency: "INR",
+        name: "NexTrade",
+        description: displayName,
+        order_id: orderData.id,
+        handler: async function () {
+          // Save each item as an order
+          for (const item of items) {
+            await fetch("/api/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productName: item.name,
+                price: item.price,
+                quantity: item.quantity,
                 paymentMethod: "Razorpay",
                 paymentStatus: "Completed",
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                address,
-                customerName: name,
-                email,
-                phone,
-                review,
-              };
+                status: "Processing"
+              })
+            });
+          }
 
-              const saveRes = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(finalOrder)
-              });
+          localStorage.removeItem("checkout_cart");
+          localStorage.removeItem("cart");
 
-              if (!saveRes.ok) {
-                throw new Error("Failed to save order");
-              }
+          alert("Payment successful!");
+          window.location.href = "orders.html";
+        }
+      };
 
-              const saveResult = await saveRes.json();
-              if (!saveResult.success) {
-                throw new Error(saveResult.message || "Failed to save order");
-              }
+      new Razorpay(options).open();
+    } catch (err) {
+      alert("Payment failed. Try again.");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = "Pay Now";
+    }
+  });
+</script>
 
-              // Remove from cart
-              const cart = JSON.parse(localStorage.getItem('cart')) || [];
-              if (productId) {
-                localStorage.setItem('cart', JSON.stringify(cart.filter(item => item.id != productId)));
-              }
-
-              successMessage.innerHTML = `<i class="fas fa-check-circle"></i> Payment successful! Redirecting...`;
-              setTimeout(() => window.location.href = "orders.html", 2000);
-            } catch (error) {
-              console.error("Error in payment handler:", error);
-              alert("Payment was successful but we encountered an issue saving your order. Please contact support.");
-              submitBtn.disabled = false;
-              submitBtn.innerHTML = 'Pay Now';
-            }
-          },
-          prefill: { name, email, contact: phone },
-          notes: {
-            address: address,
-            product: productName
-          },
-          theme: { color: "#4361ee" }
-        };
-
-        const razorpay = new Razorpay(options);
-        razorpay.on('payment.failed', function(response) {
-          alert(`Payment failed: ${response.error.description}`);
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Pay Now';
-        });
-        
-        razorpay.open();
-      } catch (error) {
-        console.error("Checkout error:", error);
-        alert(error.message || "Something went wrong. Please try again.");
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Pay Now';
-      }
-    });
-  </script>
 </body>
 </html>
