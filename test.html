@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | NexTrade</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/contact.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Consistent Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-arrow-trend-up"></i>
+                </div>
+                <div>
+                    <div class="logo-text">Nex<span>Trade</span></div>
+                    <div class="tagline">The Nexus of efficient Business</div>
+                </div>
+            </a>
+
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="wholesalers.html">Wholesalers</a></li>
+                    <li><a href="contact.html" class="active">Contact Us</a></li>
+                    <li><a href="login.html" class="btn-login" id="loginBtn">Login</a></li>
+                    <li><a href="signup.html" class="btn-nav btn-signup" id="signupBtn">Sign Up</a></li>
+                    <li><a href="dashboard.html" id="dashboardBtn" style="display:none;">Dashboard</a></li>
+
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contact Page Hero -->
+    <section class="contact-hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>We'd Love to Hear From You</h1>
+                <p>Have questions about our platform or need assistance? Our team is ready to help you with any
+                    inquiries.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Main Content -->
+    <main class="contact-container">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Contact Form -->
+                <div class="contact-form-section">
+                    <h2>Send Us a Message</h2>
+                    <p>Fill out the form below and we'll get back to you within 24 hours.</p>
+
+                    <form id="contactForm" class="contact-form">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-tag"></i>
+                                <select id="subject" name="subject" required>
+                                    <option value="" disabled selected>Select a subject</option>
+                                    <option value="general">General Inquiry</option>
+                                    <option value="account">Account Support</option>
+                                    <option value="wholesaler">Wholesaler Application</option>
+                                    <option value="technical">Technical Support</option>
+                                    <option value="feedback">Feedback/Suggestions</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Your Message</label>
+                            <textarea id="message" name="message" rows="6" placeholder="Type your message here..."
+                                required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="contact-info-section">
+                    <h2>Other Ways to Reach Us</h2>
+
+                    <div class="contact-info-card">
+                        <div class="contact-method">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h3>Phone Support</h3>
+                                <p>+91 7295988994</p>
+                                <p class="hours">Mon-Fri: 9AM - 6PM EST</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-method">
+                            <div class="contact-icon">
+                                <i class="fas fa-envelope-open-text"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h3>Email Us</h3>
+                                <p>nextradeconnect@gmail.com</p>
+                                <!-- <p>business@nextrade.com</p> -->
+                            </div>
+                        </div>
+
+                        <div class="contact-method">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h3>Visit Our Office</h3>
+                                <p>CCSIT</p>
+                                <p>TMU, Moradabad, IN 244102</p>
+                                <p>India</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="social-links">
+                        <h3>Connect With Us</h3>
+                        <div class="social-icons">
+                            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How do I become a verified wholesaler on NexTrade?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>To become a verified wholesaler, please submit an application through our Wholesaler
+                            Registration page. Our team will review your business details and contact you within 3-5
+                            business days to complete the verification process.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        What payment methods do you accept?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>NexTrade supports various payment methods including credit/debit cards, bank transfers, and
+                            digital wallets. All transactions are processed securely through our payment gateway
+                            partners.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        How can I reset my account password?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>You can reset your password by clicking on the "Forgot Password" link on the login page.
+                            We'll send a password reset link to your registered email address.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Is there a mobile app available?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! NexTrade is available on both iOS and Android platforms. You can download it from the
+                            App Store or Google Play Store.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Consistent Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html" class="logo">
+                        <i class="fas fa-arrow-trend-up logo-icon"></i>
+                        <div>
+                            <div class="logo-text">Nex<span>Trade</span></div>
+                        </div>
+                    </a>
+                    <p class="footer-tagline">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+                </div>
+
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="blog.html">Blog</a></li>
+                            <li><a href="press.html">Press</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="help-center.html">Help Center</a></li>
+                            <li><a href="wholesaler-guide.html">Wholesaler Guide</a></li>
+                            <li><a href="shopkeeper-guide.html">Shopkeeper Guide</a></li>
+                            <li><a href="faq.html">FAQs</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="privacy.html">Privacy Policy</a></li>
+                            <li><a href="terms.html">Terms of Service</a></li>
+                            <li><a href="security.html">Security</a></li>
+                            <li><a href="cookie-policy.html">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2023 NexTrade. All rights reserved.</p>
+                <div class="footer-social">
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/contact.js"></script>
+
+    <style>
+        .faq-item {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 22px 25px;
+            text-align: left;
+            border: none;
+            background: #f5f7fa;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+        }
+
+        .faq-question:hover {
+            background: #ebedf0;
+        }
+
+        .faq-question i {
+            transition: transform 0.3s ease;
+            font-size: 18px;
+        }
+
+        .faq-answer {
+            display: none;
+            padding: 25px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            font-size: 16px;
+            line-height: 1.7;
+            color: #4a5568;
+        }
+
+        .faq-answer p {
+            margin: 0 0 15px 0;
+        }
+
+        .faq-answer p:last-child {
+            margin-bottom: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                max-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+
+            to {
+                opacity: 1;
+                max-height: 500px;
+                padding: 25px;
+            }
+        }
+
+        .active-faq .faq-question {
+            background: #ebedf0;
+            color: #1a365d;
+        }
+
+        .active-faq .faq-question i {
+            transform: rotate(180deg);
+            color: #1a365d;
+        }
+
+        .active-faq .faq-answer {
+            display: block;
+            animation: fadeIn 0.4s ease forwards;
+        }
+    </style>
+
+    <!-- FAQ Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const faqItems = document.querySelectorAll('.faq-item');
+
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+
+                    item.classList.toggle('active-faq');
+
+                    // Close other items if needed (optional)
+                    // faqItems.forEach(otherItem => {
+                    //     if (otherItem !== item) {
+                    //         otherItem.classList.remove('active-faq');
+                    //     }
+                    // });
+                });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            const token = localStorage.getItem("token");
+
+            const loginBtn = document.getElementById("loginBtn");
+            const signupBtn = document.getElementById("signupBtn");
+            const dashboardBtn = document.getElementById("dashboardBtn");
+
+            if (user && token) {
+                // Logged-in user
+                if (loginBtn) loginBtn.style.display = "none";
+                if (signupBtn) signupBtn.style.display = "none";
+                if (dashboardBtn) dashboardBtn.style.display = "inline-block";
+            } else {
+                // Guest user
+                if (loginBtn) loginBtn.style.display = "inline-block";
+                if (signupBtn) signupBtn.style.display = "inline-block";
+                if (dashboardBtn) dashboardBtn.style.display = "none";
+            }
+        });
+    </script>
+
+
+</body>
+
+</html>

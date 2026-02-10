@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Nextrade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #f72585;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .signup-container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .signup-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 500px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+            font-size: 2rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .subtext {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            appearance: none;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            transition: color 0.3s ease;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: '\f078';
+            font-family: 'Font Awesome 5 Free';
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+        }
+
+        .message {
+            text-align: center;
+            color: var(--gray);
+            margin-top: 1.5rem;
+        }
+
+        .message a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .message a:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Role-specific fields */
+        .role-specific-field {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Status message */
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .status-message.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .status-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .signup-container {
+                padding: 1rem;
+            }
+            
+            .signup-card {
+                padding: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            input, select {
+                padding: 0.8rem 0.8rem 0.8rem 2.5rem;
+            }
+
+            .input-icon {
+                font-size: 0.9rem;
+                left: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-card">
+            <h2>Create Account</h2>
+            <p class="subtext">Join NexTrade to connect with wholesalers and retailers</p>
+            <form id="signupForm">
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" placeholder="Full Name" id="name" required />
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" placeholder="Email" id="email" required />
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" placeholder="Password" id="password" required />
+                </div>
+
+                <div class="input-group select-wrapper">
+                    <i class="fas fa-user-tag input-icon"></i>
+                    <select id="role" required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="wholesaler">Wholesaler</option>
+                        <option value="retailer">Retailer</option>
+                    </select>
+                </div>
+
+                <!-- Wholesaler Specific Fields -->
+                <div class="input-group role-specific-field" id="wholesaler-fields">
+                    <i class="fas fa-building input-icon"></i>
+                    <input type="text" placeholder="Business Name" id="businessName" />
+                </div>
+
+                <div class="input-group role-specific-field" id="wholesaler-fields">
+                    <i class="fas fa-id-card input-icon"></i>
+                    <input type="text" placeholder="GST Number" id="gstNumber" />
+                </div>
+
+                <!-- Retailer Specific Fields -->
+                <div class="input-group role-specific-field" id="retailer-fields">
+                    <i class="fas fa-store input-icon"></i>
+                    <input type="text" placeholder="Shop Name" id="shopName" />
+                </div>
+
+                <div class="input-group role-specific-field" id="retailer-fields">
+                    <i class="fas fa-map-marker-alt input-icon"></i>
+                    <input type="text" placeholder="Shop Address" id="shopAddress" />
+                </div>
+
+                <button type="submit" class="btn-primary">Sign Up</button>
+                <p class="message">Already have an account? <a href="login.html">Login</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div class="status-message">
+        <i class="fas fa-check-circle status-icon"></i>
+        <span>Account created successfully!</span>
+    </div>
+
+    <script>
+        document.getElementById('role').addEventListener('change', function() {
+            const role = this.value;
+            
+            // Hide all role-specific fields first
+            document.querySelectorAll('.role-specific-field').forEach(field => {
+                field.style.display = 'none';
+            });
+            
+            // Show fields for selected role
+            if (role === 'wholesaler') {
+                document.querySelectorAll('#wholesaler-fields').forEach(field => {
+                    field.style.display = 'block';
+                });
+            } else if (role === 'retailer') {
+                document.querySelectorAll('#retailer-fields').forEach(field => {
+                    field.style.display = 'block';
+                });
+            }
+        });
+
+        document.getElementById("signupForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const statusMessage = document.querySelector(".status-message");
+            const statusIcon = statusMessage.querySelector(".status-icon");
+            const statusText = statusMessage.querySelector("span");
+
+            // Form validation
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const role = document.getElementById("role").value;
+
+            if (!name || !email || !password || !role) {
+                showStatusMessage("Please fill all fields!", "error");
+                return;
+            }
+            
+            // Collect role-specific data
+            let additionalData = {};
+            if (role === 'wholesaler') {
+                additionalData.businessName = document.getElementById("businessName").value;
+                additionalData.gstNumber = document.getElementById("gstNumber").value;
+                
+                if (!additionalData.businessName || !additionalData.gstNumber) {
+                    showStatusMessage("Please fill all wholesaler fields!", "error");
+                    return;
+                }
+            } else if (role === 'retailer') {
+                additionalData.shopName = document.getElementById("shopName").value;
+                additionalData.shopAddress = document.getElementById("shopAddress").value;
+                
+                if (!additionalData.shopName || !additionalData.shopAddress) {
+                    showStatusMessage("Please fill all retailer fields!", "error");
+                    return;
+                }
+            }
+
+            try {
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing Up...';
+
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        password,
+                        role,
+                        ...additionalData
+                    })
+                });
+
+                if (!response.ok) {
+                    let errorMsg = 'Registration failed';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.message || errorMsg;
+                    } catch (e) {
+                        errorMsg = response.statusText || errorMsg;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatusMessage("Account created successfully!", "success");
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatusMessage(error.message || 'Registration failed. Please try again.', "error");
+            } finally {
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Sign Up';
+                }
+            }
+        });
+
+        function showStatusMessage(message, type) {
+            const statusMessage = document.querySelector(".status-message");
+            const statusIcon = statusMessage.querySelector(".status-icon");
+            const statusText = statusMessage.querySelector("span");
+            
+            statusMessage.style.background = type === "success" ? "#e5ffe5" : "#ffe5e5";
+            statusText.textContent = message;
+            statusIcon.className = type === "success" 
+                ? "fas fa-check-circle status-icon" 
+                : "fas fa-exclamation-circle status-icon";
+            statusIcon.style.color = type === "success" ? "#2ecc71" : "#e74c3c";
+            statusMessage.classList.add("visible");
+            
+            setTimeout(() => statusMessage.classList.remove("visible"), 3000);
+        }
+    </script>
+</body>
+</html>
