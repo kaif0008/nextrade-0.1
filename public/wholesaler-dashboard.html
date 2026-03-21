@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wholesaler Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body { margin:0; font-family:Poppins; display:flex; }
+
+.sidebar {
+    width:220px;
+    background:#4361ee;
+    color:white;
+    height:100vh;
+    padding:20px;
+}
+
+.sidebar h2 { text-align:center; }
+
+.sidebar button {
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    background:none;
+    color:white;
+    text-align:left;
+}
+
+.sidebar button:hover {
+    background:rgba(255,255,255,0.2);
+}
+
+.main { flex:1; background:#f4f6fb; }
+
+.topbar {
+    background:white;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.cards {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:20px;
+    padding:20px;
+}
+
+.card {
+    background:white;
+    padding:20px;
+    border-radius:10px;
+}
+
+.section { padding:20px; }
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>NexTrade</h2>
+    <button onclick="go('products')"><i class="fas fa-box"></i> Products</button>
+    <button onclick="go('orders')"><i class="fas fa-truck"></i> Orders</button>
+    <button onclick="go('profile')"><i class="fas fa-user"></i> Profile</button>
+    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</div>
+
+<div class="main">
+
+<div class="topbar">
+    <div id="welcome"></div>
+    <div>Wholesaler</div>
+</div>
+
+<!-- STATS -->
+<div class="cards">
+    <div class="card">Products: <span id="products">0</span></div>
+    <div class="card">Orders: <span id="orders">0</span></div>
+    <div class="card">Revenue: ₹<span id="revenue">0</span></div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="section">
+    <h3>Analytics 📊</h3>
+    <p>Top Product: Coming Soon</p>
+</div>
+
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
+
+if(!user || !token) location.href="login.html";
+if(user.role !== "wholesaler") location.href="dashboard.html";
+
+document.getElementById("welcome").innerText = "Welcome, " + user.name;
+
+function go(p){
+    if(p==="products") location.href="product-management.html";
+    if(p==="orders") location.href="orders.html";
+    if(p==="profile") location.href="profile.html";
+}
+
+function logout(){
+    localStorage.clear();
+    location.href="login.html";
+}
+
+async function load(){
+    const p = await fetch('/api/products/my',{headers:{Authorization:`Bearer ${token}`}});
+    const prod = await p.json();
+
+    document.getElementById("products").innerText = prod.products.length;
+
+    const o = await fetch('/api/orders',{headers:{Authorization:`Bearer ${token}`}});
+    const ord = await o.json();
+
+    document.getElementById("orders").innerText = ord.orders.length;
+
+    const revenue = ord.orders.reduce((sum,o)=>sum + o.price,0);
+    document.getElementById("revenue").innerText = revenue;
+}
+
+load();
+</script>
+
+</body>
+</html>

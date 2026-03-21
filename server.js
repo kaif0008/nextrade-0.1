@@ -113,13 +113,73 @@ const router = express.Router();
 // ---------- AUTH ----------
 router.post('/signup', async (req, res) => {
   try {
-    const user = new User(req.body);
+    const { name, email, password, role, gstNumber } = req.body;
+
+    // ✅ Basic validation
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
+
+    // ✅ GST rule
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    // Wholesaler → GST required + valid
+    if (role === "wholesaler") {
+      if (!gstNumber || !gstRegex.test(gstNumber)) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid GST is required for wholesalers"
+        });
+      }
+    }
+
+    // Retailer → GST optional but must be valid if given
+    if (role === "retailer" && gstNumber) {
+      if (!gstRegex.test(gstNumber)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid GST format"
+        });
+      }
+    }
+
+    // ✅ Check existing user
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists"
+      });
+    }
+
+    // ✅ Create user
+    const user = new User({
+      name,
+      email,
+      password,
+      role,
+      gstNumber
+    });
+
     await user.save();
-    res.status(201).json({ success: true, message: 'Account created', user });
+
+    res.status(201).json({
+      success: true,
+      message: "Account created successfully"
+    });
+
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Signup failed"
+    });
   }
 });
+
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -141,22 +201,22 @@ router.post('/login', async (req, res) => {
 
 // Get all registered wholesalers
 router.get('/wholesalers', async (req, res) => {
-    try {
-        const wholesalers = await User.find(
-            { role: 'wholesaler' },
-            { password: 0 } // exclude password
-        );
+  try {
+    const wholesalers = await User.find(
+      { role: 'wholesaler' },
+      { password: 0 } // exclude password
+    );
 
-        res.json({
-            success: true,
-            wholesalers
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch wholesalers'
-        });
-    }
+    res.json({
+      success: true,
+      wholesalers
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch wholesalers'
+    });
+  }
 });
 
 // Get products of a specific wholesaler

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Retailer Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body { margin:0; font-family:Poppins; display:flex; }
+
+/* SIDEBAR */
+.sidebar {
+    width:220px;
+    background:#4361ee;
+    color:white;
+    height:100vh;
+    padding:20px;
+}
+
+.sidebar h2 { text-align:center; }
+
+.sidebar button {
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    background:none;
+    color:white;
+    text-align:left;
+    cursor:pointer;
+}
+
+.sidebar button:hover {
+    background:rgba(255,255,255,0.2);
+}
+
+/* MAIN */
+.main { flex:1; background:#f4f6fb; }
+
+/* TOPBAR */
+.topbar {
+    background:white;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+}
+
+/* CARDS */
+.cards {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:20px;
+    padding:20px;
+}
+
+.card {
+    background:white;
+    padding:20px;
+    border-radius:10px;
+}
+
+/* SECTION */
+.section { padding:20px; }
+
+.products {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:15px;
+}
+
+.product {
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>NexTrade</h2>
+    <button onclick="go('browse')"><i class="fas fa-search"></i> Browse</button>
+    <button onclick="go('cart')"><i class="fas fa-shopping-cart"></i> Cart</button>
+    <button onclick="go('orders')"><i class="fas fa-box"></i> Orders</button>
+    <button onclick="go('profile')"><i class="fas fa-user"></i> Profile</button>
+    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</div>
+
+<div class="main">
+
+<div class="topbar">
+    <div id="welcome"></div>
+    <div>Retailer</div>
+</div>
+
+<!-- STATS -->
+<div class="cards">
+    <div class="card">Orders: <span id="orders">0</span></div>
+    <div class="card">Cart Items: <span id="cart">0</span></div>
+    <div class="card">Pending: <span id="pending">0</span></div>
+</div>
+
+<!-- AI RECOMMENDATION -->
+<div class="section">
+    <h3>Recommended 🤖</h3>
+    <div class="products" id="recommend"></div>
+</div>
+
+<!-- ORDERS -->
+<div class="section">
+    <h3>Recent Orders</h3>
+    <div class="products" id="recent"></div>
+</div>
+
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
+
+if(!user || !token) location.href="login.html";
+if(user.role !== "retailer") location.href="dashboard.html";
+
+document.getElementById("welcome").innerText = "Welcome, " + user.name;
+
+function go(page){
+    if(page==="browse") location.href="items.html";
+    if(page==="cart") location.href="cart.html";
+    if(page==="orders") location.href="orders.html";
+    if(page==="profile") location.href="profile.html";
+}
+
+function logout(){
+    localStorage.clear();
+    location.href="login.html";
+}
+
+// LOAD DATA
+async function load(){
+    const cart = JSON.parse(localStorage.getItem("cart"))||[];
+    document.getElementById("cart").innerText = cart.length;
+
+    const res = await fetch('/api/orders',{headers:{Authorization:`Bearer ${token}`}});
+    const data = await res.json();
+
+    document.getElementById("orders").innerText = data.orders.length;
+
+    const pending = data.orders.filter(o=>o.status==="Processing");
+    document.getElementById("pending").innerText = pending.length;
+
+    document.getElementById("recent").innerHTML =
+        data.orders.slice(0,4).map(o=>`<div class="product">${o.productName}</div>`).join("");
+
+    const p = await fetch('/api/products');
+    const prod = await p.json();
+
+    document.getElementById("recommend").innerHTML =
+        prod.products.slice(0,6).map(x=>`<div class="product">${x.name}<br>₹${x.price}</div>`).join("");
+}
+
+load();
+</script>
+
+</body>
+</html>
