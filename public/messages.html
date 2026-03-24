@@ -1,0 +1,104 @@
+<div style="display:flex;height:100vh">
+
+  <!-- LEFT SIDE (USER LIST) -->
+  <div style="width:30%;border-right:1px solid #ddd;">
+    <h3>Chats</h3>
+    <div id="userList"></div>
+  </div>
+
+  <!-- RIGHT SIDE (CHAT BOX) -->
+  <div style="flex:1;padding:10px;">
+    <h3 id="chatTitle">Select a user</h3>
+    <div id="chatBox" style="height:70vh;overflow-y:auto;border:1px solid #ddd;"></div>
+
+    <input id="msgInput" placeholder="Type message">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<script>
+const socket = io("http://localhost:5010");
+
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
+
+let currentUser = null;
+
+// REGISTER
+socket.emit("register", user._id);
+
+// LOAD CONVERSATIONS
+async function loadUsers() {
+  const res = await fetch("/api/conversations", {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  document.getElementById("userList").innerHTML =
+    data.users.map(u => `
+      <div onclick="openChat('${u._id}','${u.name}')"
+           style="padding:10px;border-bottom:1px solid #ddd;cursor:pointer;">
+        ${u.name}
+      </div>
+    `).join("");
+}
+
+// OPEN CHAT
+async function openChat(id, name) {
+  currentUser = id;
+  document.getElementById("chatTitle").innerText = name;
+
+  const res = await fetch(`/api/messages/${id}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  const box = document.getElementById("chatBox");
+  box.innerHTML = "";
+
+  data.messages.forEach(m => addMessage(m));
+}
+
+// DISPLAY MSG
+function addMessage(m) {
+  const div = document.createElement("div");
+  div.style.margin = "5px";
+
+  if (m.senderId === user._id) {
+    div.style.textAlign = "right";
+    div.innerText = m.message;
+  } else {
+    div.style.textAlign = "left";
+    div.innerText = m.message;
+  }
+
+  document.getElementById("chatBox").appendChild(div);
+}
+
+// SEND
+function sendMessage() {
+  const text = document.getElementById("msgInput").value;
+
+  socket.emit("send_message", {
+    senderId: user._id,
+    receiverId: currentUser,
+    message: text
+  });
+
+  document.getElementById("msgInput").value = "";
+}
+
+// RECEIVE
+socket.on("receive_message", (data) => {
+  if (data.senderId === currentUser || data.receiverId === currentUser) {
+    addMessage(data);
+  }
+});
+
+loadUsers();
+</script>

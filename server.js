@@ -8,6 +8,9 @@ require('dotenv').config();
 
 const app = express();
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 // ================= CONSTANTS =================
 const SALT_ROUNDS = 10;
 const DEFAULT_PORT = 5010;
@@ -28,8 +31,10 @@ const razorpay = new Razorpay({
 });
 
 // ================= MIDDLEWARE =================
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ================= AUTH MIDDLEWARE =================
@@ -58,8 +63,29 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   role: { type: String, enum: ['admin', 'wholesaler', 'retailer'] },
+  // Profile Details
+  mobileNumber: String,
+  photoUrl: String,
+  dob: String,
+  gender: String,
+  // Business Details
   businessName: String,
+  businessType: String,
+  industry: String,
   gstNumber: String,
+  yearOfEstablishment: String,
+  websiteUrl: String,
+  businessDescription: String,
+  // Address Details
+  houseNo: String,
+  street: String,
+  block: String,
+  district: String,
+  city: String,
+  state: String,
+  pincode: String,
+  country: { type: String, default: 'India' },
+  // Legacy fields
   shopName: String,
   shopAddress: String
 }, { timestamps: true });
@@ -81,9 +107,13 @@ const User = mongoose.model('User', userSchema);
 // Product
 const productSchema = new mongoose.Schema({
   name: String,
-  price: Number,
+  pricePerUnit: Number,
+  unit: String,
   category: String,
   image: String,
+  description: String,
+  stock: Number,
+  moq: Number,
   wholesalerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
@@ -106,6 +136,16 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Order = mongoose.model('Order', orderSchema);
+
+//Message
+const messageSchema = new mongoose.Schema({
+  senderId: String,
+  receiverId: String,
+  productName: String,
+  message: String
+}, { timestamps: true });
+
+const Message = mongoose.model('Message', messageSchema);
 
 // ================= ROUTES =================
 const router = express.Router();
@@ -252,6 +292,66 @@ router.get('/products/my', authMiddleware, async (req, res) => {
 });
 
 
+const ALLOWED_PROFILE_FIELDS = [
+  'name', 'mobileNumber', 'photoUrl', 'dob', 'gender',
+  'businessName', 'businessType', 'industry', 'gstNumber',
+  'yearOfEstablishment', 'websiteUrl', 'businessDescription',
+  'houseNo', 'street', 'block', 'district', 'city',
+  'state', 'pincode', 'country', 'shopName', 'shopAddress'
+];
+
+router.post("/update-profile", authMiddleware, async (req, res) => {
+  try {
+    const safeUpdate = {};
+
+    for (const field of ALLOWED_PROFILE_FIELDS) {
+      if (req.body[field] !== undefined) {
+        safeUpdate[field] = req.body[field];
+      }
+    }
+
+    // 🔥 TRIM DATA
+    for (const field in safeUpdate) {
+      if (typeof safeUpdate[field] === "string") {
+        safeUpdate[field] = safeUpdate[field].trim();
+      }
+    }
+
+    // 🔐 GST VALIDATION
+    if (safeUpdate.gstNumber) {
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstRegex.test(safeUpdate.gstNumber)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid GST Number"
+        });
+      }
+    }
+
+    // 📱 MOBILE VALIDATION
+    if (safeUpdate.mobileNumber) {
+      if (!/^[0-9]{10}$/.test(safeUpdate.mobileNumber)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid mobile number"
+        });
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      safeUpdate,
+      { new: true, runValidators: true }
+    );
+
+    res.json({ success: true, user: updatedUser });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Profile update failed" });
+  }
+});
+
+
 // ---------- PRODUCTS ----------
 router.post('/products', authMiddleware, async (req, res) => {
   if (req.user.role !== 'wholesaler') {
@@ -319,6 +419,71 @@ router.get('/orders', authMiddleware, async (req, res) => {
   res.json({ success: true, orders });
 });
 
+// ---------- MESSAGES ----------
+
+// Save message
+router.post('/messages', authMiddleware, async (req, res) => {
+  try {
+    const msg = new Message(req.body);
+    await msg.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to save message" });
+  }
+});
+
+// Get chat messages between users
+router.get('/messages/:userId', authMiddleware, async (req, res) => {
+  try {
+    const messages = await Message.find({
+      $or: [
+        { senderId: req.user.id, receiverId: req.params.userId },
+        { senderId: req.params.userId, receiverId: req.user.id }
+      ]
+    }).sort({ createdAt: 1 });
+
+    res.json({ success: true, messages });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to fetch messages" });
+  }
+});
+
+// Get all conversations (like WhatsApp list)
+router.get("/conversations", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const messages = await Message.find({
+      $or: [
+        { senderId: userId },
+        { receiverId: userId }
+      ]
+    }).sort({ createdAt: -1 });
+
+    const userIds = new Set();
+
+    messages.forEach(msg => {
+      if (msg.senderId !== userId) userIds.add(msg.senderId);
+      if (msg.receiverId !== userId) userIds.add(msg.receiverId);
+    });
+
+    const users = await User.find(
+      { _id: { $in: Array.from(userIds) } },
+      { name: 1, role: 1 }
+    );
+
+    res.json({ success: true, users });
+
+  } catch (err) {
+  console.error("PROFILE UPDATE ERROR:", err);
+  res.status(500).json({
+    success: false,
+    message: err.message
+  });
+}
+});
+
+
 // ---------- RAZORPAY ----------
 app.post('/api/create-order', async (req, res) => {
   const order = await razorpay.orders.create({
@@ -347,4 +512,55 @@ app.get('/login', (req, res) => {
 
 // ================= START =================
 const PORT = process.env.PORT || DEFAULT_PORT;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
+let users = {};
+
+// SOCKET CONNECTION
+
+io.on("connection", (socket) => {
+
+  socket.on("register", (userId) => {
+    users[userId] = socket.id;
+  });
+
+  socket.on("send_message", async (data) => {
+    const { senderId, receiverId, message, productName } = data;
+
+    // Save message in DB
+    const newMsg = new Message({
+      senderId,
+      receiverId,
+      message,
+      productName
+    });
+
+    await newMsg.save();
+
+    // Send to receiver
+    if (users[receiverId]) {
+      io.to(users[receiverId]).emit("receive_message", newMsg);
+    }
+
+    // Send back to sender (sync UI)
+    socket.emit("receive_message", newMsg);
+  });
+
+  socket.on("disconnect", () => {
+    for (let id in users) {
+      if (users[id] === socket.id) {
+        delete users[id];
+      }
+    }
+  });
+
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

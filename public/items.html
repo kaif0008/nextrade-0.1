@@ -456,17 +456,33 @@
 
           <li><a href="dashboard.html" id="dashboardBtn" style="display:none;">Dashboard</a></li>
 
-          <li>
+          <!-- <li>
             <div class="cart-icon" onclick="toggleCart()">
               <i class="fas fa-shopping-cart"></i>
               <span class="cart-count">0</span>
             </div>
-          </li>
+          </li> -->
         </ul>
       </nav>
 
     </div>
   </header>
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem;">
+
+  <!-- CATEGORY FILTER -->
+  <select id="categoryFilter" style="padding:10px;border-radius:6px;">
+    <option value="">All Categories</option>
+  </select>
+
+  <!-- SORT -->
+  <select id="sortPrice" style="padding:10px;border-radius:6px;">
+    <option value="">Sort by Price</option>
+    <option value="low">Low to High</option>
+    <option value="high">High to Low</option>
+  </select>
+
+</div>
 
   <!-- Main Content -->
   <main class="container">
@@ -477,19 +493,6 @@
 
     <div class="products-grid" id="products-container"></div>
   </main>
-
-  <!-- Cart Sidebar -->
-  <div class="cart-sidebar">
-    <div class="cart-header">
-      <h2>Your Cart</h2>
-      <button class="close-cart" onclick="toggleCart()">&times;</button>
-    </div>
-    <div class="cart-items" id="cart-items"></div>
-    <div class="cart-total">
-      <h3>Total: <span id="cart-total">₹0.00</span></h3>
-      <a href="cart.html" class="checkout-btn">Proceed to Checkout</a>
-    </div>
-  </div>
 
   <!-- Footer -->
   <footer>
@@ -551,45 +554,47 @@
   </footer>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const wholesalerId = params.get("id");
+const params = new URLSearchParams(window.location.search);
+const wholesalerId = params.get("id");
 
-    if (!wholesalerId) {
-      alert("Invalid wholesaler");
-      location.href = "wholesalers.html";
-    }
+if (!wholesalerId) {
+  alert("Invalid wholesaler");
+  location.href = "wholesalers.html";
+}
 
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let allProducts = [];
 
-    async function loadProducts() {
-      try {
-        const res = await fetch(`/api/products/wholesaler/${wholesalerId}`);
-        const data = await res.json();
+async function loadProducts() {
+  try {
+    const res = await fetch(`/api/products/wholesaler/${wholesalerId}`);
+    const data = await res.json();
 
-        if (!data.success) {
-          throw new Error("Failed to load products");
-        }
+    if (!data.success) throw new Error("Failed to load");
 
-        renderProducts(data.products);
-      } catch (err) {
-        console.error(err);
-        document.getElementById("products-container").innerHTML =
-          "<p>No products found.</p>";
-      }
-    }
+    allProducts = data.products;
 
-    function renderProducts(products) {
-      const container = document.getElementById("products-container");
+    setupFilters(allProducts);
+    renderProducts(allProducts);
 
-      if (products.length === 0) {
-        container.innerHTML = "<p>No products available.</p>";
-        return;
-      }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("products-container").innerHTML =
+      "<p>No products found.</p>";
+  }
+}
 
-      container.innerHTML = products.map(product => `
+// ================= RENDER =================
+function renderProducts(products) {
+  const container = document.getElementById("products-container");
+
+  if (!products.length) {
+    container.innerHTML = "<p>No products available.</p>";
+    return;
+  }
+
+  container.innerHTML = products.map(product => `
     <div class="product-card">
-      <img src="${product.image || 'images/default-product.jpg'}"
-           class="product-image">
+      <img src="${product.image || 'https://source.unsplash.com/300x200?product'}" class="product-image">
 
       <div class="product-info">
         <span class="product-category">
@@ -597,52 +602,83 @@
         </span>
 
         <h3 class="product-title">${product.name}</h3>
-        <p class="product-price">₹${product.price}</p>
 
-        <button class="btn btn-primary add-to-cart"
-          data-id="${product._id}"
-          data-name="${product.name}"
-          data-price="${product.price}"
-          data-image="${product.image}">
-          <i class="fas fa-cart-plus"></i> Add to Cart
-        </button>
+        <p class="product-price">
+          ₹${product.pricePerUnit || product.price} / ${product.unit || 'unit'}
+        </p>
+
+        <p style="font-size:0.9rem;color:#666;">
+          Stock: ${product.stock || 0}
+        </p>
+        
+        <!-- ✅ MOQ -->
+        <p style="font-size:0.9rem;color:#555;">
+          <i class="fas fa-box"></i> MOQ: ${product.moq || 1}
+        </p>
+
+        <!-- ✅ DESCRIPTION -->
+        <p style="font-size:0.9rem;color:#777;margin-top:5px;">
+          ${product.description ? product.description.substring(0, 80) + "..." : "No description available"}
+        </p>
+
+        
+
+        <!-- INQUIRY -->
+        <a href="messages.html?user=${product.wholesalerId}&product=${encodeURIComponent(product.name)}"
+          class="btn btn-primary">
+          Send Inquiry
+        </a>
+
+        <!-- WHATSAPP -->
+        <a href="https://wa.me/?text=I'm interested in ${encodeURIComponent(product.name)}"
+           target="_blank"
+           class="btn btn-secondary">
+          <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+        </a>
       </div>
     </div>
   `).join("");
-    }
+}
 
-    /* CART */
-    document.addEventListener("click", e => {
-      const btn = e.target.closest(".add-to-cart");
-      if (!btn) return;
+// ================= FILTER =================
+function setupFilters(products) {
+  const categoryFilter = document.getElementById("categoryFilter");
 
-      const product = {
-        id: btn.dataset.id,
-        name: btn.dataset.name,
-        price: Number(btn.dataset.price),
-        image: btn.dataset.image,
-        quantity: 1
-      };
+  const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
-      const existing = cart.find(p => p.id === product.id);
-      if (existing) {
-        existing.quantity++;
-      } else {
-        cart.push(product);
-      }
+  categoryFilter.innerHTML = `
+    <option value="">All Categories</option>
+    ${categories.map(c => `<option value="${c}">${c}</option>`).join("")}
+  `;
+}
 
-      localStorage.setItem("cart", JSON.stringify(cart));
-      updateCartCount();
-    });
+// ================= FILTER + SORT =================
+document.getElementById("categoryFilter").addEventListener("change", applyFilters);
+document.getElementById("sortPrice").addEventListener("change", applyFilters);
 
-    function updateCartCount() {
-      const count = cart.reduce((s, i) => s + i.quantity, 0);
-      document.querySelector(".cart-count").textContent = count;
-    }
+function applyFilters() {
+  let filtered = [...allProducts];
 
-    loadProducts();
-    updateCartCount();
-  </script>
+  const category = document.getElementById("categoryFilter").value;
+  const sort = document.getElementById("sortPrice").value;
+
+  if (category) {
+    filtered = filtered.filter(p => p.category === category);
+  }
+
+  if (sort === "low") {
+    filtered.sort((a, b) => (a.pricePerUnit || 0) - (b.pricePerUnit || 0));
+  }
+
+  if (sort === "high") {
+    filtered.sort((a, b) => (b.pricePerUnit || 0) - (a.pricePerUnit || 0));
+  }
+
+  renderProducts(filtered);
+}
+
+loadProducts();
+</script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const user = JSON.parse(localStorage.getItem("user"));

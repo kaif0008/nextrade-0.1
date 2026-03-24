@@ -85,9 +85,9 @@ body { margin:0; font-family:Poppins; display:flex; }
 <div class="sidebar">
     <h2>NexTrade</h2>
     <button onclick="go('browse')"><i class="fas fa-search"></i> Browse</button>
-    <button onclick="go('cart')"><i class="fas fa-shopping-cart"></i> Cart</button>
-    <button onclick="go('orders')"><i class="fas fa-box"></i> Orders</button>
+    <!-- <button onclick="go('orders')"><i class="fas fa-box"></i> Orders</button> -->
     <button onclick="go('profile')"><i class="fas fa-user"></i> Profile</button>
+    <button onclick="location.href='messages.html'">💬Messages</button>
     <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </div>
 
@@ -101,7 +101,6 @@ body { margin:0; font-family:Poppins; display:flex; }
 <!-- STATS -->
 <div class="cards">
     <div class="card">Orders: <span id="orders">0</span></div>
-    <div class="card">Cart Items: <span id="cart">0</span></div>
     <div class="card">Pending: <span id="pending">0</span></div>
 </div>
 
@@ -129,7 +128,7 @@ if(user.role !== "retailer") location.href="dashboard.html";
 document.getElementById("welcome").innerText = "Welcome, " + user.name;
 
 function go(page){
-    if(page==="browse") location.href="items.html";
+    if(page==="browse") location.href="wholesalers.html";
     if(page==="cart") location.href="cart.html";
     if(page==="orders") location.href="orders.html";
     if(page==="profile") location.href="profile.html";

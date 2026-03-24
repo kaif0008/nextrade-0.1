@@ -1,512 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Management - Nextrade</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #f72585;
-            --success: #4cc9f0;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --border: #dee2e6;
-            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Management</title>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-        body {
-            min-height: 100vh;
-            background-color: var(--light);
-            color: var(--dark);
-            line-height: 1.6;
-            padding: 2rem;
-        }
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f4f6fb;
+    padding: 20px;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid rgba(0, 0, 0, 0.03);
-        }
+.container {
+    max-width: 1100px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+}
 
-        h1 {
-            color: var(--dark);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            font-size: 2rem;
-            position: relative;
-        }
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 15px;
+}
 
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 2px;
-        }
+input, select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
 
-        h1 i {
-            color: var(--primary);
-        }
+button {
+    padding: 12px;
+    background: #4361ee;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
 
-        .search-bar {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
+.product-list {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+    gap: 15px;
+}
 
-        .search-bar i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray);
-        }
+.card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
 
-        #searchInput {
-            width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        #searchInput:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(67, 97, 238, 0.2);
-        }
-
-        .form-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .input-field {
-            position: relative;
-        }
-
-        .input-field i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--gray);
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(67, 97, 238, 0.2);
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
-        }
-
-        .product-list {
-            margin-top: 2rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .product-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--card-shadow);
-            transition: all 0.3s;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gray);
-            overflow: hidden;
-        }
-
-        .product-card h3 {
-            color: var(--dark);
-            margin-bottom: 0.5rem;
-            font-size: 1.25rem;
-        }
-
-        .product-card p {
-            color: var(--gray);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .product-price {
-            font-weight: bold;
-            color: var(--success);
-        }
-
-        .product-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .product-actions button {
-            padding: 0.75rem;
-            font-size: 0.9rem;
-            flex: 1;
-        }
-
-        .edit-btn {
-            background: var(--success);
-        }
-
-        .edit-btn:hover {
-            background: #3ab7d8;
-        }
-
-        .delete-btn {
-            background: var(--secondary);
-        }
-
-        .delete-btn:hover {
-            background: #e51773;
-        }
-
-        .notification {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--success);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            transition: top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            z-index: 1000;
-        }
-
-        .notification.show {
-            top: 30px;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
-            .container {
-                padding: 1.5rem;
-            }
-
-            .form-group {
-                grid-template-columns: 1fr;
-            }
-
-            .product-list {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+.card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+</style>
 </head>
 
 <body>
-    <div class="container">
-        <h1><i class="fas fa-boxes"></i> Product Management</h1>
 
-        <!-- Search Bar -->
-        <div class="search-bar">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search products...">
-        </div>
+<div class="container">
 
-        <div class="form-group">
-            <div class="input-field">
-                <i class="fas fa-tag"></i>
-                <input type="text" id="productName" placeholder="Product Name" required>
+<h2 id="formTitle">Add Product</h2>
+
+<div class="form-grid">
+<input type="text" id="name" placeholder="Product Name">
+<input type="number" id="price" placeholder="Price per unit">
+
+<select id="unit">
+    <option value="piece">Per Piece</option>
+    <option value="kg">Per Kg</option>
+    <option value="gram">Per Gram</option>
+    <option value="liter">Per Liter</option>
+    <option value="ml">Per ML</option>
+    <option value="dozen">Per Dozen</option>
+    <option value="box">Per Box</option>
+    <option value="packet">Per Packet</option>
+    <option value="set">Per Set</option>
+    <option value="meter">Per Meter</option>
+</select>
+
+<input type="number" id="stock" placeholder="Stock">
+<input type="number" id="moq" placeholder="MOQ">
+<input type="text" id="category" placeholder="Category">
+<input type="text" id="image" placeholder="Image URL">
+<input type="text" id="description" placeholder="Description">
+
+<button onclick="saveProduct()">Save Product</button>
+</div>
+
+<div class="product-list" id="productList"></div>
+
+</div>
+
+<script>
+const LOW_STOCK_LIMIT = 10;
+let editingId = null;
+
+// 🔐 AUTH CHECK
+const token = localStorage.getItem("token");
+if (!token) {
+    alert("Please login first");
+    window.location.href = "login.html";
+}
+
+// ================= LOAD PRODUCTS =================
+async function loadProducts() {
+    try {
+        const res = await fetch('/api/products');
+
+        if (!res.ok) throw new Error("Failed to fetch products");
+
+        const data = await res.json();
+
+        const list = document.getElementById("productList");
+        list.innerHTML = "";
+
+        if (!data.products || data.products.length === 0) {
+            list.innerHTML = "<p>No products found</p>";
+            return;
+        }
+
+        data.products.forEach(p => {
+            const stock = p.stock || 0;
+
+            list.innerHTML += `
+            <div class="card" style="border:${stock <= LOW_STOCK_LIMIT ? '2px solid red' : 'none'};">
+                <img src="${p.image || 'https://source.unsplash.com/300x200?product'}">
+
+                <h3>${p.name}</h3>
+
+                <p><strong>₹${p.pricePerUnit}</strong> / ${p.unit}</p>
+
+                <p style="color:${stock <= LOW_STOCK_LIMIT ? 'red' : 'black'};">
+                    Stock: ${stock}
+                    ${stock <= LOW_STOCK_LIMIT ? '⚠️ Low Stock' : ''}
+                </p>
+
+                <p>MOQ: ${p.moq || 1}</p>
+
+                <p>${p.description || ""}</p>
+
+                <button onclick="editProduct('${p._id}')">Edit</button>
+                <button onclick="deleteProduct('${p._id}')">Delete</button>
             </div>
+            `;
+        });
 
-            <div class="input-field">
-                <i class="fas fa-rupee-sign"></i>
-                <input type="number" id="productPrice" placeholder="Price in ₹" required>
-            </div>
+    } catch (error) {
+        console.error(error);
+        document.getElementById("productList").innerHTML = "Error loading products";
+    }
+}
 
-            <div class="input-field">
-                <i class="fas fa-list"></i>
-                <select id="productCategory" required>
-                    <option value="">Select Category</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Clothing">Clothing</option>
-                    <option value="Groceries">Groceries</option>
-                    <option value="Home Appliances">Home Appliances</option>
-                    <option value="Furniture">Furniture</option>
-                    <option value="Books">Books</option>
-                    <option value="Toys">Toys</option>
-                    <option value="Beauty">Beauty Products</option>
-                    <option value="Sports">Sports Equipment</option>
-                    <option value="Jewelry">Jewelry</option>
-                    <option value="Automotive">Automotive</option>
-                    <option value="Health">Health & Wellness</option>
-                    <option value="Office">Office Supplies</option>
-                    <option value="Pet Supplies">Pet Supplies</option>
-                    <option value="Baby Care">Baby Care</option>
-                    <option value="Fashion">Fashion Accessories</option>
-                    <option value="Kitchenware">Kitchenware</option>
-                    <option value="Gardening">Gardening Tools</option>
-                    <option value="Stationery">Stationery</option>
-                    <option value="Footwear">Footwear</option>
-                </select>
-            </div>
+// ================= SAVE PRODUCT =================
+async function saveProduct() {
 
-            <div class="input-field">
-                <i class="fas fa-image"></i>
-                <input type="text" id="productImage" placeholder="Image URL (optional)">
-            </div>
+    const product = {
+        name: document.getElementById("name").value,
+        pricePerUnit: Number(document.getElementById("price").value),
+        unit: document.getElementById("unit").value,
+        stock: Number(document.getElementById("stock").value),
+        moq: Number(document.getElementById("moq").value),
+        category: document.getElementById("category").value,
+        image: document.getElementById("image").value,
+        description: document.getElementById("description").value
+    };
 
-            <button id="addProductBtn"><i class="fas fa-plus"></i> Add Product</button>
-        </div>
+    try {
+        let url = '/api/products';
+        let method = 'POST';
 
-        <h2>Product List</h2>
-        <div class="product-list" id="productList">
-            <!-- Products will be loaded dynamically -->
-        </div>
-    </div>
+        if (editingId) {
+            url = `/api/products/${editingId}`;
+            method = 'PUT';
+        }
 
-    <div class="notification" id="notification">
-        <i class="fas fa-check-circle"></i>
-        Product added successfully!
-    </div>
+        const res = await fetch(url, {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(product)
+        });
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        const data = await res.json();
 
-            const token = localStorage.getItem("token");
-            if (!token) {
-                alert("Please login again");
-                window.location.href = "login.html";
-                return;
-            }
+        if (!data.success) {
+            alert(data.message || "Error saving product");
+            return;
+        }
 
-            const addProductBtn = document.getElementById('addProductBtn');
-            const productList = document.getElementById('productList');
-            const notification = document.getElementById('notification');
-            const searchInput = document.getElementById('searchInput');
+        resetForm();
+        loadProducts();
 
-            let editingProductId = null;
-            let currentProducts = [];
+    } catch (error) {
+        console.error(error);
+        alert("Something went wrong");
+    }
+}
 
-            loadProducts();
+// ================= EDIT =================
+async function editProduct(id) {
+    try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
 
-            searchInput.addEventListener('input', () => {
-                const value = searchInput.value.toLowerCase();
-                displayProducts(currentProducts.filter(p =>
-                    p.name.toLowerCase().includes(value)
-                ));
-            });
+        const p = data.products.find(x => x._id === id);
 
-            addProductBtn.addEventListener('click', async () => {
-                const name = productName.value.trim();
-                const price = productPrice.value.trim();
-                const category = productCategory.value;
-                const image = productImage.value.trim();
+        document.getElementById("name").value = p.name;
+        document.getElementById("price").value = p.pricePerUnit;
+        document.getElementById("unit").value = p.unit;
+        document.getElementById("stock").value = p.stock;
+        document.getElementById("moq").value = p.moq;
+        document.getElementById("category").value = p.category;
+        document.getElementById("image").value = p.image;
+        document.getElementById("description").value = p.description;
 
-                if (!name || !price || !category) {
-                    alert("Fill all required fields");
-                    return;
-                }
+        editingId = id;
+        document.getElementById("formTitle").innerText = "✏️ Edit Product";
 
-                const url = editingProductId
-                    ? `/api/products/${editingProductId}`
-                    : `/api/products`;
+    } catch (error) {
+        console.error(error);
+    }
+}
 
-                const method = editingProductId ? "PUT" : "POST";
+// ================= DELETE =================
+async function deleteProduct(id) {
+    if (!confirm("Delete this product?")) return;
 
-                try {
-                    const res = await fetch(url, {
-                        method,
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ name, price, category, image })
-                    });
-
-                    const data = await res.json();
-                    if (!data.success) throw new Error();
-
-                    resetForm();
-                    editingProductId = null;
-                    loadProducts();
-                    showNotification(editingProductId ? "Product updated" : "Product added");
-
-                } catch {
-                    alert("Operation failed");
-                }
-            });
-
-            async function loadProducts() {
-                try {
-                    const res = await fetch('/api/products/my', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-
-                    const data = await res.json();
-                    if (!data.success) throw new Error();
-
-                    currentProducts = data.products;
-                    displayProducts(currentProducts);
-
-                } catch {
-                    productList.innerHTML = "<p>No products found</p>";
-                }
-            }
-
-            function displayProducts(products) {
-                productList.innerHTML = "";
-
-                if (products.length === 0) {
-                    productList.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#6c757d;">No products found</p>`;
-                    return;
-                }
-
-                products.forEach(p => {
-                    productList.innerHTML += `
-        <div class="product-card">
-          <div class="product-image">
-            ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : `<i class="fas fa-image"></i>`}
-          </div>
-          <h3>${p.name}</h3>
-          <p><span class="product-price">₹${p.price}</span></p>
-          <p><i class="fas fa-tag"></i> ${p.category}</p>
-          <div class="product-actions">
-            <button class="edit-btn" onclick="editProduct('${p._id}')"><i class="fas fa-edit"></i> Edit</button>
-            <button class="delete-btn" onclick="deleteProduct('${p._id}')"><i class="fas fa-trash"></i> Delete</button>
-          </div>
-        </div>
-      `;
-                });
-            }
-
-            window.editProduct = function (id) {
-                const product = currentProducts.find(p => p._id === id);
-                if (!product) return;
-
-                editingProductId = id;
-                productName.value = product.name;
-                productPrice.value = product.price;
-                productCategory.value = product.category;
-                productImage.value = product.image || "";
-
-                showNotification("Editing product");
-            };
-
-            window.deleteProduct = async function (id) {
-                if (!confirm("Delete this product?")) return;
-
-                try {
-                    const res = await fetch(`/api/products/${id}`, {
-                        method: "DELETE",
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-
-                    const data = await res.json();
-                    if (!data.success) throw new Error();
-
-                    loadProducts();
-                    showNotification("Product deleted");
-
-                } catch {
-                    alert("Delete failed");
-                }
-            };
-
-            function resetForm() {
-                productName.value = "";
-                productPrice.value = "";
-                productCategory.value = "";
-                productImage.value = "";
-            }
-
-            function showNotification(msg) {
-                notification.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
-                notification.classList.add("show");
-                setTimeout(() => notification.classList.remove("show"), 3000);
+    try {
+        await fetch(`/api/products/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
             }
         });
-    </script>
+
+        loadProducts();
+
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// ================= RESET =================
+function resetForm() {
+    document.querySelectorAll("input").forEach(i => i.value = "");
+    editingId = null;
+    document.getElementById("formTitle").innerText = "Add Product";
+}
+
+// ================= INIT =================
+loadProducts();
+</script>
 
 </body>
-
 </html>

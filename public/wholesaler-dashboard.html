@@ -66,8 +66,9 @@ body { margin:0; font-family:Poppins; display:flex; }
 <div class="sidebar">
     <h2>NexTrade</h2>
     <button onclick="go('products')"><i class="fas fa-box"></i> Products</button>
-    <button onclick="go('orders')"><i class="fas fa-truck"></i> Orders</button>
+    <!-- <button onclick="go('orders')"><i class="fas fa-truck"></i> Orders</button> -->
     <button onclick="go('profile')"><i class="fas fa-user"></i> Profile</button>
+    <button onclick="location.href='messages.html'">💬Messages</button>
     <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </div>
 
@@ -81,8 +82,8 @@ body { margin:0; font-family:Poppins; display:flex; }
 <!-- STATS -->
 <div class="cards">
     <div class="card">Products: <span id="products">0</span></div>
-    <div class="card">Orders: <span id="orders">0</span></div>
-    <div class="card">Revenue: ₹<span id="revenue">0</span></div>
+    <!-- <div class="card">Orders: <span id="orders">0</span></div>
+    <div class="card">Revenue: ₹<span id="revenue">0</span></div> -->
 </div>
 
 <!-- ANALYTICS -->
