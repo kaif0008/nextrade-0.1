@@ -1,169 +1,847 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Retailer Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>NexTrade | Retailer Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-hover: #3f37c9;
+            --bg-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 25px rgba(67, 97, 238, 0.15);
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --danger: #ef233c;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-<style>
-body { margin:0; font-family:Poppins; display:flex; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-/* SIDEBAR */
-.sidebar {
-    width:220px;
-    background:#4361ee;
-    color:white;
-    height:100vh;
-    padding:20px;
-}
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            transition: var(--transition);
+        }
 
-.sidebar h2 { text-align:center; }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
 
-.sidebar button {
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border:none;
-    background:none;
-    color:white;
-    text-align:left;
-    cursor:pointer;
-}
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
 
-.sidebar button:hover {
-    background:rgba(255,255,255,0.2);
-}
+        .logo i {
+            color: var(--primary-light);
+        }
 
-/* MAIN */
-.main { flex:1; background:#f4f6fb; }
+        .toggle-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
 
-/* TOPBAR */
-.topbar {
-    background:white;
-    padding:15px;
-    display:flex;
-    justify-content:space-between;
-}
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
 
-/* CARDS */
-.cards {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:20px;
-    padding:20px;
-}
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 15px;
+        }
 
-.card {
-    background:white;
-    padding:20px;
-    border-radius:10px;
-}
+        .nav-link i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
 
-/* SECTION */
-.section { padding:20px; }
+        .nav-link:hover {
+            background: rgba(67, 97, 238, 0.05);
+            color: var(--primary);
+        }
 
-.products {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-    gap:15px;
-}
+        .nav-link.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
 
-.product {
-    background:white;
-    padding:15px;
-    border-radius:10px;
-    text-align:center;
-}
-</style>
+        .nav-link.active i {
+            color: white;
+        }
+
+        .message-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            color: var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 35, 60, 0.05);
+            color: var(--danger);
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 30px;
+            transition: var(--transition);
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: transparent;
+        }
+
+        .welcome-text h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .welcome-text p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .user-profile-top {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-profile-top:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-info-top {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name-top {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-role-top {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .icon-blue {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .icon-green {
+            background: rgba(43, 193, 85, 0.1);
+            color: #2bc155;
+        }
+
+        .icon-purple {
+            background: rgba(114, 9, 183, 0.1);
+            color: #7209b7;
+        }
+
+        .stat-details h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-details p {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Quick Actions Container */
+        .card-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .action-btn i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+            transform: translateY(-3px);
+        }
+
+        .action-btn:hover i {
+            color: white;
+        }
+
+        /* Messages Preview */
+        .chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            background: var(--bg-color);
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .chat-item:hover {
+            background: rgba(67, 97, 238, 0.05);
+            transform: translateX(5px);
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .chat-content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .chat-name {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .chat-msg {
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .view-all-link {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Profile Summary */
+        .profile-summary {
+            text-align: center;
+        }
+
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .profile-role {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .edit-profile-btn {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .edit-profile-btn:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .skeleton-text.short {
+            width: 60%;
+        }
+
+        .skeleton-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        /* Mobile Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 90;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .toggle-btn {
+                display: block;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-    <h2>NexTrade</h2>
-    <button onclick="go('browse')"><i class="fas fa-search"></i> Browse</button>
-    <!-- <button onclick="go('orders')"><i class="fas fa-box"></i> Orders</button> -->
-    <button onclick="go('profile')"><i class="fas fa-user"></i> Profile</button>
-    <button onclick="location.href='messages.html'">💬Messages</button>
-    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-</div>
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<div class="main">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="retailer-dashboard.html" class="logo">
+                <i class="fas fa-chart-line"></i> NexTrade
+            </a>
+            <button class="toggle-btn" id="closeSidebar"><i class="fas fa-times"></i></button>
+        </div>
 
-<div class="topbar">
-    <div id="welcome"></div>
-    <div>Retailer</div>
-</div>
+        <nav class="nav-links">
+            <button class="nav-link active" onclick="go('dashboard')">
+                <i class="fas fa-home"></i> Dashboard
+            </button>
+            <button class="nav-link" onclick="go('browse')">
+                <i class="fas fa-box"></i> Wholesalers
+            </button>
+            <button class="nav-link" onclick="go('messages')">
+                <i class="fas fa-comment-dots"></i> Messages
+                <span class="message-badge" id="msgBadge">2</span>
+            </button>
+            <button class="nav-link" onclick="go('profile')">
+                <i class="fas fa-user"></i> Profile
+            </button>
 
-<!-- STATS -->
-<div class="cards">
-    <div class="card">Orders: <span id="orders">0</span></div>
-    <div class="card">Pending: <span id="pending">0</span></div>
-</div>
+            <button class="nav-link logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </nav>
+    </aside>
 
-<!-- AI RECOMMENDATION -->
-<div class="section">
-    <h3>Recommended 🤖</h3>
-    <div class="products" id="recommend"></div>
-</div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="welcome-text">
+                <button class="toggle-btn" id="openSidebar"
+                    style="margin-right: 15px; display: inline-block; vertical-align: middle;">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div style="display: inline-block; vertical-align: middle;">
+                    <h1 id="welcomeTitle">
+                        <div class="skeleton skeleton-text" style="width: 200px; height: 28px;"></div>
+                    </h1>
+                    <p>Here's what's happening with your business today.</p>
+                </div>
+            </div>
 
-<!-- ORDERS -->
-<div class="section">
-    <h3>Recent Orders</h3>
-    <div class="products" id="recent"></div>
-</div>
+            <div class="user-profile-top" onclick="go('profile')">
+                <div class="user-info-top" style="text-align: right;">
+                    <span class="user-name-top" id="topName">User</span>
+                    <span class="user-role-top">Retailer</span>
+                </div>
+                <div class="avatar" id="topAvatar">R</div>
+            </div>
+        </header>
 
-</div>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon icon-purple">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <div class="stat-details">
+                    <h3 id="statProducts">
+                        <div class="skeleton skeleton-text short" style="height: 30px;"></div>
+                    </h3>
+                    <p>Available Partners</p>
+                </div>
+            </div>
 
-<script>
-const user = JSON.parse(localStorage.getItem("user"));
-const token = localStorage.getItem("token");
+            <div class="stat-card">
+                <div class="stat-icon icon-green">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="stat-details">
+                    <h3 id="statMessages">
+                        <div class="skeleton skeleton-text short" style="height: 30px;"></div>
+                    </h3>
+                    <p>Messages Count</p>
+                </div>
+            </div>
+        </div>
 
-if(!user || !token) location.href="login.html";
-if(user.role !== "retailer") location.href="dashboard.html";
+        <!-- Two Column Layout -->
+        <div class="dashboard-grid">
 
-document.getElementById("welcome").innerText = "Welcome, " + user.name;
+            <!-- Left Column -->
+            <div class="left-col">
+                <!-- Quick Actions -->
+                <div class="card-container">
+                    <div class="card-header">
+                        <h2 class="card-title">Quick Actions</h2>
+                    </div>
+                    <div class="quick-actions">
+                        <a href="wholesalers.html" class="action-btn">
+                            <i class="fas fa-search"></i>
+                            Browse Partners
+                        </a>
+                        <a href="messages.html" class="action-btn">
+                            <i class="fas fa-tasks"></i>
+                            Manage Messages
+                        </a>
+                    </div>
+                </div>
 
-function go(page){
-    if(page==="browse") location.href="wholesalers.html";
-    if(page==="cart") location.href="cart.html";
-    if(page==="orders") location.href="orders.html";
-    if(page==="profile") location.href="profile.html";
-}
+                <!-- Messages Preview -->
+                <div class="card-container">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Messages</h2>
+                        <a href="messages.html" class="view-all-link">View All</a>
+                    </div>
 
-function logout(){
-    localStorage.clear();
-    location.href="login.html";
-}
+                    <div class="chat-list" id="recentChats">
+                        <!-- Skeleton Loaders -->
+                        <div class="chat-item">
+                            <div class="skeleton skeleton-circle"></div>
+                            <div class="chat-content">
+                                <div class="skeleton skeleton-text"></div>
+                                <div class="skeleton skeleton-text short"></div>
+                            </div>
+                        </div>
+                        <div class="chat-item">
+                            <div class="skeleton skeleton-circle"></div>
+                            <div class="chat-content">
+                                <div class="skeleton skeleton-text"></div>
+                                <div class="skeleton skeleton-text short"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-// LOAD DATA
-async function load(){
-    const cart = JSON.parse(localStorage.getItem("cart"))||[];
-    document.getElementById("cart").innerText = cart.length;
+            <!-- Right Column -->
+            <div class="right-col">
+                <!-- Profile Summary -->
+                <div class="card-container profile-summary">
+                    <div class="card-header" style="justify-content: center;">
+                        <h2 class="card-title">Profile Preview</h2>
+                    </div>
 
-    const res = await fetch('/api/orders',{headers:{Authorization:`Bearer ${token}`}});
-    const data = await res.json();
+                    <div class="profile-avatar-large" id="mainAvatar">R</div>
 
-    document.getElementById("orders").innerText = data.orders.length;
+                    <div class="profile-name">
+                        <span id="mainName">Loading...</span>
+                    </div>
+                    <div class="profile-role" id="profileRoleStr">🏪 Retailer</div>
 
-    const pending = data.orders.filter(o=>o.status==="Processing");
-    document.getElementById("pending").innerText = pending.length;
+                    <div>
+                        <a href="profile.html" class="edit-profile-btn">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
 
-    document.getElementById("recent").innerHTML =
-        data.orders.slice(0,4).map(o=>`<div class="product">${o.productName}</div>`).join("");
+        </div>
+    </main>
 
-    const p = await fetch('/api/products');
-    const prod = await p.json();
+    <script>
+        // Check Auth
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
 
-    document.getElementById("recommend").innerHTML =
-        prod.products.slice(0,6).map(x=>`<div class="product">${x.name}<br>₹${x.price}</div>`).join("");
-}
+        if (!user || !token) location.href = "login.html";
+        if (user.role !== "retailer") location.href = "dashboard.html";
 
-load();
-</script>
+        // UI Interactions
+        const sidebar = document.getElementById("sidebar");
+        const openBtn = document.getElementById("openSidebar");
+        const closeBtn = document.getElementById("closeSidebar");
+        const overlay = document.getElementById("sidebarOverlay");
 
+        function toggleSidebar() {
+            sidebar.classList.toggle("active");
+            overlay.classList.toggle("active");
+        }
+
+        openBtn.addEventListener("click", toggleSidebar);
+        closeBtn.addEventListener("click", toggleSidebar);
+        overlay.addEventListener("click", toggleSidebar);
+
+        function go(p) {
+            if (p === "dashboard") location.href = "retailer-dashboard.html";
+            if (p === "browse") location.href = "wholesalers.html";
+            if (p === "messages") location.href = "messages.html";
+            if (p === "profile") location.href = "profile.html";
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.href = "login.html";
+        }
+
+        // Populate User Info
+        document.getElementById("welcomeTitle").innerText = "Welcome back, " + user.name.split(" ")[0] + "!";
+        document.getElementById("topName").innerText = user.name;
+        document.getElementById("mainName").innerText = user.name;
+
+        const initial = user.name.charAt(0).toUpperCase();
+        document.getElementById("topAvatar").innerText = initial;
+        document.getElementById("mainAvatar").innerText = initial;
+
+        // Load Real Data
+        async function loadData() {
+            try {
+                // For Retailers, we display available wholesalers instead of products since they don't have products
+                const wRes = await fetch('/api/user/wholesalers');
+                let wData = { wholesalers: [] };
+                if (wRes.ok) {
+                    wData = await wRes.json();
+                }
+
+                document.getElementById("statProducts").innerText = wData.wholesalers ? wData.wholesalers.length : 0;
+
+                // Messages / Chats
+                const cRes = await fetch('/api/conversations', { headers: { Authorization: `Bearer ${token}` } });
+                const cData = await cRes.json();
+
+                const chatUsers = cData.users || [];
+                document.getElementById("statMessages").innerText = chatUsers.length;
+
+                // Populate recent chats
+                const chatContainer = document.getElementById("recentChats");
+                if (chatUsers.length === 0) {
+                    chatContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: #8d99ae;">No recent messages</div>`;
+                } else {
+                    let chatHTML = '';
+                    chatUsers.slice(0, 3).forEach(cu => {
+                        const chatInitial = cu.name.charAt(0).toUpperCase();
+                        const colors = ['#4361ee', '#2bc155', '#7209b7', '#f72585', '#e36414'];
+                        const bg = colors[cu.name.length % colors.length];
+
+                        chatHTML += `
+                        <a href="messages.html" class="chat-item">
+                            <div class="chat-avatar" style="background:${bg}">${chatInitial}</div>
+                            <div class="chat-content">
+                                <div class="chat-name">
+                                    <span>${cu.name}</span>
+                                    <span class="chat-time">Recent</span>
+                                </div>
+                                <div class="chat-msg">Click to view conversation...</div>
+                            </div>
+                        </a>
+                        `;
+                    });
+                    chatContainer.innerHTML = chatHTML;
+                }
+
+                // Set Badge
+                if (chatUsers.length > 0) {
+                    document.getElementById("msgBadge").innerText = chatUsers.length;
+                    document.getElementById("msgBadge").style.display = "inline-block";
+                } else {
+                    document.getElementById("msgBadge").style.display = "none";
+                }
+
+            } catch (err) {
+                console.error("Error loading dashboard data:", err);
+            }
+        }
+
+        setTimeout(loadData, 500);
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        });
+    </script>
 </body>
+
 </html>

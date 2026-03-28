@@ -1,277 +1,433 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Details - Nextrade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>My Profile | NexTrade</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
-            --primary: #1a56db;
-            --primary-hover: #1e40af;
-            --primary-light: #eff6ff;
-            --secondary: #1f2937;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --light: #f3f4f6;
-            --white: #ffffff;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-hover: #3f37c9;
+            --bg-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.08);
+            --shadow-hover: 0 8px 25px rgba(67, 97, 238, 0.15);
             --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --danger: #ef233c;
+            --success: #2bc155;
+            --warning: #f39c12;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
-            background-color: var(--light);
-            color: var(--gray-800);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .navbar {
-            background-color: var(--white);
-            padding: 1rem 5%;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            transition: var(--transition);
+        }
+
+        .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .navbar .back-btn {
-            background: none;
-            border: none;
-            color: var(--gray-700);
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-        }
-
-        .navbar .back-btn:hover {
-            color: var(--primary);
+            margin-bottom: 40px;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 24px;
             font-weight: 700;
             color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
         }
-
-        .container {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+        
+        .logo i {
+            color: var(--primary-light);
         }
 
-        /* Progress Bar Section */
-        .progress-section {
-            background: var(--white);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--card-shadow);
+        .toggle-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .nav-link i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-link:hover {
+            background: rgba(67, 97, 238, 0.05);
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-link.active i {
+            color: white;
+        }
+        
+        .message-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            color: var(--danger);
+        }
+        
+        .logout-btn:hover {
+            background: rgba(239, 35, 60, 0.05);
+            color: var(--danger);
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 30px;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: transparent;
+        }
+
+        .welcome-text h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .welcome-text p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Progress Card */
+        .progress-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-sm);
         }
 
         .progress-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 15px;
         }
 
         .progress-title {
+            font-size: 18px;
             font-weight: 600;
-            font-size: 1.1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .progress-title i {
+            color: var(--success);
+            font-size: 22px;
         }
 
         .progress-text {
-            color: var(--gray-500);
-            font-size: 0.9rem;
+            color: var(--text-muted);
             font-weight: 500;
+            font-size: 14px;
         }
 
-        .progress-bar-container {
-            height: 8px;
-            background: var(--gray-200);
-            border-radius: 4px;
+        .progress-bar-bg {
+            height: 12px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 20px;
             overflow: hidden;
         }
 
         .progress-bar {
             height: 100%;
-            background: var(--success);
+            background: linear-gradient(90deg, var(--primary-light), var(--primary));
             width: 0%;
-            transition: width 0.5s ease-in-out;
+            transition: width 0.6s ease;
+            border-radius: 20px;
         }
 
-        /* Cards */
+        /* Profile Grid Layout */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
         .card {
-            background: var(--white);
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--card-shadow);
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
             transition: var(--transition);
+            border: 2px solid transparent;
+        }
+        
+        .card.editing {
+            border-color: rgba(67, 97, 238, 0.4);
+            box-shadow: var(--shadow-md);
         }
 
         .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
+            padding: 24px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--white);
         }
 
         .card-title {
-            font-size: 1.2rem;
+            font-size: 20px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 12px;
         }
 
         .card-title i {
             color: var(--primary);
+            background: rgba(67, 97, 238, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+            width: 40px;
+            text-align: center;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .edit-btn {
-            background: var(--primary-light);
+            background: rgba(67, 97, 238, 0.1);
             color: var(--primary);
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 10px;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+            font-size: 14px;
         }
 
         .edit-btn:hover {
             background: var(--primary);
-            color: var(--white);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
 
         .save-btn {
             background: var(--primary);
-            color: var(--white);
+            color: white;
             border: none;
-            padding: 0.5rem 1.25rem;
-            border-radius: 6px;
-            font-weight: 500;
+            padding: 8px 25px;
+            border-radius: 10px;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             display: none;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+            font-size: 14px;
         }
 
         .save-btn:hover {
             background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.4);
         }
 
         .card-body {
-            padding: 1.5rem;
+            padding: 24px;
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-
-        /* Specific to Profile */
-        .profile-header-group {
+        /* Avatar Section */
+        .avatar-section {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 25px;
+            margin-bottom: 30px;
         }
 
-        .profile-photo-container {
-            position: relative;
-            width: 100px;
-            height: 100px;
+        .avatar-container {
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            background: var(--gray-200);
+            background: rgba(67, 97, 238, 0.1);
+            position: relative;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             overflow: hidden;
-            border: 3px solid var(--white);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-sm);
         }
 
-        .profile-photo-container img {
+        .avatar-container i {
+            font-size: 36px;
+            color: var(--text-muted);
+        }
+
+        .avatar-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: none;
         }
 
-        .profile-photo-container i {
-            font-size: 3rem;
-            color: var(--gray-400);
-        }
-
-        .photo-upload-btn {
+        .upload-overlay {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0,0,0,0.6);
             color: white;
             text-align: center;
-            padding: 0.25rem;
-            font-size: 0.8rem;
+            font-size: 11px;
+            padding: 5px;
             cursor: pointer;
             display: none;
+            font-weight: 500;
+            transition: var(--transition);
         }
 
-        .card.editing .photo-upload-btn {
+        .upload-overlay:hover {
+            background: var(--primary);
+        }
+
+        .card.editing .upload-overlay {
             display: block;
         }
 
-        /* Form Controls */
+        .avatar-info h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        .avatar-info p {
+            color: var(--primary);
+            background: rgba(67, 97, 238, 0.1);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: capitalize;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 8px;
         }
 
         .form-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-700);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
         .required-asterisk {
@@ -279,15 +435,15 @@
         }
 
         .missing-badge {
-            font-size: 0.75rem;
-            color: var(--warning);
-            background: #fef3c7;
-            padding: 0.1rem 0.4rem;
-            border-radius: 4px;
+            font-size: 11px;
+            color: #d35400;
+            background: #fdebd0;
+            padding: 3px 8px;
+            border-radius: 12px;
             font-weight: 600;
             display: none;
             align-items: center;
-            gap: 0.25rem;
+            gap: 4px;
         }
 
         .missing-badge.active {
@@ -296,106 +452,99 @@
 
         .form-control {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--gray-300);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            color: var(--gray-800);
-            background-color: var(--gray-50);
+            padding: 12px 16px;
+            background: #f8fafc;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: var(--border-radius);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
             transition: var(--transition);
         }
 
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+        }
+
         .form-control:disabled {
-            background-color: transparent;
+            background: transparent;
             border-color: transparent;
+            color: var(--text-main);
             padding-left: 0;
-            color: var(--gray-800);
-            font-weight: 500;
+            font-weight: 600;
             opacity: 1;
         }
 
-        .form-control:focus:not(:disabled) {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-            background-color: var(--white);
-        }
-
-        select.form-control:disabled {
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: none;
-        }
-
-        /* Action groups like input + verify button */
-        .input-action-group {
+        .action-group {
             display: flex;
-            gap: 0.5rem;
-            align-items: flex-start;
+            gap: 15px;
         }
 
-        .input-action-group .form-control {
+        .action-group .form-control {
             flex: 1;
         }
 
         .action-btn {
-            padding: 0.75rem 1rem;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-300);
-            border-radius: 8px;
-            color: var(--gray-700);
-            font-weight: 500;
+            padding: 0 16px;
+            background: white;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main);
             cursor: pointer;
-            white-space: nowrap;
             display: none;
+            white-space: nowrap;
             transition: var(--transition);
         }
 
         .card.editing .action-btn {
-            display: block;
-        }
-
-        .action-btn:hover {
-            background: var(--gray-200);
+            display: inline-block;
         }
 
         .action-btn.verify {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
+            background: rgba(43, 193, 85, 0.1);
+            color: var(--success);
+            border-color: transparent;
         }
 
         .action-btn.verify:hover {
-            background: #059669;
+            background: var(--success);
+            color: white;
+            box-shadow: var(--shadow-sm);
         }
 
-        /* Full width elements */
         .col-span-full {
             grid-column: 1 / -1;
         }
-
+        
         textarea.form-control {
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
         }
 
-        /* Notification */
+        /* Notifications & Loader */
         .notification {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: var(--gray-800);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            bottom: 30px;
+            right: 30px;
+            background: var(--text-main);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-hover);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 15px;
             transform: translateY(100px);
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             z-index: 2000;
+            font-weight: 500;
+            color: white;
+            font-size: 15px;
         }
 
         .notification.show {
@@ -403,22 +552,16 @@
             opacity: 1;
         }
 
-        .notification.success i {
-            color: var(--success);
-        }
+        .notification.success { border-left: 5px solid var(--success); }
+        .notification.error { border-left: 5px solid var(--danger); }
+        .notification.error i { color: var(--danger); font-size: 18px; }
+        .notification.success i { color: var(--success); font-size: 18px; }
 
-        .notification.error i {
-            color: var(--danger);
-        }
-
-        /* Loader */
         .loader-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.7);
+            inset: 0;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(5px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -427,264 +570,291 @@
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--gray-200);
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f0f2f8;
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            100% {
-                transform: rotate(360deg);
-            }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Mobile Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 90;
         }
+        .sidebar-overlay.active { display: block; }
 
-        @media (max-width: 640px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .profile-header-group {
-                flex-direction: column;
-                text-align: center;
-            }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: 0.3s; }
+            .sidebar.active { transform: translateX(0); }
+            .toggle-btn { display: block; }
+            .main-content { margin-left: 0; padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .avatar-section { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar">
-        <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
-        <a href="#" class="logo">Nextrade</a>
-        <div style="width: 70px;"></div> <!-- Spacer -->
-    </nav>
+    <!-- Sidebar Navigation (Dynamically Injected) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="logo" id="logoLink">
+                <i class="fas fa-chart-line"></i>
+                NexTrade
+            </a>
+            <button class="toggle-btn" id="toggleBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="nav-links" id="sidebarNavs">
+            <!-- Loading -->
+        </nav>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="loader-overlay" id="loader">
         <div class="spinner"></div>
     </div>
 
-    <div class="container">
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="welcome-text">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button class="toggle-btn" id="mobileToggleBtn" style="display: none;">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>My Profile</h1>
+                </div>
+                <p>Manage your account details and business information</p>
+            </div>
+        </div>
 
-        <!-- Progress Bar -->
-        <div class="progress-section">
+        <!-- Progress Card -->
+        <div class="progress-card">
             <div class="progress-header">
                 <div class="progress-title">
-                    <i class="fas fa-shield-halved" style="color: var(--success);"></i>
-                    Verified Buyer Progress
+                    <i class="fas fa-shield-alt"></i>
+                    Profile Completion Status
                 </div>
                 <div class="progress-text" id="progressText">0/3 Sections Complete</div>
             </div>
-            <div class="progress-bar-container">
+            <div class="progress-bar-bg">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
         </div>
 
-        <!-- 1. Profile Details -->
-        <div class="card" id="cardProfile">
-            <div class="card-header">
-                <div class="card-title"><i class="fas fa-user-circle"></i> Profile Details</div>
-                <button class="edit-btn" onclick="toggleEdit('cardProfile')"><i class="fas fa-pen"></i> Edit</button>
-                <button class="save-btn" onclick="saveSection('cardProfile')"><i class="fas fa-save"></i> Save</button>
-            </div>
-            <div class="card-body">
-                <div class="profile-header-group">
-                    <div class="profile-photo-container" id="photoContainer">
-                        <i class="fas fa-user"></i>
-                        <img src="" id="profileImgPreview" alt="Profile">
-                        <label for="photoUpload" class="photo-upload-btn">Upload</label>
-                        <input type="file" id="photoUpload" style="display: none;" accept="image/*">
+        <div class="profile-layout">
+            
+            <!-- 1. Profile Details -->
+            <div class="card" id="cardProfile">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-user"></i> Personal Information
                     </div>
-                    <div>
-                        <h3 style="font-size: 1.25rem; color: var(--gray-800);" id="displayProfileName">Loading...</h3>
-                        <p style="color: var(--gray-500); font-size: 0.9rem;" id="displayProfileRole">Buyer</p>
-                    </div>
+                    <button class="edit-btn" onclick="toggleEdit('cardProfile')"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="save-btn" onclick="saveSection('cardProfile')"><i class="fas fa-save"></i> Save</button>
                 </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Full Name <span class="required-asterisk">*</span></label>
-                        <input type="text" class="form-control" id="profile_name" data-field="name" disabled required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Date of Birth</label>
-                        <input type="date" class="form-control" id="profile_dob" data-field="dob" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            Mobile Number <span class="required-asterisk">*</span>
-                            <span class="missing-badge" id="badge_mobileNumber"><i
-                                    class="fas fa-exclamation-circle"></i> Missing Mobile</span>
-                        </label>
-                        <div class="input-action-group">
-                            <input type="tel" class="form-control" id="profile_mobileNumber" data-field="mobileNumber"
-                                placeholder="10-digit mobile number" disabled>
-                            <button class="action-btn verify" type="button"
-                                onclick="verifyAction('OTP')">Verify</button>
+                <div class="card-body">
+                    <div class="avatar-section">
+                        <div class="avatar-container">
+                            <i class="fas fa-camera"></i>
+                            <img src="" id="profileImgPreview" alt="Profile">
+                            <label for="photoUpload" class="upload-overlay">Change Photo</label>
+                            <input type="file" id="photoUpload" style="display: none;" accept="image/*">
+                        </div>
+                        <div class="avatar-info">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h3 id="displayProfileName" style="margin-bottom: 0;">Loading...</h3>
+                                <i class="fas fa-check-circle" id="profileVerifiedBadge" title="Verified" style="display: none; color: var(--success); font-size: 18px;"></i>
+                            </div>
+                            <p id="displayProfileRole" style="margin-top: 5px;">User</p>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Email Address <span class="required-asterisk">*</span></label>
-                        <div class="input-action-group">
-                            <input type="email" class="form-control" id="profile_email" data-field="email" disabled
-                                required>
-                            <button class="action-btn" type="button" onclick="verifyAction('Email')">Verify</button>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Full Name <span class="required-asterisk">*</span></label>
+                            <input type="text" class="form-control" id="profile_name" data-field="name" disabled required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="profile_dob" data-field="dob" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <div>Mobile Number <span class="required-asterisk">*</span></div>
+                                <span class="missing-badge" id="badge_mobileNumber"><i class="fas fa-exclamation-circle"></i> Missing</span>
+                            </label>
+                            <div class="action-group">
+                                <input type="tel" class="form-control" id="profile_mobileNumber" data-field="mobileNumber" placeholder="10-digit mobile number" disabled>
+                                <button class="action-btn verify" type="button" onclick="verifyAction('OTP')">Verify</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <div>Email Address <span class="required-asterisk">*</span></div>
+                            </label>
+                            <div class="action-group">
+                                <input type="email" class="form-control" id="profile_email" data-field="email" disabled required>
+                                <button class="action-btn" type="button" onclick="verifyAction('Email')">Verify</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <select class="form-control" id="profile_gender" data-field="gender" disabled>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Gender</label>
-                        <select class="form-control" id="profile_gender" data-field="gender" disabled>
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 2. Business Details -->
-        <div class="card" id="cardBusiness">
-            <div class="card-header">
-                <div class="card-title"><i class="fas fa-building"></i> Business Details</div>
-                <button class="edit-btn" onclick="toggleEdit('cardBusiness')"><i class="fas fa-pen"></i> Edit</button>
-                <button class="save-btn" onclick="saveSection('cardBusiness')"><i class="fas fa-save"></i> Save</button>
-            </div>
-            <div class="card-body">
-                <div class="form-grid">
-                    <div class="form-group col-span-full">
-                        <label class="form-label">
-                            Business / Company Name <span class="required-asterisk">*</span>
-                            <span class="missing-badge" id="badge_businessName"><i
-                                    class="fas fa-exclamation-circle"></i> Missing Business Name</span>
-                        </label>
-                        <input type="text" class="form-control" id="business_businessName" data-field="businessName"
-                            disabled required>
+            <!-- 2. Business Details -->
+            <div class="card" id="cardBusiness">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-building"></i> Business Details
                     </div>
+                    <button class="edit-btn" onclick="toggleEdit('cardBusiness')"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="save-btn" onclick="saveSection('cardBusiness')"><i class="fas fa-save"></i> Save</button>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group col-span-full">
+                            <label class="form-label">
+                                <div>Business / Company Name <span class="required-asterisk">*</span></div>
+                                <span class="missing-badge" id="badge_businessName"><i class="fas fa-exclamation-circle"></i> Missing</span>
+                            </label>
+                            <input type="text" class="form-control" id="business_businessName" data-field="businessName" placeholder="E.g. NexTrade Enterpises" disabled required>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Business Type</label>
-                        <select class="form-control" id="business_businessType" data-field="businessType" disabled>
-                            <option value="">Select Type</option>
-                            <option value="Proprietorship">Proprietorship</option>
-                            <option value="Partnership">Partnership</option>
-                            <option value="Pvt. Ltd.">Pvt. Ltd.</option>
-                            <option value="Public Ltd.">Public Ltd.</option>
-                            <option value="LLP">LLP</option>
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Business Type</label>
+                            <select class="form-control" id="business_businessType" data-field="businessType" disabled>
+                                <option value="">Select Type</option>
+                                <option value="Proprietorship">Proprietorship</option>
+                                <option value="Partnership">Partnership</option>
+                                <option value="Pvt. Ltd.">Pvt. Ltd.</option>
+                                <option value="Public Ltd.">Public Ltd.</option>
+                                <option value="LLP">LLP</option>
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Industry / Category</label>
-                        <input type="text" class="form-control" id="business_industry" data-field="industry"
-                            placeholder="e.g. Electronics, Textiles" disabled>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Industry / Category</label>
+                            <input type="text" class="form-control" id="business_industry" data-field="industry" placeholder="e.g. Electronics, Textiles" disabled>
+                        </div>
 
-                    <div class="form-group col-span-full">
-                        <label class="form-label">
-                            GSTIN Number
-                            <span class="missing-badge" id="badge_gstNumber"><i class="fas fa-exclamation-circle"></i>
-                                Missing GSTIN</span>
-                        </label>
-                        <div class="input-action-group">
-                            <input type="text" class="form-control" id="business_gstNumber" data-field="gstNumber"
-                                placeholder="Enter 15 digit GSTIN" disabled>
-                            <button class="action-btn verify" type="button" onclick="verifyAction('GST')">Verify
-                                GST</button>
+                        <div class="form-group col-span-full">
+                            <label class="form-label">
+                                <div>GSTIN Number</div>
+                                <span class="missing-badge" id="badge_gstNumber"><i class="fas fa-exclamation-circle"></i> Missing</span>
+                            </label>
+                            <div class="action-group">
+                                <input type="text" class="form-control" id="business_gstNumber" data-field="gstNumber" placeholder="Enter 15 digit GSTIN" disabled>
+                                <button class="action-btn verify" type="button" onclick="verifyAction('GST')">Verify GST</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Year of Establishment</label>
+                            <input type="number" class="form-control" id="business_yearOfEstablishment" data-field="yearOfEstablishment" placeholder="YYYY" min="1800" max="2100" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Website URL (Optional)</label>
+                            <input type="url" class="form-control" id="business_websiteUrl" data-field="websiteUrl" placeholder="https://..." disabled>
+                        </div>
+
+                        <div class="form-group col-span-full">
+                            <label class="form-label">Brief Business Description</label>
+                            <textarea class="form-control" id="business_businessDescription" data-field="businessDescription" placeholder="Describe your business operations and what you trade..." disabled></textarea>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Year of Establishment</label>
-                        <input type="number" class="form-control" id="business_yearOfEstablishment"
-                            data-field="yearOfEstablishment" placeholder="YYYY" min="1800" max="2100" disabled>
+            <!-- 3. Address Details -->
+            <div class="card" id="cardAddress">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-map-marker-alt"></i> Address Details
                     </div>
+                    <button class="edit-btn" onclick="toggleEdit('cardAddress')"><i class="fas fa-pen"></i> Edit</button>
+                    <button class="save-btn" onclick="saveSection('cardAddress')"><i class="fas fa-save"></i> Save</button>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group col-span-full">
+                            <label class="form-label">
+                                <div>House no. / Flat / Building name</div>
+                                <span class="missing-badge" id="badge_houseNo"><i class="fas fa-exclamation-circle"></i> Missing</span>
+                            </label>
+                            <input type="text" class="form-control" id="address_houseNo" data-field="houseNo" disabled>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Website URL (Optional)</label>
-                        <input type="url" class="form-control" id="business_websiteUrl" data-field="websiteUrl"
-                            placeholder="https://..." disabled>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Street / Locality</label>
+                            <input type="text" class="form-control" id="address_street" data-field="street" disabled>
+                        </div>
 
-                    <div class="form-group col-span-full">
-                        <label class="form-label">Brief Business Description</label>
-                        <textarea class="form-control" id="business_businessDescription"
-                            data-field="businessDescription" placeholder="Describe your business..."
-                            disabled></textarea>
+                        <div class="form-group">
+                            <label class="form-label">Block / Sector</label>
+                            <input type="text" class="form-control" id="address_block" data-field="block" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <div>Pincode</div>
+                                <span class="missing-badge" id="badge_pincode"><i class="fas fa-exclamation-circle"></i> Missing</span>
+                            </label>
+                            <input type="text" class="form-control" id="address_pincode" data-field="pincode" oninput="autoSuggestCityState()" maxlength="6" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" id="address_city" data-field="city" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">District</label>
+                            <input type="text" class="form-control" id="address_district" data-field="district" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" id="address_state" data-field="state" disabled>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Country</label>
+                            <input type="text" class="form-control" id="address_country" data-field="country" value="India" disabled>
+                        </div>
                     </div>
                 </div>
             </div>
+
         </div>
-
-        <!-- 3. Address Details -->
-        <div class="card" id="cardAddress">
-            <div class="card-header">
-                <div class="card-title"><i class="fas fa-map-marker-alt"></i> Address Details</div>
-                <button class="edit-btn" onclick="toggleEdit('cardAddress')"><i class="fas fa-pen"></i> Edit</button>
-                <button class="save-btn" onclick="saveSection('cardAddress')"><i class="fas fa-save"></i> Save</button>
-            </div>
-            <div class="card-body">
-                <div class="form-grid">
-                    <div class="form-group col-span-full">
-                        <label class="form-label">
-                            House no. / Flat / Building name
-                            <span class="missing-badge" id="badge_houseNo"><i class="fas fa-exclamation-circle"></i>
-                                Missing House no.</span>
-                        </label>
-                        <input type="text" class="form-control" id="address_houseNo" data-field="houseNo" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Street / Locality</label>
-                        <input type="text" class="form-control" id="address_street" data-field="street" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Block / Sector</label>
-                        <input type="text" class="form-control" id="address_block" data-field="block" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            Pincode
-                            <span class="missing-badge" id="badge_pincode"><i class="fas fa-exclamation-circle"></i>
-                                Missing Pincode</span>
-                        </label>
-                        <input type="text" class="form-control" id="address_pincode" data-field="pincode"
-                            oninput="autoSuggestCityState()" maxlength="6" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">City</label>
-                        <input type="text" class="form-control" id="address_city" data-field="city" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">District</label>
-                        <input type="text" class="form-control" id="address_district" data-field="district" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">State</label>
-                        <input type="text" class="form-control" id="address_state" data-field="state" disabled>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Country</label>
-                        <input type="text" class="form-control" id="address_country" data-field="country" value="India"
-                            disabled>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
+    </main>
 
     <!-- Notification Toast -->
     <div class="notification" id="toast">
@@ -710,8 +880,73 @@
                 userData = JSON.parse(storedUser);
                 populateForm();
                 updateProgress();
+                setupDashboardNav();
             }
+
+            // Mobile Sidebar Toggle JS
+            const sidebar = document.getElementById("sidebar");
+            const toggleBtn = document.getElementById("toggleBtn");
+            const mobileToggleBtn = document.getElementById("mobileToggleBtn");
+            const sidebarOverlay = document.getElementById("sidebarOverlay");
+            
+            if (toggleBtn) toggleBtn.addEventListener("click", () => { sidebar.classList.toggle("active"); sidebarOverlay.classList.toggle("active"); });
+            if (mobileToggleBtn) mobileToggleBtn.addEventListener("click", () => { sidebar.classList.toggle("active"); sidebarOverlay.classList.toggle("active"); });
+            if (sidebarOverlay) sidebarOverlay.addEventListener("click", () => { sidebar.classList.remove("active"); sidebarOverlay.classList.remove("active"); });
         };
+
+        // SETUP NAVIGATION BASED ON ROLE
+        function setupDashboardNav() {
+            const role = (userData.role || "retailer").toLowerCase();
+            const navs = document.getElementById("sidebarNavs");
+            const logo = document.getElementById("logoLink");
+            
+            if (role === "retailer") {
+                logo.href = "retailer-dashboard.html";
+                navs.innerHTML = `
+                    <button class="nav-link" onclick="location.href='retailer-dashboard.html'">
+                        <i class="fas fa-home"></i> Dashboard
+                    </button>
+                    <button class="nav-link" onclick="location.href='wholesalers.html'">
+                        <i class="fas fa-search"></i> Browse Products
+                    </button>
+                    <button class="nav-link" onclick="location.href='messages.html'">
+                        <i class="fas fa-comment-dots"></i> Messages
+                        <span class="message-badge" style="display:none;" id="msgBadge">0</span>
+                    </button>
+                    <button class="nav-link active" onclick="location.href='profile.html'">
+                        <i class="fas fa-user"></i> Profile
+                    </button>
+                    <button class="nav-link logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                `;
+            } else {
+                logo.href = "wholesaler-dashboard.html";
+                navs.innerHTML = `
+                    <a href="wholesaler-dashboard.html" class="nav-link">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                    <a href="product-management.html" class="nav-link">
+                        <i class="fas fa-box"></i> My Products
+                    </a>
+                    <a href="messages.html" class="nav-link">
+                        <i class="fas fa-envelope"></i> Messages
+                    </a>
+                    <a href="profile.html" class="nav-link active">
+                        <i class="fas fa-user-circle"></i> Profile
+                    </a>
+                    <button class="nav-link logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                `;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "login.html";
+        }
 
         // ================= POPULATE =================
         function populateForm() {
@@ -722,7 +957,7 @@
                 }
             });
 
-            // ✅ Restore photo
+            // Restore photo
             if (userData.photoUrl) {
                 const img = document.getElementById('profileImgPreview');
                 img.src = userData.photoUrl;
@@ -733,7 +968,7 @@
             }
 
             document.getElementById("displayProfileName").innerText = userData.name || "User";
-            document.getElementById("displayProfileRole").innerText = (userData.role || "").toUpperCase();
+            document.getElementById("displayProfileRole").innerText = (userData.role || "User").toUpperCase();
         }
 
         // ================= EDIT =================
@@ -766,7 +1001,7 @@
                 }
             });
 
-            // ✅ include photo
+            // Include photo
             if (cardId === 'cardProfile' && photoBase64) {
                 updateData.photoUrl = photoBase64;
                 photoBase64 = null;
@@ -812,7 +1047,6 @@
                 } else {
                     showToast(data.message || "Update failed", "error");
                 }
-
 
             } catch (err) {
                 console.error("PROFILE ERROR:", err);
@@ -874,7 +1108,7 @@
 
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                    // ✅ compressed image
+                    // compressed image
                     photoBase64 = canvas.toDataURL("image/jpeg", 0.6);
 
                     const preview = document.getElementById("profileImgPreview");
@@ -890,15 +1124,44 @@
         function updateProgress() {
             let completed = 0;
 
-            if (userData.name && userData.mobileNumber) completed++;
-            if (userData.businessName && userData.gstNumber) completed++;
-            if (userData.houseNo && userData.pincode) completed++;
+            const isValid = (val) => val && typeof val === 'string' && val.trim() !== "";
+
+            if (isValid(userData.name) && isValid(userData.mobileNumber)) completed++;
+            if (isValid(userData.businessName) && isValid(userData.gstNumber)) completed++;
+            if (isValid(userData.houseNo) && isValid(userData.pincode)) completed++;
 
             const percent = (completed / 3) * 100;
 
             document.getElementById("progressBar").style.width = percent + "%";
-            document.getElementById("progressText").innerText =
-                `${completed}/3 Sections Complete`;
+            document.getElementById("progressText").innerText = `${completed}/3 Sections Complete`;
+            
+            // Toggle verified badge display if wholesaler profile is fully complete
+            const badge = document.getElementById("profileVerifiedBadge");
+            if (badge) {
+                if (completed === 3 && userData.role === 'wholesaler') {
+                    badge.style.display = "inline-block";
+                } else {
+                    badge.style.display = "none";
+                }
+            }
+            
+            // Toggle missing badges
+            toggleBadge('badge_mobileNumber', userData.mobileNumber);
+            toggleBadge('badge_businessName', userData.businessName);
+            toggleBadge('badge_gstNumber', userData.gstNumber);
+            toggleBadge('badge_houseNo', userData.houseNo);
+            toggleBadge('badge_pincode', userData.pincode);
+        }
+        
+        function toggleBadge(id, value) {
+            const badge = document.getElementById(id);
+            if(badge) {
+                if(!value || value.trim() === '') {
+                    badge.classList.add('active');
+                } else {
+                    badge.classList.remove('active');
+                }
+            }
         }
 
         // ================= VERIFY =================
@@ -926,16 +1189,16 @@
 
             toastMsg.textContent = msg;
 
-            toast.style.background = type === "success" ? "#2ecc71" : "#e74c3c";
-            icon.className = type === "success"
-                ? "fas fa-check-circle"
-                : "fas fa-exclamation-circle";
-
-            toast.classList.add("show");
+            if (type === "success") {
+                toast.className = "notification show success";
+                icon.className = "fas fa-check-circle";
+            } else {
+                toast.className = "notification show error";
+                icon.className = "fas fa-exclamation-circle";
+            }
 
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
     </script>
 </body>
-
 </html>

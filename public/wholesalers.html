@@ -148,6 +148,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
+        const isValid = (val) => val && typeof val === 'string' && val.trim() !== "";
+
         items.forEach(w => {
             grid.innerHTML += `
                 <div class="wholesaler-card">
@@ -156,9 +158,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     </div>
 
                     <div class="wholesaler-info">
-                        <h3>${w.businessName || w.name}</h3>
+                        <h3>${w.businessName || w.name} ${isValid(w.name) && isValid(w.mobileNumber) && isValid(w.businessName) && isValid(w.gstNumber) && isValid(w.houseNo) && isValid(w.pincode) ? '<i class="fas fa-check-circle" style="color: #4361ee; font-size: 14px;" title="Verified Wholesaler"></i>' : ''}</h3>
                         <p><i class="fas fa-envelope"></i> ${w.email}</p>
-                        <p><i class="fas fa-map-marker-alt"></i> ${w.address || "India"}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> ${w.shopAddress || w.city || "India"}</p>
                     </div>
 
                     <div class="wholesaler-actions">
