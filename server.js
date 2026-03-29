@@ -51,6 +51,9 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: "Session expired, please login again" });
+    }
     return res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
