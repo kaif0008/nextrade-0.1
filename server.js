@@ -116,6 +116,8 @@ const productSchema = new mongoose.Schema({
   image: String,
   description: String,
   stock: Number,
+  reservedStock: { type: Number, default: 0 },
+  soldCount: { type: Number, default: 0 },
   moq: Number,
   wholesalerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
@@ -294,6 +296,58 @@ router.get('/products/my', authMiddleware, async (req, res) => {
   res.json({ success: true, products });
 });
 
+// Get Wholesaler Inventory Analytics
+router.get('/analytics/inventory', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'wholesaler') {
+    return res.status(403).json({ success: false });
+  }
+
+  try {
+    const products = await Product.find({ wholesalerId: req.user.id });
+
+    const totalProducts = products.length;
+    let lowStockItems = [];
+    let criticalStock = 0;
+    const categoryDistribution = {};
+    let mostSoldProduct = null;
+    let maxSold = -1;
+
+    products.forEach(p => {
+      // Low stock
+      if (p.stock <= 10) {
+        lowStockItems.push({ id: p._id, name: p.name, stock: p.stock });
+      }
+      if (p.stock === 0) criticalStock++;
+
+      // Distribution
+      const cat = p.category || 'Uncategorized';
+      categoryDistribution[cat] = (categoryDistribution[cat] || 0) + (p.stock || 0);
+
+      // Most Sold
+      const sold = p.soldCount || 0;
+      if (sold > maxSold) {
+        maxSold = sold;
+        mostSoldProduct = { name: p.name, count: sold };
+      }
+    });
+
+    res.json({
+      success: true,
+      analytics: {
+        totalProducts,
+        lowStockCount: lowStockItems.length,
+        criticalStockCount: criticalStock,
+        lowStockItems: lowStockItems,
+        mostSoldProduct: maxSold > 0 ? mostSoldProduct : null,
+        stockDistribution: categoryDistribution
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
+  }
+});
+
 
 const ALLOWED_PROFILE_FIELDS = [
   'name', 'mobileNumber', 'photoUrl', 'dob', 'gender',
@@ -395,6 +449,46 @@ router.delete('/products/:id', authMiddleware, async (req, res) => {
   res.json({ success: true });
 });
 
+router.patch('/products/:id/stock', authMiddleware, async (req, res) => {
+  const { amount } = req.body;
+  if (!amount) return res.status(400).json({ success: false, message: 'Amount is required' });
+
+  const product = await Product.findOneAndUpdate(
+    { _id: req.params.id, wholesalerId: req.user.id },
+    { $inc: { stock: amount } },
+    { new: true }
+  );
+
+  if (!product) return res.status(403).json({ success: false });
+  res.json({ success: true, product });
+});
+
+router.post('/products/:id/inquiry', authMiddleware, async (req, res) => {
+  const { qty } = req.body;
+  const incQty = qty || 1;
+  const product = await Product.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { reservedStock: incQty } },
+    { new: true }
+  );
+  if (!product) return res.status(404).json({ success: false });
+  res.json({ success: true, product });
+});
+
+router.post('/products/inquiry-by-name', authMiddleware, async (req, res) => {
+  const { productName, qty } = req.body;
+  if (!productName) return res.status(400).json({ success: false, message: 'Product name required' });
+  
+  const incQty = qty || 1;
+  const product = await Product.findOneAndUpdate(
+    { name: productName },
+    { $inc: { reservedStock: incQty } },
+    { new: true }
+  );
+  if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+  res.json({ success: true, product });
+});
+
 router.put('/products/:id', authMiddleware, async (req, res) => {
   const product = await Product.findOneAndUpdate(
     { _id: req.params.id, wholesalerId: req.user.id },
@@ -420,6 +514,32 @@ router.post('/orders', async (req, res) => {
 router.get('/orders', authMiddleware, async (req, res) => {
   const orders = await Order.find().sort({ createdAt: -1 });
   res.json({ success: true, orders });
+});
+
+router.patch('/orders/:id/confirm', authMiddleware, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    
+    if (order.status === 'Confirmed') {
+      return res.status(400).json({ success: false, message: 'Order already confirmed' });
+    }
+
+    order.status = 'Confirmed';
+    await order.save();
+
+    const decQty = order.quantity || 1;
+
+    // Decrease stock/reservedStock and increase soldCount
+    await Product.findOneAndUpdate(
+      { name: order.productName },
+      { $inc: { stock: -decQty, reservedStock: -decQty, soldCount: decQty } }
+    );
+
+    res.json({ success: true, order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // ---------- MESSAGES ----------

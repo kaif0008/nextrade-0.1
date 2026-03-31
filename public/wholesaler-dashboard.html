@@ -500,6 +500,27 @@
             z-index: 90;
         }
 
+        /* Notifications & Analytics */
+        .notif-wrapper { position: relative; display: inline-block; vertical-align: middle; }
+        .notif-btn { background: white; border: none; font-size: 20px; color: var(--text-muted); padding: 10px; border-radius: 50%; cursor: pointer; position: relative; transition: var(--transition); }
+        .notif-btn:hover { color: var(--primary); }
+        .notif-badge { position: absolute; top: -2px; right: -2px; background: var(--danger); color: white; font-size: 10px; font-weight: 700; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; }
+        .notif-dropdown { position: absolute; right: 0; top: 120%; width: 300px; background: white; box-shadow: var(--shadow-md); border-radius: var(--border-radius); z-index: 1000; display: none; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
+        .notif-dropdown.active { display: block; animation: fadeIn 0.2s ease; }
+        .notif-header { padding: 15px; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 14px; background: #f8fafc; }
+        .notif-body { max-height: 300px; overflow-y: auto; }
+        .notif-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: var(--transition); }
+        .notif-item:hover { background: #f8fafc; }
+        .notif-icon { width: 30px; height: 30px; border-radius: 8px; background: rgba(239, 35, 60, 0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; }
+        
+        .dist-container { margin-top: 5px; }
+        .dist-item { margin-bottom: 12px; }
+        .dist-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; font-weight: 500; }
+        .dist-bar-bg { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+        .dist-bar-fill { height: 100%; border-radius: 4px; background: var(--primary); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
         /* Responsive */
         @media (max-width: 992px) {
             .dashboard-grid { grid-template-columns: 1fr; }
@@ -570,34 +591,61 @@
                 </div>
             </div>
 
-            <div class="user-profile-top" onclick="go('profile')">
-                <div class="user-info-top" style="text-align: right;">
-                    <span class="user-name-top" id="topName">User</span>
-                    <span class="user-role-top">Wholesaler</span>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <!-- Notification Bell -->
+                <div class="notif-wrapper" id="notifWrapper">
+                    <button class="notif-btn" id="notifBtn" onclick="document.getElementById('notifDropdown').classList.toggle('active')">
+                        <i class="fas fa-bell"></i>
+                        <div class="notif-badge" id="notifBadge" style="display: none;">0</div>
+                    </button>
+                    <!-- Dropdown -->
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-header">Low Stock Alerts</div>
+                        <div class="notif-body" id="notifList">
+                            <p style="text-align:center; padding:15px; color:#888; font-size: 13px;">No alerts</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="avatar" id="topAvatar">U</div>
+
+                <div class="user-profile-top" onclick="go('profile')">
+                    <div class="user-info-top" style="text-align: right;">
+                        <span class="user-name-top" id="topName">User</span>
+                        <span class="user-role-top">Wholesaler</span>
+                    </div>
+                    <div class="avatar" id="topAvatar">U</div>
+                </div>
             </div>
         </header>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
+        <h2 style="font-size: 16px; margin-bottom: 15px; color: var(--text-muted); font-weight: 600;">INVENTORY ANALYTICS</h2>
+        <!-- Analytics Stats Grid -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
             <div class="stat-card">
-                <div class="stat-icon icon-purple">
-                    <i class="fas fa-box-open"></i>
-                </div>
+                <div class="stat-icon icon-purple"><i class="fas fa-box-open"></i></div>
                 <div class="stat-details">
-                    <h3 id="statProducts"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
-                    <p>My Products</p>
+                    <h3 id="statTotalProducts"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
+                    <p>Total Products</p>
                 </div>
             </div>
-            
             <div class="stat-card">
-                <div class="stat-icon icon-green">
-                    <i class="fas fa-envelope"></i>
+                <div class="stat-icon" style="background: rgba(239, 35, 60, 0.1); color: var(--danger);"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-details">
+                    <h3 id="statLowStock"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
+                    <p>Low Stock Items</p>
                 </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(252, 163, 17, 0.1); color: var(--warning);"><i class="fas fa-star"></i></div>
+                <div class="stat-details">
+                    <h3 id="statMostSold" style="font-size: 18px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;"><div class="skeleton skeleton-text short" style="height: 20px;"></div></h3>
+                    <p>Most Sold Product</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon icon-green"><i class="fas fa-envelope"></i></div>
                 <div class="stat-details">
                     <h3 id="statMessages"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
-                    <p>Messages Count</p>
+                    <p>Messages</p>
                 </div>
             </div>
         </div>
@@ -653,6 +701,17 @@
             
             <!-- Right Column -->
             <div class="right-col">
+                <!-- Stock Distribution -->
+                <div class="card-container" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Stock Distribution</h2>
+                    </div>
+                    <div class="dist-container" id="stockDistribution">
+                        <div class="skeleton skeleton-text" style="height:20px; margin-bottom:15px;"></div>
+                        <div class="skeleton skeleton-text short" style="height:20px;"></div>
+                    </div>
+                </div>
+
                 <!-- Profile Summary -->
                 <div class="card-container profile-summary">
                     <div class="card-header" style="justify-content: center;">
@@ -732,13 +791,78 @@
             document.getElementById("profileRoleStr").innerText = "🏢 Verified Wholesaler";
         }
 
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function(e) {
+            if (!document.getElementById('notifWrapper').contains(e.target)) {
+                document.getElementById('notifDropdown').classList.remove('active');
+            }
+        });
+
         // Load Real Data
-        async function loadData(){
+        async function loadData() {
             try {
-                // Products
-                const pRes = await fetch('/api/products/my', {headers:{Authorization:`Bearer ${token}`}});
-                const pData = await pRes.json();
-                document.getElementById("statProducts").innerText = pData.products ? pData.products.length : 0;
+                // Analytics & Notifications
+                const aRes = await fetch('/api/analytics/inventory', {headers:{Authorization:`Bearer ${token}`}});
+                const aData = await aRes.json();
+                
+                if (aData.success && aData.analytics) {
+                    const an = aData.analytics;
+                    document.getElementById("statTotalProducts").innerText = an.totalProducts;
+                    document.getElementById("statLowStock").innerText = an.lowStockCount;
+                    
+                    if (an.mostSoldProduct) {
+                        document.getElementById("statMostSold").innerText = an.mostSoldProduct.name;
+                        document.getElementById("statMostSold").title = an.mostSoldProduct.name + " (" + an.mostSoldProduct.count + " sold)";
+                    } else {
+                        document.getElementById("statMostSold").innerText = "None yet";
+                    }
+
+                    // Distribution
+                    let distHtml = '';
+                    let totalItems = 0;
+                    for(let cat in an.stockDistribution) { totalItems += an.stockDistribution[cat]; }
+                    
+                    const distColors = ['#4361ee', '#2bc155', '#f72585', '#7209b7', '#fca311'];
+                    let colorIdx = 0;
+                    
+                    for(let cat in an.stockDistribution) {
+                        const count = an.stockDistribution[cat];
+                        const pct = totalItems > 0 ? (count / totalItems) * 100 : 0;
+                        const color = distColors[colorIdx % distColors.length];
+                        colorIdx++;
+                        
+                        distHtml += `
+                            <div class="dist-item">
+                                <div class="dist-label"><span>${cat}</span> <span>${count}</span></div>
+                                <div class="dist-bar-bg">
+                                    <div class="dist-bar-fill" style="width: ${pct}%; background: ${color};"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    if(!distHtml) distHtml = '<p style="color:#888;font-size:13px;">No stock data yet.</p>';
+                    document.getElementById("stockDistribution").innerHTML = distHtml;
+
+                    // Notifications Populator
+                    if (an.lowStockItems && an.lowStockItems.length > 0) {
+                        document.getElementById("notifBadge").innerText = an.lowStockItems.length;
+                        document.getElementById("notifBadge").style.display = 'flex';
+                        
+                        let alertsHtml = '';
+                        an.lowStockItems.forEach(item => {
+                            alertsHtml += `
+                                <div class="notif-item" onclick="go('products')">
+                                    <div class="notif-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                    <div style="flex:1;">
+                                        <div style="font-size:13px;font-weight:600;">${item.name}</div>
+                                        <div style="font-size:11px;color:#888;">Stock remaining: ${item.stock}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        document.getElementById("notifList").innerHTML = alertsHtml;
+                    }
+                }
                 
                 // Messages / Chats
                 const cRes = await fetch('/api/conversations', {headers:{Authorization:`Bearer ${token}`}});

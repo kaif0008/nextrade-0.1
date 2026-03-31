@@ -101,4 +101,43 @@ socket.on("receive_message", (data) => {
 });
 
 loadUsers();
+
+// Auto-start chat with inquiry if URL params exist
+const params = new URLSearchParams(window.location.search);
+const targetUserId = params.get('user');
+const targetProduct = params.get('product');
+
+if (targetUserId && targetProduct) {
+  setTimeout(async () => {
+    // Open chat for that user (if we fetched user details, we might need a dummy name if not in list yet)
+    // Actually we can just start chat
+    currentUser = targetUserId;
+    document.getElementById("chatTitle").innerText = "Chat regarding: " + targetProduct;
+
+    // Trigger inquiry API
+    try {
+      await fetch('/api/products/inquiry-by-name', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ productName: targetProduct })
+      });
+    } catch(e) { console.error("Inquiry error", e); }
+
+    // Prefill input
+    document.getElementById("msgInput").value = "Hi, I would like to inquire about " + targetProduct;
+    // We get previous messages
+    const res = await fetch(`/api/messages/${targetUserId}`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const data = await res.json();
+    const box = document.getElementById("chatBox");
+    box.innerHTML = "";
+    if (data.messages) {
+      data.messages.forEach(m => addMessage(m));
+    }
+  }, 500);
+}
 </script>
