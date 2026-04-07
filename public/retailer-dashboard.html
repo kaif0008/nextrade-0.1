@@ -587,8 +587,11 @@
             <button class="nav-link active" onclick="go('dashboard')">
                 <i class="fas fa-home"></i> Dashboard
             </button>
+            <button class="nav-link" onclick="go('explore')">
+                <i class="fas fa-store"></i> Explore Products
+            </button>
             <button class="nav-link" onclick="go('browse')">
-                <i class="fas fa-box"></i> Wholesalers
+                <i class="fas fa-building"></i> Wholesalers
             </button>
             <button class="nav-link" onclick="go('messages')">
                 <i class="fas fa-comment-dots"></i> Messages
@@ -668,13 +671,21 @@
                         <h2 class="card-title">Quick Actions</h2>
                     </div>
                     <div class="quick-actions">
+                        <a href="browse-products.html" class="action-btn">
+                            <i class="fas fa-store"></i>
+                            Explore Products
+                        </a>
                         <a href="wholesalers.html" class="action-btn">
-                            <i class="fas fa-search"></i>
+                            <i class="fas fa-building"></i>
                             Browse Partners
                         </a>
                         <a href="messages.html" class="action-btn">
-                            <i class="fas fa-tasks"></i>
+                            <i class="fas fa-comment-dots"></i>
                             Manage Messages
+                        </a>
+                        <a href="profile.html" class="action-btn">
+                            <i class="fas fa-user-edit"></i>
+                            Edit Profile
                         </a>
                     </div>
                 </div>
@@ -725,6 +736,17 @@
                         <a href="profile.html" class="edit-profile-btn">Edit Profile</a>
                     </div>
                 </div>
+
+                <!-- AI Recommendations -->
+                <div class="card-container">
+                    <div class="card-header">
+                        <h2 class="card-title">✨ Recommended for You</h2>
+                    </div>
+                    <div id="recommendationsList">
+                        <div class="skeleton skeleton-circle"></div>
+                        <div class="skeleton skeleton-text"></div>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -755,6 +777,7 @@
 
         function go(p) {
             if (p === "dashboard") location.href = "retailer-dashboard.html";
+            if (p === "explore") location.href = "browse-products.html";
             if (p === "browse") location.href = "wholesalers.html";
             if (p === "messages") location.href = "messages.html";
             if (p === "profile") location.href = "profile.html";
@@ -828,6 +851,26 @@
                     document.getElementById("msgBadge").style.display = "none";
                 }
 
+                // Load AI Recommendations
+                try {
+                    const rRes = await fetch('/api/recommendations', { headers: { Authorization: `Bearer ${token}` } });
+                    const rData = await rRes.json();
+                    if(rData.success && rData.recommendations.length > 0) {
+                        let recHTML = rData.recommendations.map(r => `
+                            <a href="wholesalers.html" style="display:flex; gap:10px; align-items:center; text-decoration:none; color:inherit; margin-bottom:10px; padding:10px; border:1px solid #e2e8f0; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <img src="${r.image || 'https://via.placeholder.com/50'}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
+                                <div>
+                                    <div style="font-weight:600;font-size:13px">${r.name}</div>
+                                    <div style="font-size:12px;color:#3B82F6">✨ AI Recommended</div>
+                                </div>
+                            </a>
+                        `).join('');
+                        document.getElementById('recommendationsList').innerHTML = recHTML;
+                    } else {
+                        document.getElementById('recommendationsList').innerHTML = `<div style="font-size:13px; color:#8d99ae;text-align:center;">No recommendations yet.</div>`;
+                    }
+                } catch(e) { console.error('Recommendations failed', e); }
+
             } catch (err) {
                 console.error("Error loading dashboard data:", err);
             }
@@ -842,6 +885,9 @@
             }
         });
     </script>
+  <!-- AI Chatbot -->
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <script src="/chatbot.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,125 @@
+/* chatbot.css */
+#nt-chatbot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  font-family: 'Inter', sans-serif;
+}
+
+#nt-chatbot-toggle {
+  background: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+#nt-chatbot-toggle:hover {
+  transform: scale(1.05);
+}
+
+#nt-chatbot-window {
+  display: none;
+  flex-direction: column;
+  width: 350px;
+  height: 450px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+#nt-chatbot-header {
+  background: #3B82F6;
+  color: white;
+  padding: 15px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#nt-chatbot-close {
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+#nt-chatbot-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f9fafb;
+}
+
+.nt-msg {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.nt-msg-user {
+  background: #3B82F6;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+
+.nt-msg-ai {
+  background: #e5e7eb;
+  color: #1f2937;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+#nt-chatbot-input-area {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+}
+
+#nt-chatbot-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  outline: none;
+  font-size: 14px;
+}
+
+#nt-chatbot-send {
+  background: #3B82F6;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-left: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nt-typing { font-style: italic; color: #6b7280; font-size: 12px; }

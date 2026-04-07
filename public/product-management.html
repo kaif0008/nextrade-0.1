@@ -603,7 +603,10 @@
                     <input type="text" id="category" required>
                 </div>
                 <div class="form-group">
-                    <label>Image</label>
+                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                        Image 
+                        <button type="button" id="autoTagBtn" style="display:none; background:#3B82F6; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;" onclick="autoTagImage()">✨ Auto-Fill with AI</button>
+                    </label>
                     <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
                     <div id="imagePreviewContainer" style="margin-top:10px; display:none; position:relative; width:max-content;">
                         <img id="imagePreview" src="" style="max-height: 100px; border-radius: 6px; border: 1px solid #e2e8f0; display: block;">
@@ -676,6 +679,7 @@
                  base64ImageString = e.target.result;
                  document.getElementById("imagePreview").src = base64ImageString;
                  document.getElementById("imagePreviewContainer").style.display = "block";
+                 document.getElementById("autoTagBtn").style.display = "block";
              };
              reader.readAsDataURL(file);
         }
@@ -684,6 +688,35 @@
             document.getElementById("imageFile").value = "";
             base64ImageString = "";
             document.getElementById("imagePreviewContainer").style.display = "none";
+            document.getElementById("autoTagBtn").style.display = "none";
+        }
+
+        async function autoTagImage() {
+            const btn = document.getElementById("autoTagBtn");
+            if(!base64ImageString) return;
+            btn.innerHTML = "✨ Analyzing...";
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/products/auto-tag', {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                    body: JSON.stringify({ image: base64ImageString })
+                });
+                const data = await res.json();
+                if(data.success && data.tags) {
+                    if(!document.getElementById("name").value) document.getElementById("name").value = data.tags.suggestedName || '';
+                    if(!document.getElementById("category").value) document.getElementById("category").value = data.tags.category || '';
+                    if(!document.getElementById("description").value) document.getElementById("description").value = data.tags.description || '';
+                } else {
+                    alert(data.message || "Failed to generate tags");
+                }
+            } catch(e) {
+                console.error(e);
+                alert("An error occurred while calling AI.");
+            } finally {
+                btn.innerHTML = "✨ Auto-Fill with AI";
+                btn.disabled = false;
+            }
         }
 
         async function loadProducts() {
@@ -891,5 +924,8 @@
         loadProducts();
 
     </script>
+  <!-- AI Chatbot -->
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <script src="/chatbot.js"></script>
 </body>
 </html>

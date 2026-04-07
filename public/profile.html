@@ -408,6 +408,121 @@
             text-transform: capitalize;
         }
 
+        /* Business Photo Preview */
+        .business-photo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .business-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .photo-slot {
+            aspect-ratio: 4/3;
+            border-radius: var(--border-radius);
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .photo-slot.has-image {
+            border: 2px solid transparent;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .photo-slot.primary {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .photo-slot i.placeholder-icon {
+            font-size: 30px;
+            color: #94a3b8;
+        }
+
+        .photo-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .slot-controls {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(2px);
+            z-index: 5;
+        }
+
+        .card.editing .photo-slot.has-image:hover .slot-controls {
+            display: flex;
+        }
+
+        .slot-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .slot-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .slot-btn.primary-btn { color: #f59e0b; }
+        .slot-btn.delete-btn { color: var(--danger); }
+        
+        .primary-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--primary);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            z-index: 4;
+            display: none;
+        }
+        
+        .photo-slot.primary .primary-badge {
+            display: block;
+        }
+
+        .add-photo-label {
+            position: absolute;
+            inset: 0;
+            display: none;
+            cursor: pointer;
+            z-index: 6;
+        }
+
+        .card.editing .photo-slot:not(.has-image) .add-photo-label {
+            display: block;
+        }
+
         /* Form Grid */
         .form-grid {
             display: grid;
@@ -738,6 +853,17 @@
                     <button class="save-btn" onclick="saveSection('cardBusiness')"><i class="fas fa-save"></i> Save</button>
                 </div>
                 <div class="card-body">
+                    <div class="business-photo-section">
+                        <label class="form-label">Business Gallery (Max 5 photos)</label>
+                        <div class="business-gallery" id="businessGallery">
+                            <!-- Slots will be rendered by JS -->
+                        </div>
+                        <input type="file" id="multiPhotoInput" style="display: none;" accept="image/*">
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+                            <i class="fas fa-info-circle"></i> Upload photos of your warehouse, shop, or factory. Select one as your primary banner.
+                        </p>
+                    </div>
+
                     <div class="form-grid">
                         <div class="form-group col-span-full">
                             <label class="form-label">
@@ -867,6 +993,8 @@
         const authToken = localStorage.getItem("token");
         let pincodeTimer = null;
         let photoBase64 = null;
+        let businessPhotos = [];
+        let primaryPhotoIndex = 0;
 
         // ================= INIT =================
         window.onload = () => {
@@ -967,6 +1095,11 @@
                 if (icon) icon.style.display = 'none';
             }
 
+            // Restore business photos
+            businessPhotos = userData.businessPhotos || [];
+            primaryPhotoIndex = userData.primaryBusinessPhotoIndex || 0;
+            renderGallery();
+
             document.getElementById("displayProfileName").innerText = userData.name || "User";
             document.getElementById("displayProfileRole").innerText = (userData.role || "User").toUpperCase();
         }
@@ -1005,6 +1138,11 @@
             if (cardId === 'cardProfile' && photoBase64) {
                 updateData.photoUrl = photoBase64;
                 photoBase64 = null;
+            }
+            
+            if (cardId === 'cardBusiness') {
+                updateData.businessPhotos = businessPhotos;
+                updateData.primaryBusinessPhotoIndex = primaryPhotoIndex;
             }
 
             // ===== VALIDATION =====
@@ -1123,6 +1261,85 @@
             reader.readAsDataURL(file);
         });
 
+        // ================= BUSINESS GALLERY =================
+        function renderGallery() {
+            const container = document.getElementById("businessGallery");
+            if (!container) return;
+            
+            container.innerHTML = "";
+            
+            // Render existing photos
+            businessPhotos.forEach((src, index) => {
+                const isPrimary = index === primaryPhotoIndex;
+                const slot = document.createElement("div");
+                slot.className = `photo-slot has-image ${isPrimary ? 'primary' : ''}`;
+                slot.innerHTML = `
+                    <img src="${src}" alt="Business Photo ${index + 1}">
+                    <div class="primary-badge">BANNER</div>
+                    <div class="slot-controls">
+                        <button class="slot-btn primary-btn" onclick="setPrimary(${index})" title="Set as Banner">
+                            <i class="fas ${isPrimary ? 'fa-star' : 'fa-star-half-stroke'}"></i>
+                        </button>
+                        <button class="slot-btn delete-btn" onclick="deletePhoto(${index})" title="Delete Photo">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(slot);
+            });
+            
+            // Render empty slots (up to 5 total)
+            const emptySlotsCount = 5 - businessPhotos.length;
+            for (let i = 0; i < emptySlotsCount; i++) {
+                const slot = document.createElement("div");
+                slot.className = "photo-slot";
+                slot.innerHTML = `
+                    <i class="fas fa-plus placeholder-icon"></i>
+                    <label class="add-photo-label" onclick="document.getElementById('multiPhotoInput').click()"></label>
+                `;
+                container.appendChild(slot);
+            }
+        }
+
+        function setPrimary(index) {
+            primaryPhotoIndex = index;
+            renderGallery();
+        }
+
+        function deletePhoto(index) {
+            businessPhotos.splice(index, 1);
+            if (primaryPhotoIndex >= businessPhotos.length) {
+                primaryPhotoIndex = Math.max(0, businessPhotos.length - 1);
+            }
+            renderGallery();
+        }
+
+        document.getElementById("multiPhotoInput")?.addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (!file || businessPhotos.length >= 5) return;
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function () {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    const MAX_WIDTH = 800;
+                    const scale = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const compressed = canvas.toDataURL("image/jpeg", 0.7);
+                    businessPhotos.push(compressed);
+                    renderGallery();
+                };
+            };
+            reader.readAsDataURL(file);
+            e.target.value = ""; // Reset input
+        });
+
         // ================= PROGRESS =================
         function updateProgress() {
             let completed = 0;
@@ -1203,5 +1420,8 @@
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
     </script>
+  <!-- AI Chatbot -->
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <script src="/chatbot.js"></script>
 </body>
 </html>

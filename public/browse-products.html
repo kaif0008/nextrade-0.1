@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexTrade | Explore Products</title>
+  <meta name="description" content="Browse all wholesale products on NexTrade. Filter by category, sort by price, and connect directly with verified suppliers.">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ===== PAGE-LEVEL OVERRIDES ===== */
+    body { background: #f8fafc; font-family: 'Poppins', sans-serif; }
+
+    /* ===== HERO BAND ===== */
+    .hero-band {
+      background: linear-gradient(135deg, #0f172a 0%, #1a2560 60%, #0f172a 100%);
+      padding: 48px 20px 70px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-band::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(67,97,238,0.25) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .hero-band::after {
+      content: '';
+      position: absolute;
+      bottom: -100px; left: 10%;
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, rgba(247,37,133,0.12) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .hero-band h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 34px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-band h1 span {
+      background: linear-gradient(90deg, #4895ef, #f72585);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-band p {
+      color: rgba(255,255,255,0.65);
+      font-size: 15px;
+      margin-bottom: 22px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stats {
+      display: inline-flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stat-pill {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 30px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hero-stat-pill i { color: #4cc9f0; font-size: 13px; }
+    .hero-stat-pill span { color: rgba(255,255,255,0.6); font-weight: 400; margin-left: 2px; }
+
+    /* ===== FILTERS BAR ===== */
+    .filters-bar {
+      background: #ffffff;
+      padding: 22px 20px;
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      margin: -32px auto 32px;
+      max-width: 1200px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .filters-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .search-wrap i.si {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .search-wrap .clear-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 13px;
+      display: none;
+      background: none;
+      border: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 11px 36px 11px 40px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'Poppins', sans-serif;
+      outline: none;
+      transition: 0.2s;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    .search-input:focus {
+      border-color: #4361ee;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(67,97,238,0.08);
+    }
+
+    .filter-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      padding: 10px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'Poppins', sans-serif;
+      color: #334155;
+      background: #f8fafc;
+      outline: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .filter-select:focus { border-color: #4361ee; }
+
+    /* Stock pills */
+    .stock-pills { display: flex; gap: 7px; }
+
+    .stock-pill {
+      padding: 7px 13px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: 0.2s;
+      white-space: nowrap;
+    }
+
+    .stock-pill:hover { border-color: #10b981; color: #10b981; }
+    .stock-pill.active { background: #10b981; color: white; border-color: #10b981; box-shadow: 0 3px 10px rgba(16,185,129,0.22); }
+    .stock-pill.low:hover { border-color: #f59e0b; color: #f59e0b; }
+    .stock-pill.low.active { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 3px 10px rgba(245,158,11,0.22); }
+
+    /* Category chips */
+    .cat-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: 0.2s;
+      white-space: nowrap;
+    }
+
+    .chip:hover { border-color: #4361ee; color: #4361ee; }
+    .chip.active { background: #4361ee; color: white; border-color: #4361ee; box-shadow: 0 3px 10px rgba(67,97,238,0.22); }
+
+    .result-info {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    /* ===== PRODUCTS GRID ===== */
+    .products-section {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    @media(max-width: 1024px) { .products-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media(max-width: 600px)  { .products-grid { grid-template-columns: 1fr; } }
+
+    /* ===== PRODUCT CARD ===== */
+    .p-card {
+      background: white;
+      border: 1px solid #f1f5f9;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .p-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(67,97,238,0.14);
+      border-color: #cbd5e1;
+    }
+
+    /* Image */
+    .p-img-area {
+      position: relative;
+      height: 200px;
+      background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+      overflow: hidden;
+    }
+
+    .p-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .p-card:hover .p-img { transform: scale(1.06); }
+
+    .p-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      color: rgba(67,97,238,0.22);
+    }
+
+    .cat-badge {
+      position: absolute;
+      top: 11px;
+      left: 11px;
+      background: rgba(15,23,42,0.65);
+      backdrop-filter: blur(6px);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+
+    .stock-badge {
+      position: absolute;
+      top: 11px;
+      right: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      z-index: 2;
+    }
+
+    .stock-badge.in  { background: rgba(16,185,129,0.15); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+    .stock-badge.low { background: rgba(245,158,11,0.15);  color: #d97706; border: 1px solid rgba(245,158,11,0.3); }
+    .stock-badge.out { background: rgba(239,35,60,0.12);   color: #dc2626; border: 1px solid rgba(239,35,60,0.25); }
+
+    .oos-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.55);
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .oos-tag {
+      background: #ef233c;
+      color: white;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      transform: rotate(-5deg);
+      box-shadow: 0 3px 8px rgba(239,35,60,0.3);
+    }
+
+    /* Card body */
+    .p-body {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .p-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .p-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-bottom: 9px;
+    }
+
+    .p-price {
+      font-size: 20px;
+      font-weight: 700;
+      color: #4361ee;
+    }
+
+    .p-unit {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .p-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .p-meta div {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .p-meta i { width: 13px; color: #94a3b8; font-size: 11px; }
+
+    /* Wholesaler row */
+    .ws-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 11px;
+      background: rgba(67,97,238,0.04);
+      border-radius: 8px;
+      margin-top: auto;
+    }
+
+    .ws-av {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .ws-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ws-verified { color: #10b981; font-size: 12px; flex-shrink: 0; }
+
+    /* Card actions */
+    .p-actions {
+      display: flex;
+      gap: 10px;
+      border-top: 1px solid #f1f5f9;
+      padding: 12px 16px;
+    }
+
+    .btn-inquire {
+      flex: 1;
+      background: #0f172a;
+      color: white;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn-inquire:hover { background: #4361ee; }
+    .btn-inquire:disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+
+    .btn-ws {
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-ws:hover { border-color: #4361ee; color: #4361ee; background: #f0f4ff; }
+
+    /* ===== SKELETON ===== */
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 70px 20px;
+      color: #64748b;
+    }
+
+    .empty-state i { font-size: 48px; color: #cbd5e1; margin-bottom: 15px; }
+    .empty-state h3 { color: #1e293b; font-size: 18px; margin-bottom: 8px; }
+    .empty-state p  { font-size: 14px; margin-bottom: 20px; }
+    .btn-clear { background: #1e293b; color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: 'Poppins', sans-serif; transition: 0.2s; }
+    .btn-clear:hover { background: #4361ee; }
+
+    /* ===== INQUIRY MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.60);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .modal-overlay.active { display: flex; opacity: 1; }
+
+    .modal-box {
+      background: white;
+      border-radius: 18px;
+      width: 90%;
+      max-width: 460px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-box { transform: translateY(0); }
+
+    .modal-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .modal-hdr h3 { font-size: 16px; font-weight: 700; color: #0f172a; }
+    .modal-cls { background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .modal-cls:hover { background: #f1f5f9; color: #ef233c; }
+
+    .modal-bdy { padding: 22px; }
+
+    .inq-product-card {
+      display: flex;
+      gap: 13px;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .inq-prod-img {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #e0e7ff;
+    }
+
+    .inq-prod-info h4 { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 3px; }
+    .inq-prod-info .price { font-size: 16px; font-weight: 700; color: #4361ee; }
+    .inq-prod-info .supplier { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    .inq-label { font-size: 13px; font-weight: 500; color: #64748b; margin-bottom: 6px; display: block; }
+
+    .inq-textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'Poppins', sans-serif;
+      resize: none;
+      outline: none;
+      transition: 0.2s;
+      color: #1e293b;
+      background: #f8fafc;
+    }
+
+    .inq-textarea:focus { border-color: #4361ee; background: white; box-shadow: 0 0 0 3px rgba(67,97,238,0.08); }
+
+    .modal-ftr {
+      padding: 14px 22px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: white;
+      color: #64748b;
+      border: 1.5px solid #e2e8f0;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: 0.2s;
+    }
+
+    .btn-cancel:hover { border-color: #ef233c; color: #ef233c; }
+
+    .btn-send {
+      background: #4361ee;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .btn-send:hover { background: #3f37c9; box-shadow: 0 4px 12px rgba(67,97,238,0.3); }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #0f172a;
+      color: white;
+      padding: 13px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toast.show   { transform: translateY(0); opacity: 1; }
+    .toast.ok     { background: #065f46; }
+    .toast.err    { background: #7f1d1d; }
+  </style>
+</head>
+
+<body>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast">
+  <i class="fas fa-check-circle"></i>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<!-- ===== HEADER (same as wholesalers.html) ===== -->
+<header>
+  <div class="container header-container">
+    <a href="index.html" class="logo">
+      <div class="logo-icon"><i class="fas fa-arrow-trend-up"></i></div>
+      <div>
+        <div class="logo-text">Nex<span>Trade</span></div>
+        <div class="tagline">The Nexus of efficient Business</div>
+      </div>
+    </a>
+
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="wholesalers.html">Wholesalers</a></li>
+        <li><a href="browse-products.html" class="active">Explore Products</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+
+        <li><a href="login.html" id="loginBtn" class="btn-login">Login</a></li>
+        <li><a href="signup.html" id="signupBtn" class="btn-nav btn-signup">Sign Up</a></li>
+        <li><a href="dashboard.html" id="dashboardBtn" style="display:none;">Dashboard</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== HERO BAND ===== -->
+<div class="hero-band">
+  <h1>Explore <span>All Products</span></h1>
+  <p>Browse verified wholesale products, filter by category and connect directly with suppliers</p>
+  <div class="hero-stats">
+    <div class="hero-stat-pill">
+      <i class="fas fa-box-open"></i>
+      <strong id="statTotal">—</strong>
+      <span>Products</span>
+    </div>
+    <div class="hero-stat-pill">
+      <i class="fas fa-building"></i>
+      <strong id="statWholesalers">—</strong>
+      <span>Wholesalers</span>
+    </div>
+    <div class="hero-stat-pill">
+      <i class="fas fa-tags"></i>
+      <strong id="statCategories">—</strong>
+      <span>Categories</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FILTERS BAR ===== -->
+<div class="filters-bar">
+  <!-- Row 1: Search + Sort + Stock -->
+  <div class="filters-row">
+    <div class="search-wrap">
+      <i class="fas fa-search si"></i>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search by product name or category..." autocomplete="off">
+      <button class="clear-btn" id="clearSearch"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="filter-controls">
+      <select class="filter-select" id="sortSelect">
+        <option value="newest">Newest First</option>
+        <option value="price_asc">Price: Low → High</option>
+        <option value="price_desc">Price: High → Low</option>
+        <option value="name_asc">Name A–Z</option>
+      </select>
+
+      <div class="stock-pills">
+        <button class="stock-pill active" data-val="all">All</button>
+        <button class="stock-pill" data-val="in_stock">In Stock</button>
+        <button class="stock-pill low" data-val="low_stock">Low Stock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Category Chips -->
+  <div class="cat-chips" id="catChips">
+    <button class="chip active" data-cat="">All Categories</button>
+    <button class="chip" data-cat="Grocery">Grocery</button>
+    <button class="chip" data-cat="Electronics">Electronics</button>
+    <button class="chip" data-cat="Textiles">Textiles</button>
+    <button class="chip" data-cat="Pharma">Pharma</button>
+    <button class="chip" data-cat="Hardware">Hardware</button>
+    <button class="chip" data-cat="FMCG">FMCG</button>
+    <button class="chip" data-cat="Clothing">Clothing</button>
+    <button class="chip" data-cat="Food">Food</button>
+  </div>
+
+  <div class="result-info" id="resultInfo">Loading products…</div>
+</div>
+
+<!-- ===== PRODUCTS GRID ===== -->
+<div class="products-section">
+  <div class="products-grid" id="productsGrid">
+    <!-- skeleton or cards rendered here -->
+  </div>
+</div>
+
+<!-- ===== INQUIRY MODAL ===== -->
+<div class="modal-overlay" id="inquiryModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h3><i class="fas fa-paper-plane" style="color:#4361ee; margin-right:8px;"></i>Send Inquiry</h3>
+      <button class="modal-cls" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-bdy">
+      <div class="inq-product-card">
+        <img class="inq-prod-img" id="mImg" src="" alt="Product" onerror="this.style.display='none'">
+        <div class="inq-prod-info">
+          <h4 id="mName">Product</h4>
+          <div class="price" id="mPrice">₹0</div>
+          <div class="supplier" id="mSupplier">Wholesaler</div>
+        </div>
+      </div>
+      <label class="inq-label" for="inqMsg">Your Message</label>
+      <textarea class="inq-textarea" id="inqMsg" rows="4" placeholder="Hi, I'm interested in this product. Please share bulk pricing and availability."></textarea>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-send" id="sendBtn" onclick="sendInquiry()">
+        <i class="fas fa-paper-plane"></i> Send & Open Chat
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI Chatbot ===== -->
+<link rel="stylesheet" href="/css/chatbot.css">
+<script src="/chatbot.js"></script>
+
+<!-- ===== SCRIPT ===== -->
+<script>
+  // ---- Auth ----
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  const loginBtn     = document.getElementById('loginBtn');
+  const signupBtn    = document.getElementById('signupBtn');
+  const dashboardBtn = document.getElementById('dashboardBtn');
+
+  if (user && token) {
+    if (loginBtn)     loginBtn.style.display  = 'none';
+    if (signupBtn)    signupBtn.style.display  = 'none';
+    if (dashboardBtn) {
+      dashboardBtn.style.display = 'inline-block';
+      dashboardBtn.href = user.role === 'retailer' ? 'retailer-dashboard.html' : (user.role === 'wholesaler' ? 'wholesaler-dashboard.html' : 'dashboard.html');
+    }
+  }
+
+  // ---- State ----
+  const state = {
+    all: [],
+    filtered: [],
+    search: '',
+    category: '',
+    stock: 'all',
+    sort: 'newest',
+    wsMap: {}
+  };
+
+  let activeInquiry = null;
+
+  // ---- Helpers ----
+  function avatarColor(str) {
+    const c = ['#4361ee','#10b981','#7209b7','#f72585','#e36414','#0891b2','#d97706'];
+    let n = 0;
+    for (let i = 0; i < str.length; i++) n += str.charCodeAt(i);
+    return c[n % c.length];
+  }
+
+  function showToast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    t.className = `toast ${type}`;
+    document.getElementById('toastMsg').innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3400);
+  }
+
+  // ---- Skeletons ----
+  function showSkeletons(n = 9) {
+    const g = document.getElementById('productsGrid');
+    let h = '';
+    for (let i = 0; i < n; i++) {
+      h += `
+        <div class="p-card">
+          <div class="skeleton" style="height:200px;border-radius:0;"></div>
+          <div class="p-body">
+            <div class="skeleton" style="height:17px;width:70%;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:23px;width:40%;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:12px;width:55%;margin-bottom:6px;"></div>
+            <div class="skeleton" style="height:12px;width:45%;margin-bottom:14px;"></div>
+            <div class="skeleton" style="height:34px;border-radius:8px;"></div>
+          </div>
+          <div class="p-actions" style="border-top:1px solid #f1f5f9;">
+            <div class="skeleton" style="height:36px;flex:1;border-radius:7px;"></div>
+            <div class="skeleton" style="height:36px;width:110px;border-radius:7px;"></div>
+          </div>
+        </div>`;
+    }
+    g.innerHTML = h;
+  }
+
+  // ---- Fetch ----
+  async function fetchProducts() {
+    showSkeletons();
+    try {
+      const [pRes, wRes] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/wholesalers')
+      ]);
+      const [pData, wData] = await Promise.all([pRes.json(), wRes.json()]);
+
+      if (!pData.success) throw new Error();
+
+      if (wData.success) {
+        wData.wholesalers.forEach(w => { state.wsMap[w._id] = w; });
+      }
+
+      state.all = pData.products || [];
+
+      // Stats
+      const uWs   = new Set(state.all.map(p => p.wholesalerId?.toString()).filter(Boolean));
+      const uCats  = new Set(state.all.map(p => p.category).filter(Boolean));
+      document.getElementById('statTotal').innerText       = state.all.length;
+      document.getElementById('statWholesalers').innerText = uWs.size;
+      document.getElementById('statCategories').innerText  = uCats.size;
+
+      // Dynamic category chips
+      const base = ['','Grocery','Electronics','Textiles','Pharma','Hardware','FMCG','Clothing','Food'];
+      uCats.forEach(cat => {
+        if (!base.includes(cat)) {
+          const el = document.createElement('button');
+          el.className  = 'chip';
+          el.dataset.cat = cat;
+          el.innerText   = cat;
+          el.addEventListener('click', () => setCat(cat, el));
+          document.getElementById('catChips').appendChild(el);
+        }
+      });
+
+      applyFilters();
+    } catch (e) {
+      document.getElementById('productsGrid').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-exclamation-triangle" style="color:#ef233c;"></i>
+          <h3>Could not load products</h3>
+          <p>Please check your connection and try again.</p>
+          <button class="btn-clear" onclick="fetchProducts()">Retry</button>
+        </div>`;
+      document.getElementById('resultInfo').innerText = 'Error loading products.';
+    }
+  }
+
+  // ---- Filter & sort ----
+  function applyFilters() {
+    const term = state.search.toLowerCase().trim();
+
+    state.filtered = state.all.filter(p => {
+      if (term) {
+        const mn = p.name?.toLowerCase().includes(term);
+        const mc = p.category?.toLowerCase().includes(term);
+        if (!mn && !mc) return false;
+      }
+      if (state.category && p.category !== state.category) return false;
+      if (state.stock === 'in_stock'  && p.stock <= 10)                   return false;
+      if (state.stock === 'low_stock' && !(p.stock > 0 && p.stock <= 10)) return false;
+      return true;
+    });
+
+    if      (state.sort === 'price_asc')  state.filtered.sort((a,b) => (a.pricePerUnit||0) - (b.pricePerUnit||0));
+    else if (state.sort === 'price_desc') state.filtered.sort((a,b) => (b.pricePerUnit||0) - (a.pricePerUnit||0));
+    else if (state.sort === 'name_asc')   state.filtered.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    else                                  state.filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    render();
+  }
+
+  // ---- Render ----
+  function render() {
+    const grid = document.getElementById('productsGrid');
+    const info = document.getElementById('resultInfo');
+    info.innerText = `Showing ${state.filtered.length} product${state.filtered.length !== 1 ? 's' : ''}${state.search ? ` for "${state.search}"` : ''}`;
+
+    if (!state.filtered.length) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-box-open"></i>
+          <h3>No products found</h3>
+          <p>Try adjusting your search or removing filters.</p>
+          <button class="btn-clear" onclick="resetFilters()">Clear All Filters</button>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = '';
+    state.filtered.forEach(p => {
+      const ws      = state.wsMap[p.wholesalerId?.toString()] || {};
+      const wsName  = ws.businessName || ws.name || 'Unknown Wholesaler';
+      const wsInit  = wsName.charAt(0).toUpperCase();
+      const wsColor = avatarColor(ws._id || wsName);
+      const isVerif = !!(ws.name && ws.mobileNumber && ws.gstNumber && ws.houseNo);
+      const isOOS   = p.stock === 0;
+
+      let sBadge = 'in',  sLabel = 'In Stock';
+      if (isOOS)           { sBadge = 'out'; sLabel = 'Out of Stock'; }
+      else if (p.stock<=10){ sBadge = 'low'; sLabel = 'Low Stock'; }
+
+      const imgHtml = p.image
+        ? `<img class="p-img" src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'p-img-placeholder\\'>${p.name?.charAt(0).toUpperCase()||'?'}</div>'">`
+        : `<div class="p-img-placeholder">${p.name?.charAt(0).toUpperCase()||'?'}</div>`;
+
+      const card = document.createElement('div');
+      card.className = 'p-card';
+      card.innerHTML = `
+        <div class="p-img-area">
+          ${imgHtml}
+          ${p.category ? `<div class="cat-badge">${p.category}</div>` : ''}
+          <div class="stock-badge ${sBadge}">${sLabel}</div>
+          ${isOOS ? '<div class="oos-overlay"><div class="oos-tag">Out of Stock</div></div>' : ''}
+        </div>
+        <div class="p-body">
+          <div class="p-name">${p.name || 'Unnamed Product'}</div>
+          <div class="p-price-row">
+            <span class="p-price">₹${(p.pricePerUnit||0).toLocaleString('en-IN')}</span>
+            <span class="p-unit">per ${p.unit||'unit'}</span>
+          </div>
+          <div class="p-meta">
+            ${p.moq ? `<div><i class="fas fa-layer-group"></i> MOQ: ${p.moq} units</div>` : ''}
+            <div><i class="fas fa-cubes"></i> Stock: ${p.stock > 0 ? p.stock + ' units' : '<span style="color:#ef233c">Out of Stock</span>'}</div>
+          </div>
+          <div class="ws-row">
+            <div class="ws-av" style="background:${wsColor}">${wsInit}</div>
+            <span class="ws-name">${wsName}</span>
+            ${isVerif ? '<i class="fas fa-check-circle ws-verified" title="Verified"></i>' : ''}
+          </div>
+        </div>
+        <div class="p-actions">
+          <button class="btn-inquire" onclick="openModal('${p._id}')" ${isOOS ? 'disabled' : ''}>
+            <i class="fas fa-paper-plane"></i> Inquire
+          </button>
+          <button class="btn-ws" onclick="location.href='items.html?id=${p.wholesalerId}'">
+            <i class="fas fa-store"></i> View Wholesaler
+          </button>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  // ---- Modal ----
+  function openModal(pid) {
+    const p  = state.all.find(x => x._id === pid);
+    if (!p) return;
+    const ws = state.wsMap[p.wholesalerId?.toString()] || {};
+    activeInquiry = { product: p, wholesaler: ws };
+
+    document.getElementById('mImg').src      = p.image || '';
+    document.getElementById('mName').innerText    = p.name || 'Product';
+    document.getElementById('mPrice').innerText   = `₹${(p.pricePerUnit||0).toLocaleString('en-IN')} per ${p.unit||'unit'}`;
+    document.getElementById('mSupplier').innerText= `by ${ws.businessName || ws.name || 'Wholesaler'}`;
+    document.getElementById('inqMsg').value       = `Hi, I'm interested in "${p.name}" (MOQ: ${p.moq||1} units). Please share bulk pricing and availability.`;
+
+    document.getElementById('inquiryModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('inquiryModal').classList.remove('active');
+    activeInquiry = null;
+  }
+
+  async function sendInquiry() {
+    if (!user || !token) { location.href = 'login.html'; return; }
+    if (!activeInquiry) return;
+
+    const { product, wholesaler } = activeInquiry;
+    const msg = document.getElementById('inqMsg').value.trim();
+    if (!msg) { showToast('Please write a message.', 'err'); return; }
+
+    const wsId = wholesaler._id || product.wholesalerId;
+    if (!wsId) { showToast('Wholesaler not found.', 'err'); return; }
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+
+    try {
+      // Bump reserved stock
+      try {
+        await fetch(`/api/products/${product._id}/inquiry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ qty: product.moq || 1 })
+        });
+      } catch (_) {}
+
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          senderId: user._id,
+          receiverId: wsId,
+          message: msg,
+          type: 'text',
+          productName: product.name,
+          productData: { name: product.name, price: product.pricePerUnit, unit: product.unit, image: product.image, id: product._id }
+        })
+      });
+
+      const d = await res.json();
+      if (!d.success) throw new Error();
+
+      closeModal();
+      showToast('Inquiry sent! Redirecting to chat…', 'ok');
+      setTimeout(() => { location.href = `messages.html?user=${wsId}&product=${encodeURIComponent(product.name)}`; }, 1200);
+    } catch (e) {
+      showToast('Failed to send. Please try again.', 'err');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send & Open Chat';
+    }
+  }
+
+  // ---- Filters ----
+  function setCat(cat, el) {
+    state.category = cat;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+  }
+
+  function resetFilters() {
+    state.search = ''; state.category = ''; state.stock = 'all'; state.sort = 'newest';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sortSelect').value  = 'newest';
+    document.getElementById('clearSearch').style.display = 'none';
+    document.querySelectorAll('.chip').forEach(c  => c.classList.toggle('active', c.dataset.cat === ''));
+    document.querySelectorAll('.stock-pill').forEach(p => p.classList.toggle('active', p.dataset.val === 'all'));
+    applyFilters();
+  }
+
+  // ---- Events ----
+  document.getElementById('searchInput').addEventListener('input', e => {
+    state.search = e.target.value;
+    document.getElementById('clearSearch').style.display = state.search ? 'block' : 'none';
+    applyFilters();
+  });
+
+  document.getElementById('clearSearch').addEventListener('click', () => {
+    state.search = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('clearSearch').style.display = 'none';
+    applyFilters();
+  });
+
+  document.getElementById('sortSelect').addEventListener('change', e => {
+    state.sort = e.target.value;
+    applyFilters();
+  });
+
+  document.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => setCat(c.dataset.cat, c));
+  });
+
+  document.querySelectorAll('.stock-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      state.stock = p.dataset.val;
+      document.querySelectorAll('.stock-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      applyFilters();
+    });
+  });
+
+  document.getElementById('inquiryModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('inquiryModal')) closeModal();
+  });
+
+  // ---- Init ----
+  fetchProducts();
+</script>
+
+</body>
+</html>

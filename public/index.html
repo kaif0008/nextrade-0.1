@@ -11,7 +11,7 @@
   <!-- ==================================================================================================== -->
   <!-- ==================================================================================================== -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Open+Sans:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&family=Open+Sans:wght@400;600&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 
@@ -19,6 +19,90 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
   <!-- ==================================================================================================== -->
 
+  <!-- INJECTED CUSTOM INDEX STYLING -->
+  <style>
+    /* Premium Redesign Aesthetics */
+    :root {
+      --nx-navy: #0f172a;
+      --nx-primary: #4361ee;
+      --nx-accent: #fca311;
+      --nx-bg: #f8fafc;
+    }
+    body { background: var(--nx-bg); overflow-x: hidden; }
+    
+    /* Hero */
+    .nx-hero { padding: 120px 20px 80px; background: radial-gradient(circle at top right, rgba(67, 97, 238, 0.08) 0%, transparent 40%), var(--nx-navy); color: white; position: relative; overflow: hidden; }
+    .nx-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml;utf8,<svg opacity="0.05" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%23ffffff" stroke-width="0.5" stroke-dasharray="2 4"/></svg>') repeat; z-index: 0; }
+    .nx-hero-content { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: center; }
+    @media(max-width: 900px) { .nx-hero-content { grid-template-columns: 1fr; text-align: center; } }
+    .nx-badge { display: inline-block; padding: 6px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 20px; color: #cbd5e1; backdrop-filter: blur(4px); }
+    .nx-h1 { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 64px); font-weight: 700; line-height: 1.1; margin-bottom: 20px; }
+    .nx-h1 span { background: linear-gradient(120deg, #4361ee, #4cc9f0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nx-sub { font-size: 18px; color: #94a3b8; line-height: 1.6; margin-bottom: 30px; max-width: 500px; }
+    @media(max-width: 900px) { .nx-sub { margin: 0 auto 30px; } }
+    
+    .nx-cta-wrap { display: flex; gap: 15px; }
+    @media(max-width: 900px) { .nx-cta-wrap { justify-content: center; } }
+    .nx-btn { padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; transition: 0.3s; display: inline-block; }
+    .nx-btn-primary { background: linear-gradient(90deg, #4361ee, #3a0ca3); color: white; box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3); }
+    .nx-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(67, 97, 238, 0.4); }
+    .nx-btn-secondary { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px); }
+    .nx-btn-secondary:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+    
+    .nx-hero-img-wrap { position: relative; }
+    .nx-hero-main-img { width: 100%; max-width: 500px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); margin: auto; display: block; border: 1px solid rgba(255,255,255,0.1); }
+    .nx-float-card { position: absolute; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 15px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .nx-float-1 { bottom: -20px; left: -30px; animation: float 6s ease-in-out infinite; }
+    .nx-float-2 { top: -20px; right: -20px; animation: float 5s ease-in-out infinite reverse; }
+    .nx-float-icon { width: 40px; height: 40px; background: rgba(67,97,238,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #4cc9f0; font-size: 20px; }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+    @media(max-width: 900px) { .nx-float-card { display: none; } }
+
+    /* Stats Strip */
+    .nx-stats { background: white; padding: 40px 20px; border-bottom: 1px solid #e2e8f0; }
+    .nx-stats-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center; }
+    @media(max-width: 768px) { .nx-stats-grid { grid-template-columns: 1fr; } }
+    .nx-stat-num { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 700; color: var(--nx-primary); margin-bottom: 5px; }
+    .nx-stat-label { font-size: 14px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+    
+    /* Categories Bento */
+    .nx-section { padding: 80px 20px; }
+    .nx-container { max-width: 1200px; margin: 0 auto; }
+    .nx-sec-title { text-align: center; margin-bottom: 50px; }
+    .nx-sec-title h2 { font-family: 'Syne', sans-serif; font-size: 36px; color: var(--nx-navy); margin-bottom: 10px; }
+    .nx-sec-title p { color: #64748b; font-size: 16px; max-width: 600px; margin: 0 auto; }
+    
+    .nx-bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 250px; gap: 20px; }
+    @media(max-width: 900px) { .nx-bento { grid-template-columns: repeat(2, 1fr); } }
+    @media(max-width: 480px) { .nx-bento { grid-template-columns: 1fr; } }
+    
+    .b-card { position: relative; border-radius: 20px; overflow: hidden; text-decoration: none; display: flex; align-items: flex-end; padding: 25px; transition: 0.4s; }
+    .b-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.9), rgba(15,23,42,0.1)); z-index: 1; transition: 0.4s; }
+    .b-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; transition: 0.5s; }
+    .b-card:hover img { transform: scale(1.1); }
+    .b-card:hover::before { background: linear-gradient(to top, rgba(15,23,42,0.95), rgba(67,97,238,0.4)); }
+    .b-tall { grid-row: span 2; }
+    .b-wide { grid-column: span 2; }
+    
+    .b-content { position: relative; z-index: 2; color: white; width: 100%; }
+    .b-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.3); }
+    .b-content h3 { font-family: 'Syne', sans-serif; font-size: 24px; margin: 0 0 5px; }
+    .b-content span { font-size: 13px; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
+    .b-content span i { opacity: 0; transform: translateX(-10px); transition: 0.3s; }
+    .b-card:hover .b-content span i { opacity: 1; transform: translateX(0); }
+
+    /* Features 2.0 */
+    .nx-feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+    @media(max-width: 900px) { .nx-feat-grid { grid-template-columns: 1fr; } }
+    .nx-f-card { background: white; padding: 40px 30px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: 0.3s; position: relative; z-index: 1; overflow: hidden; }
+    .nx-f-card::after { content: ''; position: absolute; inset: 0; border: 2px solid transparent; border-radius: 20px; background: linear-gradient(120deg, #4361ee, #4cc9f0) border-box; -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); -webkit-mask-composite: destination-out; mask-composite: exclude; opacity: 0; transition: 0.3s; z-index: -1; }
+    .nx-f-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(67,97,238,0.1); }
+    .nx-f-card:hover::after { opacity: 1; }
+    .nx-f-icon { width: 70px; height: 70px; margin: 0 auto 20px; background: #f8fafc; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--nx-primary); position: relative; }
+    .nx-f-card:hover .nx-f-icon { background: linear-gradient(120deg, #4361ee, #4cc9f0); color: white; }
+    .nx-f-card h3 { font-family: 'Syne', sans-serif; font-size: 20px; color: var(--nx-navy); margin-bottom: 15px; }
+    .nx-f-card p { color: #64748b; font-size: 14px; line-height: 1.6; }
+  </style>
 </head>
 
 <body>
@@ -39,6 +123,7 @@
         <ul>
           <li><a href="index.html" class="active">Home</a></li>
           <li><a href="wholesalers.html">Wholesalers</a></li>
+          <li><a href="browse-products.html">Explore Products</a></li>
           <li><a href="contact.html">Contact Us</a></li>
 
           <!-- Auth buttons -->
@@ -54,61 +139,139 @@
   </header>
 
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="container hero-container">
-      <div class="hero-content">
-        <h1>Connect with verified wholesalers. Stock Your Store with Confidence!</h1>
-        <p>Join thousands of shopkeepers who trust NexTrade for quality products at wholesale prices. Fast delivery,
-          secure payments, and exceptional support.</p>
-        <div class="cta-buttons">
-          <a href="wholesalers.html" class="btn btn-primary">Explore Wholesalers</a>
-          <a href="signup.html" class="btn btn-secondary">List Your Products</a>
+  <!-- ==================== NX REDESIGN START ==================== -->
+  
+  <!-- HERO -->
+  <section class="nx-hero">
+    <div class="nx-hero-content">
+      <div class="nx-hero-text gsap-fade">
+        <div class="nx-badge"><i class="fas fa-shield-check"></i> India's #1 Trusted B2B Hub</div>
+        <h1 class="nx-h1">The Nexus of <br><span>Wholesale Trading</span></h1>
+        <p class="nx-sub">Discover pre-verified wholesalers, secure unbeatable bulk rates, and seamlessly restock your inventory through one intelligent platform.</p>
+        <div class="nx-cta-wrap">
+          <a href="wholesalers.html" class="nx-btn nx-btn-primary">Browse Wholesalers <i class="fas fa-arrow-right" style="margin-left:5px;"></i></a>
+          <a href="signup.html" class="nx-btn nx-btn-secondary">Join as Supplier</a>
         </div>
       </div>
-      <div class="hero-image">
-        <img
-          src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
-          alt="Shopkeeper reviewing products">
+      
+      <div class="nx-hero-img-wrap gsap-slide-left">
+        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=800&auto=format&fit=crop" class="nx-hero-main-img" alt="Wholesale Trade Dashboard">
+        
+        <div class="nx-float-card nx-float-1">
+          <div class="nx-float-icon"><i class="fas fa-box-open"></i></div>
+          <div>
+            <div style="font-weight:700; font-family:'Syne',sans-serif; font-size:18px;">50,000+</div>
+            <div style="font-size:12px; color:#cbd5e1;">Products Listed</div>
+          </div>
+        </div>
+        
+        <div class="nx-float-card nx-float-2">
+          <div class="nx-float-icon" style="color:#10b981; background:rgba(16,185,129,0.2);"><i class="fas fa-check-circle"></i></div>
+          <div>
+            <div style="font-weight:700; font-family:'Syne',sans-serif; font-size:18px;">100% Verified</div>
+            <div style="font-size:12px; color:#cbd5e1;">Trusted Suppliers</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Features Section -->
-  <section class="features" id="footer1">
-    <div class="container">
-      <div class="section-title">
-        <h2>Why Choose NexTrade?</h2>
-        <p>We make wholesale trading simple, secure, and profitable for both shopkeepers and wholesalers</p>
+  <!-- LIVE STATS -->
+  <section class="nx-stats">
+    <div class="nx-stats-grid">
+      <div class="gsap-counter">
+        <div class="nx-stat-num">15,000+</div>
+        <div class="nx-stat-label">Active Retailers</div>
       </div>
+      <div class="gsap-counter" style="border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+        <div class="nx-stat-num">850+</div>
+        <div class="nx-stat-label">Verified Wholesalers</div>
+      </div>
+      <div class="gsap-counter">
+        <div class="nx-stat-num">120+</div>
+        <div class="nx-stat-label">Cities Covered</div>
+      </div>
+    </div>
+  </section>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="ri-product-hunt-fill"></i>
+  <!-- CATEGORIES BENTO MATRIX -->
+  <section class="nx-section" style="background:#f1f5f9;">
+    <div class="nx-container">
+      <div class="nx-sec-title gsap-fade">
+        <h2>Explore By Category</h2>
+        <p>Source high-margin inventory directly from top-rated manufacturers and distributors across massive categories.</p>
+      </div>
+      
+      <div class="nx-bento">
+        <a href="wholesalers.html" class="b-card b-tall b-wide gsap-scale">
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80" alt="Grocery">
+          <div class="b-content">
+            <div class="b-icon"><i class="fas fa-shopping-basket"></i></div>
+            <h3>FMCG & Groceries</h3>
+            <span>12,400+ Products <i class="fas fa-arrow-right"></i></span>
           </div>
-          <h3>Verified Wholesalers</h3>
-          <p>All suppliers undergo strict verification for quality assurance and reliability.</p>
+        </a>
+        
+        <a href="wholesalers.html" class="b-card gsap-scale" style="transition-delay:0.1s;">
+          <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500&q=80" alt="Electronics">
+          <div class="b-content">
+            <div class="b-icon"><i class="fas fa-laptop"></i></div>
+            <h3>Electronics</h3>
+            <span>8,100+ Products <i class="fas fa-arrow-right"></i></span>
+          </div>
+        </a>
+        
+        <a href="wholesalers.html" class="b-card gsap-scale" style="transition-delay:0.2s;">
+          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500&q=80" alt="Pharma">
+          <div class="b-content">
+            <div class="b-icon"><i class="fas fa-capsules"></i></div>
+            <h3>Pharma & Health</h3>
+            <span>4,500+ Products <i class="fas fa-arrow-right"></i></span>
+          </div>
+        </a>
+        
+        <a href="wholesalers.html" class="b-card b-wide gsap-scale" style="transition-delay:0.3s;">
+          <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&q=80" alt="Apparel">
+          <div class="b-content">
+            <div class="b-icon"><i class="fas fa-tshirt"></i></div>
+            <h3>Clothing & Textiles</h3>
+            <span>9,200+ Products <i class="fas fa-arrow-right"></i></span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES 2.0 -->
+  <section class="nx-section" style="background:white;">
+    <div class="nx-container">
+      <div class="nx-sec-title gsap-fade">
+        <h2>Unfair Advantage For Your Business</h2>
+        <p>We eliminate the intermediaries and connect you directly with the source.</p>
+      </div>
+      
+      <div class="nx-feat-grid">
+        <div class="nx-f-card gsap-fade-up">
+          <div class="nx-f-icon"><i class="ri-shield-check-fill"></i></div>
+          <h3>Strict Verification</h3>
+          <p>Every wholesaler passes rigorous KYC documentation and facility checks to ensure you only deal with legitimate businesses.</p>
         </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-tags"></i>
-          </div>
-          <h3>Competitive Pricing</h3>
-          <p>Access wholesale prices that maximize your profit margins with no middlemen.</p>
+        
+        <div class="nx-f-card gsap-fade-up" style="transition-delay:0.1s;">
+          <div class="nx-f-icon"><i class="ri-money-dollar-circle-fill"></i></div>
+          <h3>0% Middleman Fees</h3>
+          <p>Negotiate directly with manufacturers and major distributors via integrated messaging to secure ultimate margins.</p>
         </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-truck-fast"></i>
-          </div>
-          <h3>Browse Products</h3>
-          <p>Find product according to your convenience.</p>
+        
+        <div class="nx-f-card gsap-fade-up" style="transition-delay:0.2s;">
+          <div class="nx-f-icon"><i class="ri-rocket-2-fill"></i></div>
+          <h3>Smart Analytics</h3>
+          <p>Wholesalers benefit from an integrated Real-Time Inventory dashboard keeping their core metrics and stock levels flowing smoothly.</p>
         </div>
       </div>
     </div>
   </section>
+  <!-- ==================== NX REDESIGN END ==================== -->
   <footer>
     <div class="container">
       <div class="footer-content">
@@ -176,14 +339,40 @@
     integrity="sha512-AcqPGqrrAEtEwe+ADO5R8RbdFi7tuU7b/A2cJJH0Im0D18NRk5p5s4B3E5PMuO81KFw0ClN7J5SHVUJz7KOb0A=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-  <script src="/gsap/index.js"></script>
-  <script src="/js/index.js"></script>
+  <script>
+    // Inline GSAP Initializations
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+          gsap.registerPlugin(ScrollTrigger);
+          
+          gsap.from(".nx-hero-text", { opacity: 0, y: 30, duration: 1, ease: "power3.out" });
+          gsap.from(".nx-hero-img-wrap", { opacity: 0, x: 40, duration: 1, delay: 0.2, ease: "power3.out" });
+          
+          gsap.utils.toArray('.gsap-fade').forEach(el => {
+            gsap.from(el, { scrollTrigger: { trigger: el, start: "top 80%" }, opacity: 0, y: 30, duration: 0.8 });
+          });
+          
+          gsap.utils.toArray('.gsap-fade-up').forEach((el, i) => {
+            gsap.from(el, { scrollTrigger: { trigger: el, start: "top 85%" }, opacity: 0, y: 40, duration: 0.8 });
+          });
+          
+          gsap.utils.toArray('.gsap-scale').forEach(el => {
+            gsap.from(el, { scrollTrigger: { trigger: el, start: "top 85%" }, opacity: 0, scale: 0.9, duration: 0.8 });
+          });
+        }
+      }, 100);
+    });
+  </script>
 
   <!-- ==================================================================================================== -->
   <!-- ==================================================================================================== -->
 
 
 
+  <!-- AI Chatbot -->
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <script src="/chatbot.js"></script>
 </body>
 
 <script>

@@ -1,143 +1,642 @@
-<div style="display:flex;height:100vh">
+<!DOCTYPE html>
+<html lang="en">
 
-  <!-- LEFT SIDE (USER LIST) -->
-  <div style="width:30%;border-right:1px solid #ddd;">
-    <h3>Chats</h3>
-    <div id="userList"></div>
-  </div>
+<head>
+    <meta charset="UTF-8">
+    <title>NexTrade | Messages</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-hover: #3f37c9;
+            --bg-color: #f4f6f9;
+            --sidebar-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --danger: #ef233c;
+            --chat-bg: #f0f2f5;
+            --bubble-me: #dcf8c6;
+            --bubble-other: #ffffff;
+            --unread-bg: #25d366;
+        }
 
-  <!-- RIGHT SIDE (CHAT BOX) -->
-  <div style="flex:1;padding:10px;">
-    <h3 id="chatTitle">Select a user</h3>
-    <div id="chatBox" style="height:70vh;overflow-y:auto;border:1px solid #ddd;"></div>
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-    <input id="msgInput" placeholder="Type message">
-    <button onclick="sendMessage()">Send</button>
-  </div>
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex; height: 100vh; overflow: hidden;
+        }
 
-</div>
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px; background: var(--sidebar-bg);
+            height: 100vh; position: fixed; left: 0; top: 0;
+            padding: 24px 20px; display: flex; flex-direction: column;
+            box-shadow: var(--shadow-sm); z-index: 100; transition: var(--transition);
+        }
 
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+        .sidebar-header { margin-bottom: 40px; }
+        .logo {
+            font-size: 24px; font-weight: 700; color: var(--primary);
+            display: flex; align-items: center; gap: 10px; text-decoration: none;
+        }
 
-<script>
-const socket = io("http://localhost:5010");
+        .nav-links { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .nav-link {
+            display: flex; align-items: center; gap: 15px; padding: 12px 16px;
+            border-radius: var(--border-radius); color: var(--text-muted);
+            text-decoration: none; font-weight: 500; transition: var(--transition);
+            border: none; background: none; width: 100%; text-align: left;
+            cursor: pointer; font-size: 15px;
+        }
 
-const user = JSON.parse(localStorage.getItem("user"));
-const token = localStorage.getItem("token");
+        .nav-link i { font-size: 18px; width: 24px; text-align: center; }
+        .nav-link:hover { background: rgba(67, 97, 238, 0.05); color: var(--primary); }
+        .nav-link.active { background: var(--primary); color: white; box-shadow: var(--shadow-sm); }
+        .logout-btn { margin-top: auto; color: var(--danger); }
 
-let currentUser = null;
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px; flex: 1; padding: 20px 30px;
+            display: flex; flex-direction: column; height: 100vh;
+        }
 
-// REGISTER
-socket.emit("register", user._id);
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0; }
+        .welcome-text h1 { font-size: 24px; font-weight: 600; color: var(--text-main); }
 
-// LOAD CONVERSATIONS
-async function loadUsers() {
-  const res = await fetch("/api/conversations", {
-    headers: { Authorization: "Bearer " + token }
-  });
+        .chat-layout {
+            display: flex; flex: 1; background: var(--card-bg);
+            border-radius: var(--border-radius); box-shadow: var(--shadow-sm);
+            overflow: hidden; margin-bottom: 10px;
+        }
 
-  const data = await res.json();
+        .contacts-area { width: 320px; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; background: #ffffff; }
+        .contacts-header { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+        .contacts-list { flex: 1; overflow-y: auto; }
+        .contact-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: var(--transition); position: relative; }
+        .contact-item:hover, .contact-item.active { background: #f8fafc; }
+        .contact-item.active { border-left: 4px solid var(--primary); padding-left: 16px; }
 
-  document.getElementById("userList").innerHTML =
-    data.users.map(u => `
-      <div onclick="openChat('${u._id}','${u.name}')"
-           style="padding:10px;border-bottom:1px solid #ddd;cursor:pointer;">
-        ${u.name}
-      </div>
-    `).join("");
-}
+        .contact-avatar-wrap { position: relative; margin-right: 15px; flex-shrink: 0; }
+        .contact-avatar {
+            width: 45px; height: 45px; border-radius: 50%;
+            background: var(--primary-light); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 16px;
+        }
+        .status-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #cbd5e1; border: 2px solid white;
+            position: absolute; bottom: 2px; right: 2px;
+        }
+        .status-dot.online { background: #2bc155; }
 
-// OPEN CHAT
-async function openChat(id, name) {
-  currentUser = id;
-  document.getElementById("chatTitle").innerText = name;
+        .contact-info { flex: 1; overflow: hidden; }
+        .contact-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .contact-name { font-weight: 600; font-size: 14px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .unread-badge {
+            background: var(--unread-bg); color: white; font-size: 10px;
+            font-weight: 700; padding: 2px 6px; border-radius: 10px;
+            min-width: 18px; text-align: center;
+        }
 
-  const res = await fetch(`/api/messages/${id}`, {
-    headers: { Authorization: "Bearer " + token }
-  });
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--chat-bg); position: relative; }
+        .chat-header { padding: 15px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .chat-header-left { display: flex; align-items: center; }
+        .chat-header-avatar { width: 40px; height: 40px; border-radius: 50%; background: #cbd5e1; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 15px; }
+        .chat-header-info h2 { font-size: 16px; font-weight: 600; color: var(--text-main); line-height: 1.2; }
+        .chat-header-info p { font-size: 12px; color: #64748b; font-weight: 500; margin-top: 2px; }
+        .chat-header-info p.online { color: #2bc155; }
+        .chat-header-actions { display: flex; gap: 15px; color: var(--text-muted); font-size: 18px; }
+        .chat-header-actions i { cursor: pointer; transition: var(--transition); }
+        .chat-header-actions i:hover { color: var(--danger); }
 
-  const data = await res.json();
+        .chat-messages { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        
+        .msg-bubble-wrap { display: flex; width: 100%; margin-bottom: 4px; }
+        .msg-bubble-wrap.sent { justify-content: flex-end; }
+        .msg-bubble-wrap.recv { justify-content: flex-start; }
 
-  const box = document.getElementById("chatBox");
-  box.innerHTML = "";
+        .message {
+            max-width: 70%; padding: 8px 12px; border-radius: 8px;
+            font-size: 14px; line-height: 1.4; position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .message.is-me { background: var(--bubble-me); border-top-right-radius: 0; color: #111b21; }
+        .message.is-other { background: var(--bubble-other); border-top-left-radius: 0; color: #111b21; }
 
-  data.messages.forEach(m => addMessage(m));
-}
+        .msg-footer { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 4px; font-size: 10px; color: #667781; }
+        .tick-icon { font-size: 12px; }
+        .tick-icon.read { color: #53bdeb; }
 
-// DISPLAY MSG
-function addMessage(m) {
-  const div = document.createElement("div");
-  div.style.margin = "5px";
+        .empty-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); background: #f8fafc; }
+        .empty-chat i { font-size: 48px; margin-bottom: 15px; color: #cbd5e1; }
 
-  if (m.senderId === user._id) {
-    div.style.textAlign = "right";
-    div.innerText = m.message;
-  } else {
-    div.style.textAlign = "left";
-    div.innerText = m.message;
-  }
+        .chat-input-area { padding: 15px 25px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        .chat-input { flex: 1; padding: 12px 20px; border: 1px solid #e2e8f0; border-radius: 24px; font-size: 14px; outline: none; background: #f8fafc; }
+        .media-actions { display: flex; align-items: center; gap: 15px; color: var(--primary); font-size: 20px; }
+        .media-actions i { cursor: pointer; transition: var(--transition); }
+        .media-actions i:hover { opacity: 0.7; transform: scale(1.1); }
+        .send-btn { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); color: white; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); font-size: 16px; }
+        .send-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
 
-  document.getElementById("chatBox").appendChild(div);
-}
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: white; padding: 20px; border-radius: var(--border-radius); width: 500px; max-width: 90%; box-shadow: var(--shadow-md); position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-// SEND
-function sendMessage() {
-  const text = document.getElementById("msgInput").value;
+        .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000; cursor: pointer; }
+        .lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
 
-  socket.emit("send_message", {
-    senderId: user._id,
-    receiverId: currentUser,
-    message: text
-  });
+        @media (max-width: 900px) {
+            .contacts-area { width: 80px; }
+            .contact-info, .contacts-header h3 { display: none; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 15px; }
+            .toggle-btn { display: block; }
+        }
+    </style>
+</head>
 
-  document.getElementById("msgInput").value = "";
-}
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:90;"></div>
+    
+    <div class="lightbox-overlay" id="lightbox" onclick="this.style.display='none'">
+        <img class="lightbox-img" id="lightboxImg" src="">
+    </div>
 
-// RECEIVE
-socket.on("receive_message", (data) => {
-  if (data.senderId === currentUser || data.receiverId === currentUser) {
-    addMessage(data);
-  }
-});
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo"><i class="fas fa-chart-line"></i> NexTrade</a>
+            <button class="toggle-btn" id="closeSidebar" style="display:none;"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="nav-links" id="sidebarNav"></nav>
+    </aside>
 
-loadUsers();
+    <main class="main-content">
+        <header class="topbar">
+            <div class="welcome-text" style="display: flex; align-items: center; gap: 15px;">
+                <button class="toggle-btn" id="openSidebar" style="background:none; border:none; font-size:20px; display:none;"><i class="fas fa-bars"></i></button>
+                <h1>Message Center</h1>
+            </div>
+            <div style="background:white; padding:6px 15px; border-radius:30px; box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="location.href='profile.html'">
+                <div style="text-align:right;">
+                    <div style="font-size:13px; font-weight:600;" id="topName">User</div>
+                    <div style="font-size:11px; color:var(--primary);" id="topRole">Role</div>
+                </div>
+                <div id="topAvatar" style="width:35px; height:35px; border-radius:50%; background:var(--primary-light); color:white; display:flex; align-items:center; justify-content:center; font-weight:600;">U</div>
+            </div>
+        </header>
 
-// Auto-start chat with inquiry if URL params exist
-const params = new URLSearchParams(window.location.search);
-const targetUserId = params.get('user');
-const targetProduct = params.get('product');
+        <div class="chat-layout">
+            <div class="contacts-area">
+                <div class="contacts-header"><h3>Chats</h3></div>
+                <div class="contacts-list" id="userList">
+                    <div style="padding:20px; text-align:center; color:var(--text-muted);">Loading...</div>
+                </div>
+            </div>
 
-if (targetUserId && targetProduct) {
-  setTimeout(async () => {
-    // Open chat for that user (if we fetched user details, we might need a dummy name if not in list yet)
-    // Actually we can just start chat
-    currentUser = targetUserId;
-    document.getElementById("chatTitle").innerText = "Chat regarding: " + targetProduct;
+            <div class="chat-area">
+                <div class="empty-chat" id="emptyChat">
+                    <i class="far fa-comments"></i>
+                    <h3>Select a conversation</h3>
+                    <p>Connect with wholesalers and retailers instantly.</p>
+                </div>
 
-    // Trigger inquiry API
-    try {
-      await fetch('/api/products/inquiry-by-name', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({ productName: targetProduct })
-      });
-    } catch(e) { console.error("Inquiry error", e); }
+                <div id="activeChat" style="display: none; height: 100%; flex-direction: column;">
+                    <div class="chat-header">
+                        <div class="chat-header-left">
+                            <div class="chat-header-avatar" id="chatTitleAvatar">U</div>
+                            <div class="chat-header-info">
+                                <h2 id="chatTitle">Contact Name</h2>
+                                <p id="chatStatus">Offline</p>
+                            </div>
+                        </div>
+                        <div class="chat-header-actions">
+                            <i class="fas fa-trash-alt" title="Delete Conversation" onclick="deleteConversation()"></i>
+                        </div>
+                    </div>
 
-    // Prefill input
-    document.getElementById("msgInput").value = "Hi, I would like to inquire about " + targetProduct;
-    // We get previous messages
-    const res = await fetch(`/api/messages/${targetUserId}`, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    const data = await res.json();
-    const box = document.getElementById("chatBox");
-    box.innerHTML = "";
-    if (data.messages) {
-      data.messages.forEach(m => addMessage(m));
-    }
-  }, 500);
-}
-</script>
+                    <div class="chat-messages" id="chatBox"></div>
+
+                    <div class="chat-input-area">
+                        <div class="media-actions">
+                            <i class="fas fa-camera" title="Camera" onclick="openCameraModal()"></i>
+                            <i class="fas fa-image" title="Gallery" onclick="document.getElementById('galleryInput').click()"></i>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-microphone" title="Voice" id="voiceBtn" onclick="toggleVoiceRecord()"></i>
+                                <span id="recordTimer" style="display:none; color:var(--danger); font-size:12px; font-weight:600; font-family:monospace;">0:00</span>
+                            </div>
+                        </div>
+                        <input type="file" id="galleryInput" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+                        <input type="text" class="chat-input" id="msgInput" placeholder="Type a message..." autocomplete="off">
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Camera Modal -->
+    <div class="modal-overlay" id="cameraModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Take Photo</h3>
+                <button onclick="closeCameraModal()" style="background:none; border:none; font-size:20px; cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <video id="cameraVideo" style="width:100%; border-radius:8px; background:#000;" autoplay playsinline></video>
+            <div style="margin-top:15px; text-align:center;">
+                <button onclick="takeSnapshot()" style="padding:10px 25px; border-radius:20px; border:none; background:var(--primary); color:white; cursor:pointer; font-weight:500;">Capture</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
+        if (!user || !token) location.href = "login.html";
+
+        const socket = io();
+        let currentUser = null;
+        let onlineUsers = [];
+        let typingTimeout;
+
+        // Register
+        socket.emit("register", user._id);
+        socket.emit("get_online_status");
+
+        // UI Setup
+        document.getElementById("topName").innerText = user.name;
+        document.getElementById("topRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        document.getElementById("topAvatar").innerText = user.name.charAt(0).toUpperCase();
+
+        const sidebarNav = document.getElementById("sidebarNav");
+        sidebarNav.innerHTML = `
+            <button class="nav-link" onclick="location.href='${user.role}-dashboard.html'"><i class="fas fa-home"></i> Dashboard</button>
+            <button class="nav-link" onclick="location.href='${user.role === 'wholesaler' ? 'product-management.html' : 'wholesalers.html'}'"><i class="fas fa-box"></i> ${user.role === 'wholesaler' ? 'Inventory' : 'Wholesalers'}</button>
+            <button class="nav-link active"><i class="fas fa-comment-dots"></i> Messages</button>
+            <button class="nav-link" onclick="location.href='profile.html'"><i class="fas fa-user"></i> Profile</button>
+            <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        `;
+
+        function logout() { localStorage.clear(); location.href = "login.html"; }
+
+        // --- Core Messaging Logic ---
+
+        async function loadConversations() {
+            try {
+                const res = await fetch("/api/conversations", { headers: { Authorization: "Bearer " + token } });
+                const data = await res.json();
+                if (data.success) renderUserList(data.conversations);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderUserList(conversations) {
+            const list = document.getElementById("userList");
+            if (!conversations.length) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#8d99ae; font-size:13px;">No active chats.</div>';
+                return;
+            }
+
+            list.innerHTML = conversations.map(c => {
+                const u = c.user;
+                const isOnline = onlineUsers.includes(u._id);
+                const initials = u.name.charAt(0).toUpperCase();
+                const unread = c.unreadCount > 0 ? `<div class="unread-badge">${c.unreadCount}</div>` : '';
+                return `
+                    <div class="contact-item ${currentUser === u._id ? 'active' : ''}" onclick="openChat('${u._id}', '${u.name.replace(/'/g, "\\'")}')" id="user-${u._id}">
+                        <div class="contact-avatar-wrap">
+                            <div class="contact-avatar">${initials}</div>
+                            <div class="status-dot ${isOnline ? 'online' : ''}" id="dot-${u._id}"></div>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-top">
+                                <div class="contact-name">${u.businessName || u.name}</div>
+                                ${unread}
+                            </div>
+                            <div class="contact-preview" id="preview-${u._id}">${c.lastMessage?.message || 'Media message'}</div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function openChat(id, name) {
+            currentUser = id;
+            document.getElementById("emptyChat").style.display = "none";
+            document.getElementById("activeChat").style.display = "flex";
+            document.getElementById("chatTitle").innerText = name;
+            document.getElementById("chatTitleAvatar").innerText = name.charAt(0).toUpperCase();
+            
+            updateHeaderStatus();
+            document.querySelectorAll(".contact-item").forEach(i => i.classList.remove("active"));
+            document.getElementById(`user-${id}`)?.classList.add("active");
+
+            // Mark as read on server
+            fetch(`/api/messages/mark-read/${id}`, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
+            
+            try {
+                const res = await fetch(`/api/messages/${id}`, { headers: { Authorization: "Bearer " + token } });
+                const data = await res.json();
+                const box = document.getElementById("chatBox");
+                box.innerHTML = "";
+                if (data.messages) {
+                    data.messages.forEach(m => addMessageToUI(m));
+                    scrollToBottom();
+                    // Mark last messages as read in socket
+                    data.messages.filter(m => m.receiverId === user._id && m.status !== 'read').forEach(m => {
+                        socket.emit("message_read", { messageId: m._id, senderId: m.senderId });
+                    });
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function addMessageToUI(m) {
+            const box = document.getElementById("chatBox");
+            const isMe = String(m.senderId) === String(user._id);
+            const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let content = m.message;
+            if (m.type === 'image') {
+                content = `<img src="${m.message}" style="max-width:100%; max-height:300px; border-radius:8px; display:block; cursor:pointer;" onclick="viewImage(this.src)">`;
+            } else if (m.type === 'audio') {
+                content = `<audio controls src="${m.message}" style="max-width:100%; max-height:40px;"></audio>`;
+            }
+
+            // Handle Product Inquiry Cards
+            let prodHtml = "";
+            if (m.productData) {
+                const pd = m.productData;
+                const img = pd.image ? pd.image : 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&q=80';
+                prodHtml = `
+                    <a href="items.html?id=${isMe ? m.receiverId : m.senderId}" style="display:flex; gap:10px; background:rgba(0,0,0,0.05); padding:8px; border-radius:8px; margin-bottom:8px; text-decoration:none; color:inherit; border:1px solid rgba(0,0,0,0.1);">
+                        <img src="${img}" style="width:50px; height:50px; border-radius:4px; object-fit:cover;">
+                        <div>
+                            <div style="font-weight:600; font-size:12px;">${pd.name || "Product Inquiry"}</div>
+                            <div style="color:var(--primary); font-weight:700; font-size:12px;">₹${pd.price || "0"}</div>
+                        </div>
+                    </a>
+                `;
+            }
+
+            let ticks = '';
+            if (isMe) {
+                const tickClass = m.status === 'read' ? 'read' : '';
+                const icon = m.status === 'sent' ? 'fa-check' : 'fa-check-double';
+                ticks = `<i class="fas ${icon} tick-icon ${tickClass}" id="tick-${m._id}"></i>`;
+            }
+
+            const wrap = document.createElement("div");
+            wrap.className = `msg-bubble-wrap ${isMe ? 'sent' : 'recv'}`;
+            wrap.innerHTML = `
+                <div class="message ${isMe ? 'is-me' : 'is-other'}">
+                    ${prodHtml}
+                    <div style="word-break:break-word;">${content || ""}</div>
+                    <div class="msg-footer">
+                        <span>${time}</span>
+                        ${ticks}
+                    </div>
+                </div>
+            `;
+            box.appendChild(wrap);
+            scrollToBottom();
+        }
+
+        function sendMessage(customMsg = null, type = 'text') {
+            const input = document.getElementById("msgInput");
+            const text = customMsg || input.value.trim();
+            if (!text || !currentUser) return;
+
+            socket.emit("send_message", {
+                senderId: user._id,
+                receiverId: currentUser,
+                message: text,
+                type: type
+            });
+            if (!customMsg) input.value = "";
+        }
+
+        async function deleteConversation() {
+            if (!currentUser) return;
+            if (!confirm("Are you sure you want to delete this conversation? This will only remove it for you.")) return;
+
+            try {
+                const res = await fetch(`/api/messages/${currentUser}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById("activeChat").style.display = "none";
+                    document.getElementById("emptyChat").style.display = "flex";
+                    currentUser = null;
+                    await loadConversations();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function scrollToBottom() { const box = document.getElementById("chatBox"); box.scrollTop = box.scrollHeight; }
+
+        // --- Socket Listeners ---
+
+        socket.on("receive_message", (data) => {
+            if (currentUser === data.senderId || currentUser === data.receiverId) {
+                addMessageToUI(data);
+                if (data.senderId === currentUser) {
+                     socket.emit("message_read", { messageId: data._id, senderId: data.senderId });
+                }
+            } else {
+                loadConversations(); // Trigger refresh for unread count
+            }
+        });
+
+        socket.on("message_status_update", (data) => {
+            const tick = document.getElementById(`tick-${data.messageId}`);
+            if (tick) {
+                tick.className = `fas fa-check-double tick-icon ${data.status === 'read' ? 'read' : ''}`;
+            }
+        });
+
+        socket.on("status_update", (data) => {
+            if (data.status === 'online') {
+                if (!onlineUsers.includes(data.userId)) onlineUsers.push(data.userId);
+            } else {
+                onlineUsers = onlineUsers.filter(id => id !== data.userId);
+            }
+            document.getElementById(`dot-${data.userId}`)?.classList.toggle('online', data.status === 'online');
+            if (currentUser === data.userId) updateHeaderStatus();
+        });
+
+        socket.on("online_users_list", (list) => {
+            onlineUsers = list;
+            loadConversations();
+        });
+
+        socket.on("typing", (data) => {
+            if (currentUser === data.senderId) {
+                document.getElementById("chatStatus").innerText = "typing...";
+                document.getElementById("chatStatus").classList.add("online");
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(updateHeaderStatus, 2000);
+            }
+        });
+
+        function updateHeaderStatus() {
+            const status = onlineUsers.includes(currentUser) ? 'Active now' : 'Offline';
+            document.getElementById("chatStatus").innerText = status;
+            document.getElementById("chatStatus").className = onlineUsers.includes(currentUser) ? 'online' : '';
+        }
+
+        document.getElementById("msgInput").oninput = () => {
+            if (currentUser) socket.emit("typing", { senderId: user._id, receiverId: currentUser });
+        };
+
+        // --- Media Features ---
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    const MAX_WIDTH = 800;
+                    let width = img.width, height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    sendMessage(canvas.toDataURL("image/jpeg", 0.7), 'image');
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        let cameraStream;
+        async function openCameraModal() {
+            try {
+                const modal = document.getElementById("cameraModal");
+                const video = document.getElementById("cameraVideo");
+                modal.style.display = "flex";
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
+                });
+                video.srcObject = cameraStream;
+                await video.play();
+            } catch (err) {
+                console.error("Camera error:", err);
+                alert("Could not access camera. Ensure you are on HTTPS or localhost and have given permission.");
+                closeCameraModal();
+            }
+        }
+        function closeCameraModal() {
+            document.getElementById("cameraModal").style.display = "none";
+            cameraStream?.getTracks().forEach(t => t.stop());
+        }
+        function takeSnapshot() {
+            const video = document.getElementById("cameraVideo");
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            sendMessage(canvas.toDataURL("image/jpeg", 0.7), 'image');
+            closeCameraModal();
+        }
+
+        let mediaRecorder, audioChunks = [];
+        let recordInterval;
+        async function toggleVoiceRecord() {
+            const btn = document.getElementById("voiceBtn");
+            const timer = document.getElementById("recordTimer");
+
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                btn.style.color = "";
+                timer.style.display = "none";
+                clearInterval(recordInterval);
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.onload = ev => sendMessage(ev.target.result, 'audio');
+                    reader.readAsDataURL(blob);
+                    stream.getTracks().forEach(t => t.stop());
+                };
+                
+                mediaRecorder.start();
+                btn.style.color = "var(--danger)";
+                
+                // Start Timer
+                timer.style.display = "inline";
+                timer.innerText = "0:00";
+                let seconds = 0;
+                clearInterval(recordInterval);
+                recordInterval = setInterval(() => {
+                    seconds++;
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    timer.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                }, 1000);
+
+            } catch (err) {
+                console.error("Microphone access denied", err);
+                alert("Microphone permission denied. Note: This requires a secure connection (localhost or HTTPS).");
+            }
+        }
+
+        function viewImage(src) {
+            const lb = document.getElementById("lightbox");
+            const img = document.getElementById("lightboxImg");
+            img.src = src;
+            lb.style.display = "flex";
+        }
+
+        window.onload = async () => {
+            await loadConversations();
+            
+            // Auto-start chat with inquiry if URL params exist
+            const params = new URLSearchParams(window.location.search);
+            const targetUserId = params.get('user');
+            const targetProduct = params.get('product');
+
+            if (targetUserId && targetProduct) {
+                // Find or assume name
+                let name = "Wholesaler"; 
+                // Trigger inquiry API
+                try {
+                    await fetch('/api/products/inquiry-by-name', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ productName: targetProduct })
+                    });
+                } catch (e) { console.error("Inquiry error", e); }
+
+                await openChat(targetUserId, name);
+                document.getElementById("msgInput").value = "Hi, I would like to inquire about " + targetProduct;
+            }
+        };
+    </script>
+</body>
+</html>

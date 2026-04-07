@@ -855,7 +855,7 @@
                                     <div class="notif-icon"><i class="fas fa-exclamation-triangle"></i></div>
                                     <div style="flex:1;">
                                         <div style="font-size:13px;font-weight:600;">${item.name}</div>
-                                        <div style="font-size:11px;color:#888;">Stock remaining: ${item.stock}</div>
+                                        <div style="font-size:11px;color:#888;">Stock remaining: ${item.stock} ${item.forecastDays >= 0 ? `<span style="color:#e36414; margin-left:8px;">✨ AI Forecast: ~${item.forecastDays} days</span>` : ''}</div>
                                     </div>
                                 </div>
                             `;
@@ -924,5 +924,8 @@
             }
         });
     </script>
+  <!-- AI Chatbot -->
+  <link rel="stylesheet" href="/css/chatbot.css">
+  <script src="/chatbot.js"></script>
 </body>
 </html>
