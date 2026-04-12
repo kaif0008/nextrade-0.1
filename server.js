@@ -3,9 +3,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Razorpay = require('razorpay');
 require('dotenv').config();
-
 const nodemailer = require('nodemailer');
 
 const app = express();
@@ -77,12 +75,6 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nextrade'
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
-
-// ================= RAZORPAY =================
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
 
 // ================= MIDDLEWARE =================
 // app.use(express.json());
@@ -186,24 +178,6 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Product = mongoose.model('Product', productSchema);
-
-// Order (SECURE VERSION)
-const orderSchema = new mongoose.Schema({
-  productName: String,
-  price: Number,
-  quantity: Number,
-  address: String,
-  paymentMethod: String,
-  paymentStatus: { type: String, default: 'Pending' },
-  razorpayOrderId: String,
-  razorpayPaymentId: String,
-  customerName: String,
-  email: String,
-  phone: String,
-  status: { type: String, default: 'Processing' }
-}, { timestamps: true });
-
-const Order = mongoose.model('Order', orderSchema);
 
 // Deal (Negotiation system)
 const dealSchema = new mongoose.Schema({
@@ -790,43 +764,6 @@ router.put('/products/:id', authMiddleware, async (req, res) => {
 
 
 // ---------- ORDERS ----------
-router.post('/orders', authMiddleware, requireEmailVerified, async (req, res) => {
-  const order = new Order(req.body);
-  await order.save();
-  res.status(201).json({ success: true, order });
-});
-
-router.get('/orders', authMiddleware, async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
-  res.json({ success: true, orders });
-});
-
-router.patch('/orders/:id/confirm', authMiddleware, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-    
-    if (order.status === 'Confirmed') {
-      return res.status(400).json({ success: false, message: 'Order already confirmed' });
-    }
-
-    order.status = 'Confirmed';
-    await order.save();
-
-    const decQty = order.quantity || 1;
-
-    // Decrease stock/reservedStock and increase soldCount
-    await Product.findOneAndUpdate(
-      { name: order.productName },
-      { $inc: { stock: -decQty, reservedStock: -decQty, soldCount: decQty } }
-    );
-
-    res.json({ success: true, order });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
 // ---------- MESSAGES ----------
 
 // Save message
@@ -1505,52 +1442,19 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
   }
 });
 
-// 3. Recommendation Engine API
+// 3. Recommendation Engine API (Simplified - Non-order based)
 router.get('/recommendations', authMiddleware, async (req, res) => {
   try {
-    const orders = await Order.find({ email: req.user.email }).limit(20);
-    const orderProductNames = orders.map(o => o.productName);
+    // Return best sellers since order history is removed
+    const recommendations = await Product.find({
+      stock: { $gt: 0 }
+    }).sort({ soldCount: -1 }).limit(5);
     
-    let recommendations = [];
-    if (orderProductNames.length > 0) {
-      const boughtProducts = await Product.find({ name: { $in: orderProductNames } });
-      const favoriteCategories = [...new Set(boughtProducts.map(p => p.category).filter(c => c))];
-      
-      recommendations = await Product.find({
-        category: { $in: favoriteCategories },
-        name: { $nin: orderProductNames },
-        stock: { $gt: 0 }
-      }).sort({ soldCount: -1 }).limit(5);
-    } 
-
-    if (recommendations.length < 5) {
-      const needed = 5 - recommendations.length;
-      const bestSellers = await Product.find({
-        name: { $nin: [...orderProductNames, ...recommendations.map(r=>r.name)] },
-        stock: { $gt: 0 }
-      }).sort({ soldCount: -1 }).limit(needed);
-      
-      recommendations = [...recommendations, ...bestSellers];
-    }
     res.json({ success: true, recommendations });
   } catch(error) {
     console.error('Recommendations error:', error);
     res.status(500).json({ success: false });
   }
-});
-
-// ---------- RAZORPAY ----------
-app.post('/api/create-order', async (req, res) => {
-  const order = await razorpay.orders.create({
-    amount: Math.round(req.body.amount),
-    currency: 'INR',
-    receipt: `receipt_${Date.now()}`
-  });
-  res.json(order);
-});
-
-app.get('/api/get-razorpay-key', (req, res) => {
-  res.json({ key: process.env.RAZORPAY_KEY_ID });
 });
 
 // ================= MOUNT ROUTER =================

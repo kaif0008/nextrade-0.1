@@ -26,8 +26,8 @@ Built with a modern tech stack and integrated with cutting-edge AI, NexTrade pro
 - **Demand Forecasting**: Real-time distribution analysis and low-stock alerts.
 - **Reserved Stock**: Dynamic inventory management that holds stock during active negotiations.
 
-### 💳 Secure Transactions
-- **Razorpay Integration**: Seamless and secure payment processing for confirmed orders.
+### 📦 Secure Transactions
+- **Direct Ordering**: Simplified direct ordering flow with digital record-keeping.
 - **Digital Invoicing**: Automated record-keeping for every transaction.
 
 ---
@@ -41,7 +41,6 @@ Built with a modern tech stack and integrated with cutting-edge AI, NexTrade pro
 | **Database** | MongoDB (Mongoose ODM) |
 | **AI/ML** | Groq Cloud SDK (Llama 3.2 Vision, 3.3 70B Versatile) |
 | **Real-time** | Socket.IO |
-| **Payments** | Razorpay |
 | **Auth** | JWT (JSON Web Tokens), bcryptjs |
 
 ---
@@ -85,8 +84,8 @@ Built with a modern tech stack and integrated with cutting-edge AI, NexTrade pro
    MONGODB_URI=your_mongodb_connection_string
    JWT_SECRET=your_jwt_secret_key
    GROQ_API_KEY=your_groq_api_key
-   RAZORPAY_KEY_ID=your_razorpay_key_id
-   RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+   EMAIL_USER=your_email
+   EMAIL_PASS=your_app_password
    ```
 
 4. **Run the server:**
