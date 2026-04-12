@@ -1,10 +1,12 @@
-﻿const express = require('express');
+const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Razorpay = require('razorpay');
 require('dotenv').config();
+
+const nodemailer = require('nodemailer');
 
 const app = express();
 
@@ -14,6 +16,54 @@ const { Server } = require('socket.io');
 // ================= AI CONFIGURATION (GROQ) =================
 const Groq = require('groq-sdk');
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'fake_key' });
+
+// ================= EMAIL TRANSPORTER (NODEMAILER) =================
+const emailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendOTPEmail(toEmail, otp, userName) {
+  const mailOptions = {
+    from: `"NexTrade" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: 'Your NexTrade Verification Code',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"></head>
+      <body style="margin:0;padding:0;background:#f4f6f9;font-family:'Segoe UI',sans-serif;">
+        <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+          <div style="background:linear-gradient(135deg,#4361ee,#4895ef);padding:36px 40px;text-align:center;">
+            <h1 style="color:white;margin:0;font-size:26px;font-weight:700;">NexTrade</h1>
+            <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px;">B2B Trading Platform</p>
+          </div>
+          <div style="padding:40px;text-align:center;">
+            <h2 style="color:#2b2d42;margin:0 0 8px;font-size:20px;">Email Verification</h2>
+            <p style="color:#8d99ae;font-size:14px;margin:0 0 32px;">Hello ${userName}, here is your verification code:</p>
+            <div style="background:#f0f4ff;border:2px dashed #4361ee;border-radius:12px;padding:24px;margin:0 auto 28px;display:inline-block;">
+              <span style="font-size:48px;font-weight:800;letter-spacing:12px;color:#4361ee;">${otp}</span>
+            </div>
+            <p style="color:#ef233c;font-size:13px;font-weight:600;margin:0 0 8px;">⏱ This code expires in <strong>5 minutes</strong></p>
+            <p style="color:#8d99ae;font-size:12px;margin:0;">If you didn&apos;t request this, you can safely ignore this email.</p>
+          </div>
+          <div style="background:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #f1f5f9;">
+            <p style="color:#8d99ae;font-size:11px;margin:0;">NexTrade &bull; Secure B2B Platform &bull; Do not share this code with anyone</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  };
+  return emailTransporter.sendMail(mailOptions);
+}
 
 // ================= CONSTANTS =================
 const SALT_ROUNDS = 10;
@@ -97,7 +147,13 @@ const userSchema = new mongoose.Schema({
   country: { type: String, default: 'India' },
   // Legacy fields
   shopName: String,
-  shopAddress: String
+  shopAddress: String,
+  // Email Verification
+  emailVerified: { type: Boolean, default: false },
+  otpCode: String,
+  otpExpiry: Date,
+  otpAttempts: { type: Number, default: 0 },
+  otpRequestedAt: Date
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
@@ -149,14 +205,40 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', orderSchema);
 
-//Message
+// Deal (Negotiation system)
+const dealSchema = new mongoose.Schema({
+  retailerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  wholesalerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  productName: String,
+  productImage: String,
+  listPrice: Number,
+  quantity: { type: Number, default: 1 },
+  offeredPrice: { type: Number, default: 0 },
+  status: { type: String, enum: ['pending', 'wholesaler_accepted', 'confirmed', 'rejected'], default: 'pending' },
+}, { timestamps: true });
+
+const Deal = mongoose.model('Deal', dealSchema);
+
+// Review Model
+const reviewSchema = new mongoose.Schema({
+  retailerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  wholesalerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  dealId: { type: mongoose.Schema.Types.ObjectId, ref: 'Deal' },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  reviewText: String
+}, { timestamps: true });
+
+const Review = mongoose.model('Review', reviewSchema);
+
+// Message
 const messageSchema = new mongoose.Schema({
   senderId: String,
   receiverId: String,
   productName: String,
-  productData: { type: mongoose.Schema.Types.Mixed },
+  productData: { type: mongoose.Schema.Types.Mixed }, // now handles product and deal metadata
   message: String,
-  type: { type: String, enum: ['text', 'image', 'audio'], default: 'text' },
+  type: { type: String, enum: ['text', 'image', 'audio', 'deal', 'system'], default: 'text' },
   status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
   deletedBy: { type: [String], default: [] }
 }, { timestamps: true });
@@ -165,6 +247,23 @@ const Message = mongoose.model('Message', messageSchema);
 
 // ================= ROUTES =================
 const router = express.Router();
+
+// ================= EMAIL VERIFICATION MIDDLEWARE =================
+const requireEmailVerified = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || !user.emailVerified) {
+      return res.status(403).json({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Email verification required. Please verify your email from your Profile page.'
+      });
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Verification check failed' });
+  }
+};
 
 // ---------- AUTH ----------
 router.post('/signup', async (req, res) => {
@@ -236,6 +335,84 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+// ---------- OTP EMAIL VERIFICATION ----------
+
+router.post('/auth/send-otp', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.emailVerified) return res.status(400).json({ success: false, message: 'Email is already verified' });
+
+    // Rate limiting: 1 OTP per 60 seconds
+    if (user.otpRequestedAt) {
+      const secondsSinceLast = (Date.now() - new Date(user.otpRequestedAt).getTime()) / 1000;
+      if (secondsSinceLast < 60) {
+        const waitSecs = Math.ceil(60 - secondsSinceLast);
+        return res.status(429).json({ success: false, message: `Please wait ${waitSecs} seconds before requesting a new OTP` });
+      }
+    }
+
+    const otp = generateOTP();
+    const hashedOtp = await bcrypt.hash(otp, 8);
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    user.otpCode = hashedOtp;
+    user.otpExpiry = expiry;
+    user.otpAttempts = 0;
+    user.otpRequestedAt = new Date();
+    await user.save();
+
+    await sendOTPEmail(user.email, otp, user.name);
+
+    res.json({ success: true, message: `OTP sent to ${user.email}` });
+  } catch (err) {
+    console.error('Send OTP error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send OTP. Check email configuration.' });
+  }
+});
+
+router.post('/auth/verify-otp', authMiddleware, async (req, res) => {
+  try {
+    const { otp } = req.body;
+    if (!otp) return res.status(400).json({ success: false, message: 'OTP is required' });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.emailVerified) return res.status(400).json({ success: false, message: 'Email already verified' });
+
+    // Check attempts
+    if (user.otpAttempts >= 3) {
+      return res.status(400).json({ success: false, message: 'Too many incorrect attempts. Please request a new OTP.' });
+    }
+
+    // Check expiry
+    if (!user.otpExpiry || new Date() > new Date(user.otpExpiry)) {
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Check OTP
+    const isMatch = await bcrypt.compare(otp.trim(), user.otpCode);
+    if (!isMatch) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      await user.save();
+      const remaining = 3 - user.otpAttempts;
+      return res.status(400).json({ success: false, message: `Incorrect OTP. ${remaining} attempt(s) remaining.` });
+    }
+
+    // Success — clear OTP fields
+    user.emailVerified = true;
+    user.otpCode = undefined;
+    user.otpExpiry = undefined;
+    user.otpAttempts = 0;
+    user.otpRequestedAt = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'Email verified successfully!', user });
+  } catch (err) {
+    console.error('Verify OTP error:', err);
+    res.status(500).json({ success: false, message: 'Verification failed' });
+  }
+});
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -261,11 +438,20 @@ router.get('/wholesalers', async (req, res) => {
     const wholesalers = await User.find(
       { role: 'wholesaler' },
       { password: 0 } // exclude password
-    );
+    ).lean();
+
+    const reviews = await Review.find();
+    
+    // Compute average ratings
+    const wsWithRatings = wholesalers.map(ws => {
+      const wReviews = reviews.filter(r => String(r.wholesalerId) === String(ws._id));
+      const avg = wReviews.length > 0 ? (wReviews.reduce((sum, r) => sum + r.rating, 0) / wReviews.length).toFixed(1) : 0;
+      return { ...ws, averageRating: Number(avg), reviewCount: wReviews.length };
+    });
 
     res.json({
       success: true,
-      wholesalers
+      wholesalers: wsWithRatings
     });
   } catch (error) {
     res.status(500).json({
@@ -278,10 +464,16 @@ router.get('/wholesalers', async (req, res) => {
 // Get products of a specific wholesaler
 router.get('/products/wholesaler/:id', async (req, res) => {
   try {
-    const wholesaler = await User.findById(req.params.id, { password: 0 });
+    const wholesaler = await User.findById(req.params.id, { password: 0 }).lean();
     const products = await Product.find({
       wholesalerId: req.params.id
     }).sort({ createdAt: -1 });
+
+    const reviews = await Review.find({ wholesalerId: req.params.id });
+    const avg = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
+    
+    wholesaler.averageRating = Number(avg);
+    wholesaler.reviewCount = reviews.length;
 
     res.json({
       success: true,
@@ -429,7 +621,7 @@ router.post("/update-profile", authMiddleware, async (req, res) => {
 
 
 // ---------- PRODUCTS ----------
-router.post('/products', authMiddleware, async (req, res) => {
+router.post('/products', authMiddleware, requireEmailVerified, async (req, res) => {
   if (req.user.role !== 'wholesaler') {
     return res.status(403).json({ success: false, message: 'Only wholesalers can add products' });
   }
@@ -598,7 +790,7 @@ router.put('/products/:id', authMiddleware, async (req, res) => {
 
 
 // ---------- ORDERS ----------
-router.post('/orders', async (req, res) => {
+router.post('/orders', authMiddleware, requireEmailVerified, async (req, res) => {
   const order = new Order(req.body);
   await order.save();
   res.status(201).json({ success: true, order });
@@ -763,6 +955,239 @@ router.get("/conversations", authMiddleware, async (req, res) => {
       success: false,
       message: err.message
     });
+  }
+});
+
+// ---------- DEALS AND REVIEWS ----------
+
+// Helper: build deal productData for messages
+function buildDealMsgData(deal) {
+  return {
+    dealId: deal._id,
+    productId: deal.productId,
+    name: deal.productName,
+    image: deal.productImage,
+    listPrice: deal.listPrice,
+    quantity: deal.quantity,
+    offeredPrice: deal.offeredPrice,
+    status: deal.status
+  };
+}
+
+router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, res) => {
+  try {
+    const { wholesalerId, productId, quantity, offeredPrice } = req.body;
+    if (!wholesalerId || !productId) return res.status(400).json({ success: false, message: 'wholesalerId and productId are required' });
+    const reqQty = Math.max(1, parseInt(quantity) || 1);
+    const reqPrice = parseFloat(offeredPrice) || 0;
+
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    const reserved = product.reservedStock || 0;
+    const currentStock = product.stock || 0;
+    if (currentStock - reserved < reqQty) {
+      return res.status(400).json({ success: false, message: `Only ${currentStock - reserved} units available` });
+    }
+
+    product.reservedStock = reserved + reqQty;
+    await product.save();
+
+    const deal = new Deal({
+      retailerId: req.user.id,
+      wholesalerId,
+      productId,
+      productName: product.name,
+      productImage: product.image || '',
+      listPrice: product.pricePerUnit || 0,
+      quantity: reqQty,
+      offeredPrice: reqPrice,
+      status: 'pending'
+    });
+    await deal.save();
+
+    const msg = new Message({
+      senderId: req.user.id,
+      receiverId: wholesalerId,
+      type: 'deal',
+      message: '',
+      productData: buildDealMsgData(deal)
+    });
+    await msg.save();
+
+    // Emit real-time socket events to both parties
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const dealEvent = { msg: msg.toObject(), deal: deal.toObject() };
+    if (onlineUsers.has(wholesalerId)) io.to(onlineUsers.get(wholesalerId)).emit('deal_created', dealEvent);
+    if (onlineUsers.has(String(req.user.id))) io.to(onlineUsers.get(String(req.user.id))).emit('deal_created', dealEvent);
+
+    res.json({ success: true, deal, message: msg });
+  } catch (err) {
+    console.error('Deal create error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Update deal offer (quantity + price renegotiation)
+router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
+  try {
+    const { quantity, offeredPrice } = req.body;
+    const deal = await Deal.findById(req.params.id);
+    if (!deal) return res.status(404).json({ success: false, message: 'Deal not found' });
+    if (String(deal.retailerId) !== req.user.id) return res.status(403).json({ success: false, message: 'Only retailer can update the offer' });
+    if (deal.status === 'confirmed' || deal.status === 'rejected') {
+      return res.status(400).json({ success: false, message: 'Cannot renegotiate a finalised deal' });
+    }
+
+    const newQty = Math.max(1, parseInt(quantity) || deal.quantity);
+    const newPrice = parseFloat(offeredPrice) || deal.offeredPrice;
+    const diff = newQty - deal.quantity;
+
+    if (diff !== 0) {
+      const product = await Product.findById(deal.productId);
+      if (product) {
+        const available = (product.stock || 0) - (product.reservedStock || 0);
+        if (diff > 0 && available < diff) {
+          return res.status(400).json({ success: false, message: `Only ${available} additional units available` });
+        }
+        product.reservedStock = Math.max(0, (product.reservedStock || 0) + diff);
+        await product.save();
+      }
+    }
+
+    deal.quantity = newQty;
+    deal.offeredPrice = newPrice;
+    deal.status = 'pending'; // Reset to pending on re-negotiation
+    await deal.save();
+
+    // System message in chat
+    const sysMsg = new Message({
+      senderId: deal.retailerId,
+      receiverId: deal.wholesalerId,
+      type: 'system',
+      message: `Retailer updated offer: ${newQty} units at ₹${newPrice}/unit (Total: ₹${(newQty * newPrice).toLocaleString('en-IN')})`
+    });
+    await sysMsg.save();
+
+    // Updated deal message
+    const dealMsg = new Message({
+      senderId: deal.retailerId,
+      receiverId: deal.wholesalerId,
+      type: 'deal',
+      message: '',
+      productData: buildDealMsgData(deal)
+    });
+    await dealMsg.save();
+
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const payload = { sysMsg: sysMsg.toObject(), dealMsg: dealMsg.toObject(), deal: deal.toObject() };
+    if (onlineUsers.has(String(deal.wholesalerId))) io.to(onlineUsers.get(String(deal.wholesalerId))).emit('deal_updated', payload);
+    if (onlineUsers.has(req.user.id)) io.to(onlineUsers.get(req.user.id)).emit('deal_updated', payload);
+
+    res.json({ success: true, deal, sysMsg, dealMsg });
+  } catch (err) {
+    console.error('Deal update error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Change deal status (accept / reject / confirm / cancel)
+router.patch('/deals/:id/status', authMiddleware, requireEmailVerified, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const deal = await Deal.findById(req.params.id);
+    if (!deal) return res.status(404).json({ success: false, message: 'Deal not found' });
+    if (deal.status === 'confirmed' || deal.status === 'rejected') {
+      return res.status(400).json({ success: false, message: 'Deal is already finalised' });
+    }
+
+    const product = await Product.findById(deal.productId);
+    const userId = req.user.id;
+
+    if (status === 'wholesaler_accepted' && userId === String(deal.wholesalerId)) {
+      deal.status = 'wholesaler_accepted';
+    } else if (status === 'rejected' && (userId === String(deal.wholesalerId) || userId === String(deal.retailerId))) {
+      deal.status = 'rejected';
+      if (product) {
+        product.reservedStock = Math.max(0, (product.reservedStock || 0) - deal.quantity);
+        await product.save();
+      }
+    } else if (status === 'confirmed' && userId === String(deal.retailerId)) {
+      deal.status = 'confirmed';
+      if (product) {
+        product.stock = Math.max(0, (product.stock || 0) - deal.quantity);
+        product.reservedStock = Math.max(0, (product.reservedStock || 0) - deal.quantity);
+        product.soldCount = (product.soldCount || 0) + deal.quantity;
+        await product.save();
+      }
+    } else {
+      return res.status(403).json({ success: false, message: 'Unauthorized action on deal' });
+    }
+
+    await deal.save();
+
+    const statusLabels = { wholesaler_accepted: 'accepted', rejected: 'rejected', confirmed: 'confirmed' };
+    const actor = userId === String(deal.wholesalerId) ? 'Wholesaler' : 'Retailer';
+    let msgText = `${actor} ${statusLabels[status]} the deal`;
+    if (status === 'rejected' && userId === String(deal.retailerId)) msgText = 'Retailer cancelled the deal';
+
+    const otherId = userId === String(deal.retailerId) ? deal.wholesalerId : deal.retailerId;
+    const sysMsg = new Message({
+      senderId: userId,
+      receiverId: otherId,
+      type: 'system',
+      message: msgText
+    });
+    await sysMsg.save();
+
+    // Also save an updated deal card message (latest status)
+    const dealMsg = new Message({
+      senderId: deal.retailerId,
+      receiverId: deal.wholesalerId,
+      type: 'deal',
+      message: '',
+      productData: buildDealMsgData(deal)
+    });
+    await dealMsg.save();
+
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const payload = { sysMsg: sysMsg.toObject(), dealMsg: dealMsg.toObject(), deal: deal.toObject() };
+    [String(deal.retailerId), String(deal.wholesalerId)].forEach(uid => {
+      if (onlineUsers.has(uid)) io.to(onlineUsers.get(uid)).emit('deal_status_changed', payload);
+    });
+
+    res.json({ success: true, deal, sysMsg, dealMsg });
+  } catch (err) {
+    console.error('Deal status error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/reviews', authMiddleware, async (req, res) => {
+  try {
+    const { wholesalerId, dealId, rating, reviewText } = req.body;
+    const existingReview = await Review.findOne({ retailerId: req.user.id, dealId });
+    if (existingReview) return res.status(400).json({ success: false, message: 'Review already submitted for this deal' });
+    const deal = await Deal.findOne({ _id: dealId, retailerId: req.user.id, wholesalerId, status: 'confirmed' });
+    if (!deal) return res.status(400).json({ success: false, message: 'You can only rate after a confirmed deal' });
+    const review = new Review({ retailerId: req.user.id, wholesalerId, dealId, rating, reviewText });
+    await review.save();
+    res.json({ success: true, review });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/wholesalers/:id/rating', async (req, res) => {
+  try {
+    const reviews = await Review.find({ wholesalerId: req.params.id }).populate('retailerId', 'name businessName');
+    const avg = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+    res.json({ success: true, averageRating: avg, reviewCount: reviews.length, reviews });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -1152,6 +1577,10 @@ const io = new Server(server, {
 
 // Use a Map to track real-time online status
 const onlineUsers = new Map();
+
+// Expose to routes
+app.set('io', io);
+app.set('onlineUsers', onlineUsers);
 
 // SOCKET CONNECTION
 io.on("connection", (socket) => {

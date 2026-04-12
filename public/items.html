@@ -142,9 +142,15 @@
       scrollbar-width: thin;
       scrollbar-color: #cbd5e1 transparent;
     }
-    
-    .wb-gallery::-webkit-scrollbar { height: 6px; }
-    .wb-gallery::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    .wb-gallery::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .wb-gallery::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
 
     .wb-gallery-item {
       flex: 0 0 200px;
@@ -155,12 +161,12 @@
       transition: 0.3s;
       border: 1px solid #f1f5f9;
     }
-    
+
     .wb-gallery-item:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
-    
+
     .wb-gallery-item img {
       width: 100%;
       height: 100%;
@@ -946,6 +952,7 @@
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="wholesalers.html" class="active">Wholesalers</a></li>
+          <li><a href="browse-products.html">Explore Products</a></li>
           <li><a href="contact.html">Contact Us</a></li>
 
           <li><a href="login.html" id="loginBtn" class="btn-login">Login</a></li>
@@ -1114,6 +1121,11 @@
     document.addEventListener("DOMContentLoaded", () => {
       const user = JSON.parse(localStorage.getItem("user"));
       if (user) {
+        // Restrict wholesaler access
+        if (user.role === 'wholesaler') {
+          location.href = 'wholesaler-dashboard.html';
+          return;
+        }
         document.getElementById("loginBtn").style.display = "none";
         document.getElementById("signupBtn").style.display = "none";
         document.getElementById("dashboardBtn").style.display = "inline-block";
@@ -1157,7 +1169,7 @@
     saveWishlist(); // Init visual
 
     window.toggleWishlist = function (e, id) {
-      e.stopPropagation(); 
+      e.stopPropagation();
       if (wishlist.includes(id)) {
         wishlist = wishlist.filter(x => x !== id);
       } else {
@@ -1201,19 +1213,19 @@
       document.getElementById("mStock").innerText = p.stock || 0;
 
       const inqBtn = document.getElementById("mInqBtn");
-      inqBtn.href = `messages.html?user=${p.wholesalerId}&productId=${p._id}&productName=${encodeURIComponent(p.name)}`;
-
-      const waBtn = document.getElementById("mWaBtn");
-      waBtn.href = `https://wa.me/?text=Hi, I'm interested in ordering ${encodeURIComponent(p.name)} listed on NexTrade`;
-
+      
       if (p.stock === 0) {
+        inqBtn.href = "#";
         inqBtn.style.background = "#cbd5e1";
         inqBtn.style.pointerEvents = "none";
         inqBtn.innerText = "Unavailable";
+        inqBtn.onclick = (e) => e.preventDefault();
       } else {
+        inqBtn.href = "#";
         inqBtn.style.background = "var(--navy)";
         inqBtn.style.pointerEvents = "auto";
         inqBtn.innerText = "Send Inquiry";
+        inqBtn.onclick = (e) => attemptInquire(e, p.wholesalerId, p._id, p.name);
       }
 
       modal.classList.add("active");
@@ -1295,35 +1307,37 @@
       const gallery = document.getElementById("wbGallery");
       const photos = wholesalerData.businessPhotos || [];
       if (photos.length > 0) {
-          gallery.style.display = "flex";
-          gallery.innerHTML = photos.map(src => `
+        gallery.style.display = "flex";
+        gallery.innerHTML = photos.map(src => `
               <div class="wb-gallery-item" onclick="viewPhoto('${src}')">
                   <img src="${src}" alt="Business Photo">
               </div>
           `).join('');
       } else if (wholesalerData.businessPhotoUrl) {
-          // Legacy support
-          gallery.style.display = "flex";
-          gallery.innerHTML = `
+        // Legacy support
+        gallery.style.display = "flex";
+        gallery.innerHTML = `
               <div class="wb-gallery-item" onclick="viewPhoto('${wholesalerData.businessPhotoUrl}')">
                   <img src="${wholesalerData.businessPhotoUrl}" alt="Business Photo">
               </div>
           `;
       } else {
-          gallery.style.display = "none";
+        gallery.style.display = "none";
       }
 
+      const ratingHtml = wholesalerData.averageRating > 0 ? `<span style="font-size:14px; margin-left: 10px; color:#fbbf24; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 12px; display: inline-flex; align-items:center; gap:5px; vertical-align:middle;"><i class="fas fa-star"></i> ${wholesalerData.averageRating.toFixed(1)} (${wholesalerData.reviewCount} Reviews)</span>` : '';
+
       document.getElementById("wbAvatar").innerText = initial;
-      document.getElementById("wbBiz").innerHTML = `${bName} ${vHtml}`;
+      document.getElementById("wbBiz").innerHTML = `${bName} ${vHtml} ${ratingHtml}`;
       document.getElementById("wbOwner").innerText = wholesalerData.name;
       document.getElementById("wbCity").innerHTML = `<i class="fas fa-map-marker-alt"></i> ${wholesalerData.shopAddress || wholesalerData.city || 'India'}`;
       document.getElementById("totalCountPill").innerText = `${allData.length} Products`;
       document.title = `${bName} Products | NexTrade`;
     }
 
-    window.viewPhoto = function(src) {
-        // Simple lightbox idea using modal structure if needed, or just open in new tab
-        window.open(src, '_blank');
+    window.viewPhoto = function (src) {
+      // Simple lightbox idea using modal structure if needed, or just open in new tab
+      window.open(src, '_blank');
     }
 
     function setupFiltersDOM() {
@@ -1510,7 +1524,7 @@
               </div>
               
               <div class="p-footer" style="padding:15px 0 0; margin-top:auto;">
-                <a href="messages.html?user=${p.wholesalerId}&productId=${p._id}&productName=${encodeURIComponent(p.name)}" class="${inqClass}">
+                <a href="#" class="${inqClass}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${p.name}'); return false;">
                   ${isOos ? 'Unavailable' : 'Send Inquiry'}
                 </a>
               </div>
@@ -1519,6 +1533,24 @@
         `;
       });
       grid.innerHTML = html;
+    }
+
+    function attemptInquire(e, wsId, pId, pName) {
+      e.preventDefault();
+      const u = JSON.parse(localStorage.getItem('user'));
+      if (!u) {
+        window.location.href = 'login.html'; return;
+      }
+      if (u.role === 'wholesaler') {
+        alert('Wholesalers cannot send inquiries.'); return;
+      }
+      if (!u.emailVerified) {
+        alert('Email verification required to send inquiries. Please verify your email from your Profile page.'); return;
+      }
+      
+      if (e.currentTarget.classList.contains('disabled')) return;
+      
+      window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${encodeURIComponent(pName)}`;
     }
 
   </script>

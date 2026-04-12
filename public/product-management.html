@@ -578,14 +578,16 @@
                     </div>
                     <div class="form-group" style="flex:1;">
                         <label>Unit</label>
-                        <select id="unit">
+                        <select id="unit" onchange="onUnitSelectChange()">
                             <option value="piece">Piece</option>
                             <option value="kg">Kg</option>
                             <option value="gram">Gram</option>
                             <option value="liter">Liter</option>
                             <option value="box">Box</option>
                             <option value="dozen">Dozen</option>
+                            <option value="Other">Other (Custom)</option>
                         </select>
+                        <input type="text" id="custom_unit" placeholder="Enter custom unit" style="display:none; margin-top:8px;">
                     </div>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -599,8 +601,8 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Category</label>
-                    <input type="text" id="category" required>
+                    <label>Category (Fixed to your Business Category)</label>
+                    <input type="text" id="category" readonly style="background-color: #f1f5f9; cursor: not-allowed;" required>
                 </div>
                 <div class="form-group">
                     <label style="display:flex; justify-content:space-between; align-items:center;">
@@ -834,12 +836,28 @@
         function openModal() {
             modal.classList.add("active");
             modalOverlay.classList.add("active");
+            
+            // Strictly set category from profile
+            const wholsalerCat = user.industry || "General";
+            document.getElementById("category").value = wholsalerCat;
         }
-        
+
+        function onUnitSelectChange() {
+            const select = document.getElementById("unit");
+            const custom = document.getElementById("custom_unit");
+            if (select.value === 'Other') {
+                custom.style.display = 'block';
+                custom.focus();
+            } else {
+                custom.style.display = 'none';
+            }
+        }
+
         function closeModal() {
             modal.classList.remove("active");
             modalOverlay.classList.remove("active");
             document.getElementById("productForm").reset();
+            document.getElementById("custom_unit").style.display = 'none';
             clearImage();
             editingId = null;
             document.getElementById("modalTitle").innerText = "Add Product";
@@ -848,10 +866,14 @@
         modalOverlay.addEventListener("click", closeModal);
 
         async function saveProduct() {
+            if (!user.emailVerified) {
+                alert('Email verification required to manage products. Please verify your email from your Profile page.');
+                return;
+            }
             const product = {
                 name: document.getElementById("name").value,
                 pricePerUnit: Number(document.getElementById("price").value),
-                unit: document.getElementById("unit").value,
+                unit: document.getElementById("unit").value === 'Other' ? document.getElementById("custom_unit").value : document.getElementById("unit").value,
                 stock: Number(document.getElementById("stock").value),
                 moq: Number(document.getElementById("moq").value),
                 category: document.getElementById("category").value,
@@ -886,10 +908,23 @@
             
             document.getElementById("name").value = p.name || '';
             document.getElementById("price").value = p.pricePerUnit || '';
-            document.getElementById("unit").value = p.unit || 'piece';
+            
+            const unitSelect = document.getElementById("unit");
+            const customUnit = document.getElementById("custom_unit");
+            const presetUnits = Array.from(unitSelect.options).map(o => o.value);
+            
+            if (presetUnits.includes(p.unit)) {
+                unitSelect.value = p.unit;
+                customUnit.style.display = 'none';
+            } else {
+                unitSelect.value = 'Other';
+                customUnit.value = p.unit || '';
+                customUnit.style.display = 'block';
+            }
+
             document.getElementById("stock").value = p.stock || 0;
             document.getElementById("moq").value = p.moq || 1;
-            document.getElementById("category").value = p.category || '';
+            document.getElementById("category").value = user.industry || "General";
             document.getElementById("description").value = p.description || '';
             
             if (p.image) {

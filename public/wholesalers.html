@@ -303,6 +303,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Check Auth
     const user = JSON.parse(localStorage.getItem("user"));
+    if (user && user.role === 'wholesaler') {
+        location.href = 'wholesaler-dashboard.html';
+        return;
+    }
     document.getElementById("loginBtn").style.display = user ? "none" : "inline-block";
     document.getElementById("signupBtn").style.display = user ? "none" : "inline-block";
     document.getElementById("dashboardBtn").style.display = user ? "inline-block" : "none";
@@ -484,7 +488,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="ws-header">
                         <div class="ws-avatar" style="background:${color}">${initial}</div>
                         <div class="ws-title">
-                            <div class="ws-name">${bName} ${verifiedHtml}</div>
+                            <div class="ws-name">${bName} ${verifiedHtml} ${w.averageRating > 0 ? `<span style="font-size:12px; color:#fbbf24; margin-left:auto; display:flex; align-items:center; gap:3px;"><i class="fas fa-star"></i> ${w.averageRating.toFixed(1)}</span>` : ''}</div>
                             <div class="ws-owner">${w.name}</div>
                         </div>
                     </div>

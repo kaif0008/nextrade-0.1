@@ -713,6 +713,86 @@
             .form-grid { grid-template-columns: 1fr; }
             .avatar-section { flex-direction: column; text-align: center; }
         }
+
+        /* === OTP Verification UI === */
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(43, 193, 85, 0.12);
+            color: var(--success);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        .unverified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(239, 35, 60, 0.1);
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        .otp-section {
+            margin-top: 12px;
+            padding: 16px;
+            background: #f0f4ff;
+            border-radius: 12px;
+            border: 1px solid rgba(67,97,238,0.2);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .otp-section.show { display: flex; }
+        .otp-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .otp-input {
+            width: 160px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 2px solid #c7d2fe;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-align: center;
+            outline: none;
+            background: white;
+            color: var(--primary);
+            transition: var(--transition);
+        }
+        .otp-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67,97,238,0.15); }
+        .otp-verify-btn {
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+        .otp-verify-btn:hover { background: var(--primary-hover); }
+        .otp-resend-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 0;
+            text-decoration: underline;
+        }
+        .otp-resend-btn:disabled { color: var(--text-muted); cursor: not-allowed; text-decoration: none; }
     </style>
 </head>
 
@@ -816,17 +896,32 @@
                             </label>
                             <div class="action-group">
                                 <input type="tel" class="form-control" id="profile_mobileNumber" data-field="mobileNumber" placeholder="10-digit mobile number" disabled>
-                                <button class="action-btn verify" type="button" onclick="verifyAction('OTP')">Verify</button>
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" id="emailFormGroup">
                             <label class="form-label">
-                                <div>Email Address <span class="required-asterisk">*</span></div>
+                                <div>
+                                    Email Address <span class="required-asterisk">*</span>
+                                    <span class="verified-badge" id="emailVerifiedBadge" style="display:none;"><i class="fas fa-check-circle"></i> Verified</span>
+                                    <span class="unverified-badge" id="emailUnverifiedBadge" style="display:none;"><i class="fas fa-times-circle"></i> Not Verified</span>
+                                </div>
                             </label>
                             <div class="action-group">
                                 <input type="email" class="form-control" id="profile_email" data-field="email" disabled required>
-                                <button class="action-btn" type="button" onclick="verifyAction('Email')">Verify</button>
+                                <button class="action-btn verify" type="button" id="sendOtpBtn" onclick="sendOTP()" style="display:none;">Send OTP</button>
+                            </div>
+                            <!-- OTP Entry Section -->
+                            <div class="otp-section" id="otpSection">
+                                <p style="font-size:13px;color:#475569;margin:0;"><i class="fas fa-envelope" style="color:var(--primary);"></i> Check your email inbox for the 6-digit code.</p>
+                                <div class="otp-input-row">
+                                    <input type="text" class="otp-input" id="otpInput" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+                                    <button class="otp-verify-btn" onclick="verifyOTP()">Confirm</button>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <button class="otp-resend-btn" id="resendBtn" onclick="sendOTP(true)">Resend OTP</button>
+                                    <span style="font-size:12px;color:var(--text-muted);" id="otpTimer"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -887,7 +982,23 @@
 
                         <div class="form-group">
                             <label class="form-label">Industry / Category</label>
-                            <input type="text" class="form-control" id="business_industry" data-field="industry" placeholder="e.g. Electronics, Textiles" disabled>
+                            <select class="form-control" id="business_industry_select" onchange="onIndustrySelectChange()" disabled>
+                                <option value="">Select Category</option>
+                                <option value="Grocery">Grocery</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Textiles">Textiles</option>
+                                <option value="Pharma">Pharma</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="FMCG">FMCG</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Food">Food</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="Automotive">Automotive</option>
+                                <option value="Construction">Construction</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Other">Other (Custom)</option>
+                            </select>
+                            <input type="text" class="form-control" id="business_industry" data-field="industry" placeholder="Enter custom category" style="display:none; margin-top:8px;" disabled>
                         </div>
 
                         <div class="form-group col-span-full">
@@ -897,7 +1008,6 @@
                             </label>
                             <div class="action-group">
                                 <input type="text" class="form-control" id="business_gstNumber" data-field="gstNumber" placeholder="Enter 15 digit GSTIN" disabled>
-                                <button class="action-btn verify" type="button" onclick="verifyAction('GST')">Verify GST</button>
                             </div>
                         </div>
 
@@ -1085,6 +1195,23 @@
                 }
             });
 
+            // Handle Email Verification UI state
+            const badgeVerified = document.getElementById('emailVerifiedBadge');
+            const badgeUnverified = document.getElementById('emailUnverifiedBadge');
+            const btnSendOtp = document.getElementById('sendOtpBtn');
+            const otpSection = document.getElementById('otpSection');
+
+            if (userData.emailVerified) {
+                if (badgeVerified) badgeVerified.style.display = 'inline-flex';
+                if (badgeUnverified) badgeUnverified.style.display = 'none';
+                if (btnSendOtp) btnSendOtp.style.display = 'none';
+                if (otpSection) otpSection.classList.remove('show');
+            } else {
+                if (badgeVerified) badgeVerified.style.display = 'none';
+                if (badgeUnverified) badgeUnverified.style.display = 'inline-flex';
+                if (btnSendOtp) btnSendOtp.style.display = 'inline-flex';
+            }
+
             // Restore photo
             if (userData.photoUrl) {
                 const img = document.getElementById('profileImgPreview');
@@ -1102,6 +1229,36 @@
 
             document.getElementById("displayProfileName").innerText = userData.name || "User";
             document.getElementById("displayProfileRole").innerText = (userData.role || "User").toUpperCase();
+
+            // Handle Industry/Category Dropdown
+            if (userData.industry) {
+                const select = document.getElementById("business_industry_select");
+                const input = document.getElementById("business_industry");
+                const options = Array.from(select.options).map(o => o.value);
+                
+                if (options.includes(userData.industry)) {
+                    select.value = userData.industry;
+                    input.style.display = 'none';
+                } else {
+                    select.value = 'Other';
+                    input.value = userData.industry;
+                    input.style.display = 'block';
+                }
+            }
+        }
+
+        function onIndustrySelectChange() {
+            const select = document.getElementById("business_industry_select");
+            const input = document.getElementById("business_industry");
+            
+            if (select.value === 'Other') {
+                input.style.display = 'block';
+                input.value = '';
+                input.focus();
+            } else {
+                input.style.display = 'none';
+                input.value = select.value;
+            }
         }
 
         // ================= EDIT =================
@@ -1146,6 +1303,20 @@
             }
 
             // ===== VALIDATION =====
+            if (updateData.dob) {
+                const birthDate = new Date(updateData.dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                if (age < 18) {
+                    showToast("You must be 18 years or older", "error");
+                    return;
+                }
+            }
+
             if (updateData.mobileNumber && !/^[0-9]{10}$/.test(updateData.mobileNumber)) {
                 showToast("Invalid mobile number", "error");
                 return;
@@ -1342,27 +1513,41 @@
 
         // ================= PROGRESS =================
         function updateProgress() {
-            let completed = 0;
-
             const isValid = (val) => val && typeof val === 'string' && val.trim() !== "";
+            const isFilled = (val) => val !== undefined && val !== null && val !== "" && (Array.isArray(val) ? val.length > 0 : true);
 
-            if (isValid(userData.name) && isValid(userData.mobileNumber)) completed++;
-            if (isValid(userData.businessName) && isValid(userData.gstNumber)) completed++;
-            if (isValid(userData.houseNo) && isValid(userData.pincode)) completed++;
+            // Mandatory fields for general completion
+            const sections = [
+                isValid(userData.name) && isValid(userData.mobileNumber) && isValid(userData.dob),
+                isValid(userData.businessName) && isValid(userData.gstNumber) && isValid(userData.businessType),
+                isValid(userData.houseNo) && isValid(userData.pincode) && isValid(userData.city)
+            ];
 
-            const percent = (completed / 3) * 100;
+            const completedSections = sections.filter(Boolean).length;
+            const percent = (completedSections / 3) * 100;
 
             document.getElementById("progressBar").style.width = percent + "%";
-            document.getElementById("progressText").innerText = `${completed}/3 Sections Complete`;
+            document.getElementById("progressText").innerText = `${completedSections}/3 Sections Complete`;
             
-            // Toggle verified badge display if wholesaler profile is fully complete
+            // --- STRICT WHOLESALER VERIFICATION ---
+            let isStrictlyComplete = false;
+            if (userData.role === 'wholesaler') {
+                const requiredFields = [
+                    'name', 'dob', 'mobileNumber', 'gender',
+                    'businessName', 'businessType', 'industry', 'gstNumber', 'yearOfEstablishment', 'businessDescription',
+                    'houseNo', 'street', 'pincode', 'city', 'state'
+                ];
+                
+                const allFieldsFilled = requiredFields.every(field => isFilled(userData[field]));
+                const hasPhoto = isFilled(userData.businessPhotos);
+                const emailVerified = userData.emailVerified === true;
+
+                isStrictlyComplete = allFieldsFilled && hasPhoto && emailVerified;
+            }
+            
             const badge = document.getElementById("profileVerifiedBadge");
             if (badge) {
-                if (completed === 3 && userData.role === 'wholesaler') {
-                    badge.style.display = "inline-block";
-                } else {
-                    badge.style.display = "none";
-                }
+                badge.style.display = (isStrictlyComplete && userData.role === 'wholesaler') ? "inline-block" : "none";
             }
             
             // Toggle missing badges
@@ -1386,7 +1571,107 @@
 
         // ================= VERIFY =================
         function verifyAction(type) {
-            showToast("Verification feature coming soon");
+            if (type === 'Email') {
+                sendOTP();
+            } else {
+                showToast(type + " verification feature coming soon", "info");
+            }
+        }
+
+        // ================= OTP LOGIC =================
+        let otpTimerInterval = null;
+
+        async function sendOTP(isResend = false) {
+            const btn = document.getElementById('sendOtpBtn');
+            const resendBtn = document.getElementById('resendBtn');
+            
+            try {
+                if (!isResend && btn) { btn.disabled = true; btn.innerText = "Sending..."; }
+                if (isResend && resendBtn) { resendBtn.disabled = true; resendBtn.innerText = "Sending..."; }
+
+                const res = await fetch("/api/auth/send-otp", {
+                    method: "POST",
+                    headers: { "Authorization": "Bearer " + authToken }
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast(data.message, "success");
+                    document.getElementById('otpSection').classList.add('show');
+                    if (btn) btn.style.display = 'none'; // hide initial button after user engages
+                    startOtpTimer();
+                } else {
+                    showToast(data.message, "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to send OTP", "error");
+            } finally {
+                if (!isResend && btn) { btn.disabled = false; btn.innerText = "Send OTP"; }
+                if (isResend && resendBtn) { resendBtn.innerText = "Resend OTP"; }
+            }
+        }
+
+        function startOtpTimer() {
+            const timerSpan = document.getElementById('otpTimer');
+            const resendBtn = document.getElementById('resendBtn');
+            let timeLeft = 60; // 60 seconds strict rate limit
+            
+            if (resendBtn) resendBtn.disabled = true;
+            
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+            
+            otpTimerInterval = setInterval(() => {
+                timeLeft--;
+                if (timerSpan) timerSpan.innerText = `Wait ${timeLeft}s`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimerInterval);
+                    if (timerSpan) timerSpan.innerText = '';
+                    if (resendBtn) resendBtn.disabled = false;
+                }
+            }, 1000);
+        }
+
+        async function verifyOTP() {
+            const otpInput = document.getElementById('otpInput');
+            const otp = otpInput ? otpInput.value.trim() : '';
+            
+            if (!otp || otp.length !== 6) {
+                showToast("Please enter a valid 6-digit OTP", "warning");
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/auth/verify-otp", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + authToken 
+                    },
+                    body: JSON.stringify({ otp })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(data.message, "success");
+                    // Update user state
+                    userData.emailVerified = true;
+                    localStorage.setItem("user", JSON.stringify(userData));
+                    
+                    // Update UI immediately without reload
+                    document.getElementById('otpSection').classList.remove('show');
+                    populateForm();
+                    updateProgress();
+                } else {
+                    showToast(data.message, "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Verification failed", "error");
+            }
         }
 
         //===========================================

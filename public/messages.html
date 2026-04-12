@@ -159,6 +159,33 @@
         .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 3000; cursor: pointer; }
         .lightbox-img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
 
+        .system-msg { max-width: 80%; margin: 10px auto; padding: 6px 14px; background: rgba(0,0,0,0.05); border-radius: 20px; font-size: 12px; font-weight: 500; color: #64748b; text-align: center; }
+        .deal-card { 
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); min-width: 250px;
+        }
+        .deal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px; }
+        .deal-title { font-weight: 600; font-size: 13px; color: var(--text-main); }
+        .deal-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; }
+        .status-pending { background: #fef08a; color: #854d0e; }
+        .status-wholesaler_accepted { background: #bae6fd; color: #0369a1; }
+        .status-confirmed { background: #bbf7d0; color: #166534; }
+        .status-rejected { background: #fecaca; color: #991b1b; }
+        .deal-body { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .deal-qty { font-size: 15px; font-weight: 700; color: var(--primary); }
+        .deal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .deal-btn { padding: 6px 12px; font-size: 12px; font-weight: 500; border-radius: 4px; border: none; cursor: pointer; transition: 0.2s; flex: 1; text-align: center; }
+        .deal-btn.update { background: #f1f5f9; color: #334155; }
+        .deal-btn.update:hover { background: #e2e8f0; }
+        .deal-btn.confirm { background: var(--primary); color: white; }
+        .deal-btn.confirm:hover { background: var(--primary-hover); }
+        .deal-btn.cancel { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+        .deal-btn.cancel:hover { background: #fee2e2; }
+
+        /* Rating Stars */
+        .rating-stars { display: flex; gap: 5px; font-size: 24px; color: #cbd5e1; cursor: pointer; justify-content: center; margin: 15px 0; }
+        .rating-stars i:hover, .rating-stars i.active { color: #fbbf24; }
+        .header-rating { font-size: 13px; font-weight: 600; color: #fbbf24; display: flex; gap: 4px; align-items: center; margin-left: 10px; }
+
         @media (max-width: 900px) {
             .contacts-area { width: 80px; }
             .contact-info, .contacts-header h3 { display: none; }
@@ -222,7 +249,10 @@
                         <div class="chat-header-left">
                             <div class="chat-header-avatar" id="chatTitleAvatar">U</div>
                             <div class="chat-header-info">
-                                <h2 id="chatTitle">Contact Name</h2>
+                                <div style="display:flex; align-items:center;">
+                                    <h2 id="chatTitle">Contact Name</h2>
+                                    <div class="header-rating" id="chatRating" style="display:none;"><i class="fas fa-star"></i> <span>0.0</span></div>
+                                </div>
                                 <p id="chatStatus">Offline</p>
                             </div>
                         </div>
@@ -265,6 +295,77 @@
         </div>
     </div>
 
+    <!-- Rating Modal -->
+    <div class="modal-overlay" id="ratingModal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center;">
+                <h3 style="margin:0;">Rate your experience</h3>
+            </div>
+            <p style="font-size: 13px; color: #64748b;">Please rate this wholesaler based on your recent deal.</p>
+            <div class="rating-stars" id="starContainer">
+                <i class="fas fa-star" data-val="1"></i>
+                <i class="fas fa-star" data-val="2"></i>
+                <i class="fas fa-star" data-val="3"></i>
+                <i class="fas fa-star" data-val="4"></i>
+                <i class="fas fa-star" data-val="5"></i>
+            </div>
+            <textarea id="reviewText" placeholder="Write a short review (optional)" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; resize: none; font-size: 13px;" rows="3"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeRatingModal()" style="flex:1; padding:10px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer; font-weight:500;">Skip</button>
+                <button onclick="submitRating()" style="flex:1; padding:10px; border-radius:8px; border:none; background:var(--primary); color:white; cursor:pointer; font-weight:500;">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offer Update Modal (renegotiate) -->
+    <div class="modal-overlay" id="offerModal">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h3 style="margin:0;font-size:16px;"><i class="fas fa-edit" style="color:var(--primary);margin-right:8px;"></i>Update Your Offer</h3>
+                <button onclick="closeOfferModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">&times;</button>
+            </div>
+            <input type="hidden" id="offerDealId">
+            <div style="margin-bottom:14px;">
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Quantity (units)</label>
+                <input type="number" id="offerQty" min="1" placeholder="e.g. 50" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Your Offered Price per Unit (&#8377;)</label>
+                <input type="number" id="offerPrice" min="0" step="0.01" placeholder="e.g. 45.00" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="closeOfferModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:white;cursor:pointer;font-weight:500;">Cancel</button>
+                <button onclick="submitOffer()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--primary);color:white;cursor:pointer;font-weight:600;">Update Offer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Deal Modal (from items page inquiry) -->
+    <div class="modal-overlay" id="newDealModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 style="margin:0;font-size:16px;"><i class="fas fa-handshake" style="color:var(--primary);margin-right:8px;"></i>Send Deal Inquiry</h3>
+                <button onclick="closeNewDealModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">&times;</button>
+            </div>
+            <input type="hidden" id="newDealWholesalerId">
+            <input type="hidden" id="newDealProductId">
+            <p id="newDealProductName" style="font-size:14px;font-weight:600;color:#1e293b;background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:16px;border-left:3px solid var(--primary);">Product</p>
+            <div style="margin-bottom:14px;">
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Quantity Required (units)</label>
+                <input type="number" id="newDealQty" min="1" value="10" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Your Offered Price per Unit (&#8377;)</label>
+                <input type="number" id="newDealPrice" min="0" step="0.01" placeholder="Enter your budget per unit" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
+            </div>
+            <p style="font-size:12px;color:#94a3b8;margin-bottom:16px;"><i class="fas fa-info-circle"></i> The wholesaler will review your offer and respond.</p>
+            <div style="display:flex;gap:10px;">
+                <button onclick="closeNewDealModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid #cbd5e1;background:white;cursor:pointer;font-weight:500;">Cancel</button>
+                <button onclick="submitNewDeal()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--primary);color:white;cursor:pointer;font-weight:600;"><i class="fas fa-paper-plane"></i> Send Inquiry</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
         const user = JSON.parse(localStorage.getItem("user"));
@@ -276,11 +377,9 @@
         let onlineUsers = [];
         let typingTimeout;
 
-        // Register
         socket.emit("register", user._id);
         socket.emit("get_online_status");
 
-        // UI Setup
         document.getElementById("topName").innerText = user.name;
         document.getElementById("topRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
         document.getElementById("topAvatar").innerText = user.name.charAt(0).toUpperCase();
@@ -296,8 +395,26 @@
 
         function logout() { localStorage.clear(); location.href = "login.html"; }
 
-        // --- Core Messaging Logic ---
+        // ===================== TOAST NOTIFICATIONS =====================
+        function showToast(msg, type) {
+            type = type || 'info';
+            var container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+                document.body.appendChild(container);
+            }
+            var colors = { success: '#10b981', error: '#ef233c', info: '#4361ee', warning: '#f59e0b' };
+            var icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle', warning: 'fa-exclamation-circle' };
+            var toast = document.createElement('div');
+            toast.style.cssText = 'background:white;border-left:4px solid ' + (colors[type]||'#4361ee') + ';padding:12px 16px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,.15);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:240px;max-width:320px;';
+            toast.innerHTML = '<i class="fas ' + (icons[type]||'fa-info-circle') + '" style="color:' + (colors[type]||'#4361ee') + ';font-size:16px;"></i><span>' + msg + '</span>';
+            container.appendChild(toast);
+            setTimeout(function() { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(function(){ toast.remove(); },300); }, 3500);
+        }
 
+        // ===================== CONVERSATIONS =====================
         async function loadConversations() {
             try {
                 const res = await fetch("/api/conversations", { headers: { Authorization: "Bearer " + token } });
@@ -309,30 +426,23 @@
         function renderUserList(conversations) {
             const list = document.getElementById("userList");
             if (!conversations.length) {
-                list.innerHTML = '<div style="padding:20px; text-align:center; color:#8d99ae; font-size:13px;">No active chats.</div>';
+                list.innerHTML = '<div style="padding:20px;text-align:center;color:#8d99ae;font-size:13px;">No active chats.</div>';
                 return;
             }
-
-            list.innerHTML = conversations.map(c => {
+            list.innerHTML = conversations.map(function(c) {
                 const u = c.user;
                 const isOnline = onlineUsers.includes(u._id);
                 const initials = u.name.charAt(0).toUpperCase();
-                const unread = c.unreadCount > 0 ? `<div class="unread-badge">${c.unreadCount}</div>` : '';
-                return `
-                    <div class="contact-item ${currentUser === u._id ? 'active' : ''}" onclick="openChat('${u._id}', '${u.name.replace(/'/g, "\\'")}')" id="user-${u._id}">
-                        <div class="contact-avatar-wrap">
-                            <div class="contact-avatar">${initials}</div>
-                            <div class="status-dot ${isOnline ? 'online' : ''}" id="dot-${u._id}"></div>
-                        </div>
-                        <div class="contact-info">
-                            <div class="contact-top">
-                                <div class="contact-name">${u.businessName || u.name}</div>
-                                ${unread}
-                            </div>
-                            <div class="contact-preview" id="preview-${u._id}">${c.lastMessage?.message || 'Media message'}</div>
-                        </div>
-                    </div>
-                `;
+                const unread = c.unreadCount > 0 ? '<div class="unread-badge">' + c.unreadCount + '</div>' : '';
+                let preview = c.lastMessage ? (c.lastMessage.message || '') : '';
+                if (c.lastMessage && c.lastMessage.type === 'deal') preview = '&#129309; Deal card';
+                else if (c.lastMessage && c.lastMessage.type === 'image') preview = '&#128247; Image';
+                else if (c.lastMessage && c.lastMessage.type === 'audio') preview = '&#127897; Voice';
+                else if (c.lastMessage && c.lastMessage.type === 'system') preview = '&#128276; ' + (c.lastMessage.message || 'Notification');
+                return '<div class="contact-item ' + (currentUser === u._id ? 'active' : '') + '" onclick="openChat(\'' + u._id + '\', \'' + u.name.replace(/'/g,'\\&apos;') + '\')" id="user-' + u._id + '">' +
+                    '<div class="contact-avatar-wrap"><div class="contact-avatar">' + initials + '</div><div class="status-dot ' + (isOnline ? 'online' : '') + '" id="dot-' + u._id + '"></div></div>' +
+                    '<div class="contact-info"><div class="contact-top"><div class="contact-name">' + (u.businessName || u.name) + '</div>' + unread + '</div>' +
+                    '<div style="font-size:12px;color:#8d99ae;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + preview + '</div></div></div>';
             }).join("");
         }
 
@@ -342,152 +452,243 @@
             document.getElementById("activeChat").style.display = "flex";
             document.getElementById("chatTitle").innerText = name;
             document.getElementById("chatTitleAvatar").innerText = name.charAt(0).toUpperCase();
-            
             updateHeaderStatus();
-            document.querySelectorAll(".contact-item").forEach(i => i.classList.remove("active"));
-            document.getElementById(`user-${id}`)?.classList.add("active");
-
-            // Mark as read on server
-            fetch(`/api/messages/mark-read/${id}`, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
-            
+            document.querySelectorAll(".contact-item").forEach(function(i){ i.classList.remove("active"); });
+            var ci = document.getElementById('user-' + id);
+            if (ci) ci.classList.add("active");
+            fetch('/api/messages/mark-read/' + id, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
             try {
-                const res = await fetch(`/api/messages/${id}`, { headers: { Authorization: "Bearer " + token } });
+                const res = await fetch('/api/messages/' + id, { headers: { Authorization: "Bearer " + token } });
                 const data = await res.json();
                 const box = document.getElementById("chatBox");
                 box.innerHTML = "";
                 if (data.messages) {
-                    data.messages.forEach(m => addMessageToUI(m));
+                    data.messages.forEach(function(m){ addMessageToUI(m); });
                     scrollToBottom();
-                    // Mark last messages as read in socket
-                    data.messages.filter(m => m.receiverId === user._id && m.status !== 'read').forEach(m => {
+                    data.messages.filter(function(m){ return m.receiverId === user._id && m.status !== 'read'; }).forEach(function(m){
                         socket.emit("message_read", { messageId: m._id, senderId: m.senderId });
                     });
                 }
             } catch (e) { console.error(e); }
+            try {
+                const resRating = await fetch('/api/wholesalers/' + id + '/rating');
+                const rtData = await resRating.json();
+                const chatRating = document.getElementById("chatRating");
+                if (rtData.success && rtData.averageRating > 0) {
+                    chatRating.style.display = "flex";
+                    chatRating.querySelector("span").innerText = Number(rtData.averageRating).toFixed(1);
+                } else {
+                    chatRating.style.display = "none";
+                }
+            } catch(e) {}
         }
 
+        // ===================== DEAL CARD BUILDER =====================
+        const statusLabels = { pending: 'Pending', wholesaler_accepted: 'Accepted', confirmed: 'Confirmed', rejected: 'Rejected' };
+        function fmtINR(n) { return '&#8377;' + Number(n || 0).toLocaleString('en-IN'); }
+
+        function buildDealCard(d) {
+            if (!d) return '<div class="deal-card"><p style="color:#94a3b8;font-size:13px;">Deal data unavailable</p></div>';
+            const isRetailer = user.role === 'retailer';
+            const isWholesaler = user.role === 'wholesaler';
+            const total = fmtINR((d.quantity || 0) * (d.offeredPrice || 0));
+            const listP = d.listPrice ? '<span style="color:#94a3b8;text-decoration:line-through;font-size:11px;">' + fmtINR(d.listPrice) + '/unit</span> ' : '';
+            const statusClass = 'status-' + (d.status || 'pending');
+            const statusLabel = statusLabels[d.status] || d.status;
+
+            let actionsHtml = '';
+            if (d.status === 'pending') {
+                if (isRetailer) {
+                    actionsHtml = '<button class="deal-btn update" onclick="openOfferModal(\'' + d.dealId + '\', ' + (d.quantity||1) + ', ' + (d.offeredPrice||0) + ')"><i class="fas fa-edit"></i> Update Offer</button>';
+                } else if (isWholesaler) {
+                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'wholesaler_accepted\')"><i class="fas fa-check"></i> Accept Offer</button>' +
+                        '<button class="deal-btn cancel" onclick="changeDealStatus(\'' + d.dealId + '\', \'rejected\')"><i class="fas fa-times"></i> Reject</button>';
+                }
+            } else if (d.status === 'wholesaler_accepted') {
+                if (isRetailer) {
+                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'confirmed\')"><i class="fas fa-handshake"></i> Confirm Deal</button>' +
+                        '<button class="deal-btn cancel" onclick="changeDealStatus(\'' + d.dealId + '\', \'rejected\')"><i class="fas fa-times"></i> Cancel</button>';
+                } else if (isWholesaler) {
+                    actionsHtml = '<div style="padding:6px;text-align:center;font-size:12px;color:#0369a1;font-weight:500;"><i class="fas fa-clock"></i> Awaiting retailer confirmation</div>';
+                }
+            }
+
+            return '<div class="deal-card" data-deal-id="' + d.dealId + '">' +
+                '<div class="deal-header"><span class="deal-title"><i class="fas fa-handshake"></i> ' + (d.name || 'Deal') + '</span>' +
+                '<span class="deal-status ' + statusClass + '">' + statusLabel + '</span></div>' +
+                '<div class="deal-body">' +
+                '<img src="' + (d.image || 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=60&q=70') + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">' +
+                '<div style="flex:1;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">' +
+                '<div><span style="color:#64748b;">Quantity</span><br><strong style="color:var(--primary);font-size:14px;">' + (d.quantity||0) + ' units</strong></div>' +
+                '<div><span style="color:#64748b;">Offered Price</span><br>' + listP + '<strong style="color:#10b981;font-size:14px;">' + fmtINR(d.offeredPrice) + '/unit</strong></div>' +
+                '<div style="grid-column:1/-1;background:#f8fafc;border-radius:6px;padding:5px 8px;margin-top:2px;"><span style="color:#64748b;font-size:11px;">Total Deal Value</span><strong style="display:block;font-size:15px;color:var(--text-main);">' + total + '</strong></div>' +
+                '</div></div></div>' +
+                (actionsHtml ? '<div class="deal-actions">' + actionsHtml + '</div>' : '') +
+                '</div>';
+        }
+
+        // ===================== ADD MESSAGE TO CHAT UI =====================
         function addMessageToUI(m) {
             const box = document.getElementById("chatBox");
             const isMe = String(m.senderId) === String(user._id);
-            const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            let content = m.message;
-            if (m.type === 'image') {
-                content = `<img src="${m.message}" style="max-width:100%; max-height:300px; border-radius:8px; display:block; cursor:pointer;" onclick="viewImage(this.src)">`;
-            } else if (m.type === 'audio') {
-                content = `<audio controls src="${m.message}" style="max-width:100%; max-height:40px;"></audio>`;
+            const time = m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+            if (m.type === 'system') {
+                const wrap = document.createElement("div");
+                wrap.className = "msg-bubble-wrap";
+                wrap.style.justifyContent = "center";
+                wrap.innerHTML = '<div class="system-msg">' + (m.message || '') + '</div>';
+                box.appendChild(wrap);
+                scrollToBottom();
+                return;
             }
 
-            // Handle Product Inquiry Cards
-            let prodHtml = "";
-            if (m.productData) {
-                const pd = m.productData;
-                const img = pd.image ? pd.image : 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&q=80';
-                prodHtml = `
-                    <a href="items.html?id=${isMe ? m.receiverId : m.senderId}" style="display:flex; gap:10px; background:rgba(0,0,0,0.05); padding:8px; border-radius:8px; margin-bottom:8px; text-decoration:none; color:inherit; border:1px solid rgba(0,0,0,0.1);">
-                        <img src="${img}" style="width:50px; height:50px; border-radius:4px; object-fit:cover;">
-                        <div>
-                            <div style="font-weight:600; font-size:12px;">${pd.name || "Product Inquiry"}</div>
-                            <div style="color:var(--primary); font-weight:700; font-size:12px;">₹${pd.price || "0"}</div>
-                        </div>
-                    </a>
-                `;
+            let content = '';
+            if (m.type === 'image') {
+                content = '<img src="' + m.message + '" style="max-width:100%;max-height:280px;border-radius:8px;display:block;cursor:pointer;" onclick="viewImage(this.src)">';
+            } else if (m.type === 'audio') {
+                content = '<audio controls src="' + m.message + '" style="max-width:100%;"></audio>';
+            } else if (m.type === 'deal') {
+                content = buildDealCard(m.productData);
+            } else {
+                content = '<div style="word-break:break-word;">' + (m.message || '') + '</div>';
             }
 
             let ticks = '';
-            if (isMe) {
-                const tickClass = m.status === 'read' ? 'read' : '';
-                const icon = m.status === 'sent' ? 'fa-check' : 'fa-check-double';
-                ticks = `<i class="fas ${icon} tick-icon ${tickClass}" id="tick-${m._id}"></i>`;
+            if (isMe && m.type !== 'deal') {
+                var tickClass = m.status === 'read' ? 'read' : '';
+                var icon = m.status === 'sent' ? 'fa-check' : 'fa-check-double';
+                ticks = '<i class="fas ' + icon + ' tick-icon ' + tickClass + '" id="tick-' + m._id + '"></i>';
             }
 
             const wrap = document.createElement("div");
-            wrap.className = `msg-bubble-wrap ${isMe ? 'sent' : 'recv'}`;
-            wrap.innerHTML = `
-                <div class="message ${isMe ? 'is-me' : 'is-other'}">
-                    ${prodHtml}
-                    <div style="word-break:break-word;">${content || ""}</div>
-                    <div class="msg-footer">
-                        <span>${time}</span>
-                        ${ticks}
-                    </div>
-                </div>
-            `;
+            wrap.className = 'msg-bubble-wrap ' + (isMe ? 'sent' : 'recv');
+            if (m.type === 'deal') {
+                wrap.innerHTML = '<div style="max-width:340px;">' + content + '<div class="msg-footer" style="justify-content:flex-end;font-size:10px;color:#667781;margin-top:3px;"><span>' + time + '</span>' + ticks + '</div></div>';
+            } else {
+                wrap.innerHTML = '<div class="message ' + (isMe ? 'is-me' : 'is-other') + '">' + content + '<div class="msg-footer"><span>' + time + '</span>' + ticks + '</div></div>';
+            }
             box.appendChild(wrap);
             scrollToBottom();
         }
 
-        function sendMessage(customMsg = null, type = 'text') {
-            const input = document.getElementById("msgInput");
-            const text = customMsg || input.value.trim();
-            if (!text || !currentUser) return;
+        // ===================== OFFER UPDATE MODAL =====================
+        function openOfferModal(dealId, curQty, curPrice) {
+            document.getElementById('offerDealId').value = dealId;
+            document.getElementById('offerQty').value = curQty;
+            document.getElementById('offerPrice').value = curPrice;
+            document.getElementById('offerModal').style.display = 'flex';
+        }
+        function closeOfferModal() { document.getElementById('offerModal').style.display = 'none'; }
 
-            socket.emit("send_message", {
-                senderId: user._id,
-                receiverId: currentUser,
-                message: text,
-                type: type
-            });
-            if (!customMsg) input.value = "";
+        async function submitOffer() {
+            const dealId = document.getElementById('offerDealId').value;
+            const qty = parseInt(document.getElementById('offerQty').value);
+            const price = parseFloat(document.getElementById('offerPrice').value);
+            if (!qty || qty < 1) { showToast('Enter a valid quantity', 'error'); return; }
+            if (!price || price <= 0) { showToast('Enter a valid price per unit', 'error'); return; }
+            try {
+                const res = await fetch('/api/deals/' + dealId + '/update', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ quantity: qty, offeredPrice: price })
+                });
+                const data = await res.json();
+                if (data.success) { closeOfferModal(); showToast('Offer updated successfully!', 'success'); openChat(currentUser, document.getElementById('chatTitle').innerText); }
+                else showToast(data.message || 'Failed to update offer', 'error');
+            } catch(e) { console.error(e); showToast('Network error', 'error'); }
         }
 
-        async function deleteConversation() {
-            if (!currentUser) return;
-            if (!confirm("Are you sure you want to delete this conversation? This will only remove it for you.")) return;
-
+        // ===================== DEAL STATUS ACTIONS =====================
+        async function changeDealStatus(dealId, status) {
+            if (!user.emailVerified) {
+                showToast('Email verification required to perform this action. Please verify in your Profile.', 'error');
+                return;
+            }
+            var label = { wholesaler_accepted: 'accept', rejected: 'reject/cancel', confirmed: 'confirm' }[status] || status;
+            if (!confirm('Are you sure you want to ' + label + ' this deal?')) return;
             try {
-                const res = await fetch(`/api/messages/${currentUser}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + token }
+                const res = await fetch('/api/deals/' + dealId + '/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ status: status })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById("activeChat").style.display = "none";
-                    document.getElementById("emptyChat").style.display = "flex";
-                    currentUser = null;
-                    await loadConversations();
-                }
-            } catch (e) { console.error(e); }
+                    var msgs = { wholesaler_accepted: 'Deal accepted! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal rejected ❌' };
+                    showToast(msgs[status] || 'Deal updated', status === 'confirmed' ? 'success' : status === 'rejected' ? 'error' : 'info');
+                    openChat(currentUser, document.getElementById('chatTitle').innerText);
+                    if (status === 'confirmed' && user.role === 'retailer') setTimeout(function(){ openRatingModal(currentUser, dealId); }, 1200);
+                } else showToast(data.message || 'Action failed', 'error');
+            } catch(e) { console.error(e); showToast('Network error', 'error'); }
         }
 
-        function scrollToBottom() { const box = document.getElementById("chatBox"); box.scrollTop = box.scrollHeight; }
+        // ===================== SEND TEXT MESSAGE =====================
+        function sendMessage(customMsg, type) {
+            if (!user.emailVerified) {
+                showToast('Email verification required to chat. Please verify in your Profile.', 'error');
+                return;
+            }
+            customMsg = customMsg || null;
+            type = type || 'text';
+            const input = document.getElementById("msgInput");
+            const text = customMsg || input.value.trim();
+            if (!text || !currentUser) return;
+            socket.emit("send_message", { senderId: user._id, receiverId: currentUser, message: text, type: type });
+            if (!customMsg) input.value = "";
+        }
 
-        // --- Socket Listeners ---
-
-        socket.on("receive_message", (data) => {
+        // ===================== SOCKET LISTENERS =====================
+        socket.on("receive_message", function(data) {
             if (currentUser === data.senderId || currentUser === data.receiverId) {
                 addMessageToUI(data);
-                if (data.senderId === currentUser) {
-                     socket.emit("message_read", { messageId: data._id, senderId: data.senderId });
-                }
-            } else {
-                loadConversations(); // Trigger refresh for unread count
+                if (data.senderId === currentUser) socket.emit("message_read", { messageId: data._id, senderId: data.senderId });
+            } else { loadConversations(); }
+        });
+
+        socket.on("deal_created", function(payload) {
+            var msg = payload && payload.msg;
+            if (!msg) return;
+            if (currentUser === msg.senderId || currentUser === msg.receiverId) openChat(currentUser, document.getElementById("chatTitle").innerText);
+            else loadConversations();
+        });
+
+        socket.on("deal_updated", function(payload) {
+            var sysMsg = payload && payload.sysMsg;
+            if (!sysMsg) return;
+            if (currentUser === String(sysMsg.senderId) || currentUser === String(sysMsg.receiverId)) {
+                openChat(currentUser, document.getElementById("chatTitle").innerText);
+                showToast('Deal offer updated', 'info');
             }
         });
 
-        socket.on("message_status_update", (data) => {
-            const tick = document.getElementById(`tick-${data.messageId}`);
-            if (tick) {
-                tick.className = `fas fa-check-double tick-icon ${data.status === 'read' ? 'read' : ''}`;
+        socket.on("deal_status_changed", function(payload) {
+            var sysMsg = payload && payload.sysMsg;
+            var deal = payload && payload.deal;
+            if (!sysMsg) return;
+            if (currentUser === String(sysMsg.senderId) || currentUser === String(sysMsg.receiverId)) {
+                openChat(currentUser, document.getElementById("chatTitle").innerText);
+                var msgs = { wholesaler_accepted: 'Wholesaler accepted the deal! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal was rejected ❌' };
+                showToast(msgs[deal && deal.status] || 'Deal status changed', deal && deal.status === 'confirmed' ? 'success' : deal && deal.status === 'rejected' ? 'error' : 'info');
             }
         });
 
-        socket.on("status_update", (data) => {
-            if (data.status === 'online') {
-                if (!onlineUsers.includes(data.userId)) onlineUsers.push(data.userId);
-            } else {
-                onlineUsers = onlineUsers.filter(id => id !== data.userId);
-            }
-            document.getElementById(`dot-${data.userId}`)?.classList.toggle('online', data.status === 'online');
+        socket.on("message_status_update", function(data) {
+            const tick = document.getElementById('tick-' + data.messageId);
+            if (tick) tick.className = 'fas fa-check-double tick-icon ' + (data.status === 'read' ? 'read' : '');
+        });
+
+        socket.on("status_update", function(data) {
+            if (data.status === 'online') { if (!onlineUsers.includes(data.userId)) onlineUsers.push(data.userId); }
+            else { onlineUsers = onlineUsers.filter(function(id){ return id !== data.userId; }); }
+            var dot = document.getElementById('dot-' + data.userId);
+            if (dot) dot.classList.toggle('online', data.status === 'online');
             if (currentUser === data.userId) updateHeaderStatus();
         });
 
-        socket.on("online_users_list", (list) => {
-            onlineUsers = list;
-            loadConversations();
-        });
+        socket.on("online_users_list", function(list) { onlineUsers = list; loadConversations(); });
 
-        socket.on("typing", (data) => {
+        socket.on("typing", function(data) {
             if (currentUser === data.senderId) {
                 document.getElementById("chatStatus").innerText = "typing...";
                 document.getElementById("chatStatus").classList.add("online");
@@ -497,31 +698,48 @@
         });
 
         function updateHeaderStatus() {
-            const status = onlineUsers.includes(currentUser) ? 'Active now' : 'Offline';
-            document.getElementById("chatStatus").innerText = status;
+            const s = onlineUsers.includes(currentUser) ? 'Active now' : 'Offline';
+            document.getElementById("chatStatus").innerText = s;
             document.getElementById("chatStatus").className = onlineUsers.includes(currentUser) ? 'online' : '';
         }
 
-        document.getElementById("msgInput").oninput = () => {
+        document.getElementById("msgInput").oninput = function() {
             if (currentUser) socket.emit("typing", { senderId: user._id, receiverId: currentUser });
         };
+        document.getElementById("msgInput").addEventListener("keydown", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        });
 
-        // --- Media Features ---
+        // ===================== DELETE CONVERSATION =====================
+        async function deleteConversation() {
+            if (!currentUser || !confirm("Delete this conversation for you?")) return;
+            try {
+                const res = await fetch('/api/messages/' + currentUser, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById("activeChat").style.display = "none";
+                    document.getElementById("emptyChat").style.display = "flex";
+                    currentUser = null; await loadConversations();
+                }
+            } catch (e) { console.error(e); }
+        }
 
+        function scrollToBottom() { const box = document.getElementById("chatBox"); box.scrollTop = box.scrollHeight; }
+
+        // ===================== MEDIA =====================
         function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = function(ev) {
                 const img = new Image();
-                img.onload = () => {
+                img.onload = function() {
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
                     const MAX_WIDTH = 800;
-                    let width = img.width, height = img.height;
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    canvas.width = width; canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
+                    let w = img.width, h = img.height;
+                    if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
                     sendMessage(canvas.toDataURL("image/jpeg", 0.7), 'image');
                 };
                 img.src = ev.target.result;
@@ -529,26 +747,18 @@
             reader.readAsDataURL(file);
         }
 
-        let cameraStream;
+        var cameraStream;
         async function openCameraModal() {
             try {
-                const modal = document.getElementById("cameraModal");
-                const video = document.getElementById("cameraVideo");
-                modal.style.display = "flex";
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
-                });
-                video.srcObject = cameraStream;
-                await video.play();
-            } catch (err) {
-                console.error("Camera error:", err);
-                alert("Could not access camera. Ensure you are on HTTPS or localhost and have given permission.");
-                closeCameraModal();
-            }
+                document.getElementById("cameraModal").style.display = "flex";
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } });
+                document.getElementById("cameraVideo").srcObject = cameraStream;
+                await document.getElementById("cameraVideo").play();
+            } catch (err) { closeCameraModal(); showToast('Camera access denied', 'error'); }
         }
         function closeCameraModal() {
             document.getElementById("cameraModal").style.display = "none";
-            cameraStream?.getTracks().forEach(t => t.stop());
+            if (cameraStream) cameraStream.getTracks().forEach(function(t){ t.stop(); });
         }
         function takeSnapshot() {
             const video = document.getElementById("cameraVideo");
@@ -559,84 +769,136 @@
             closeCameraModal();
         }
 
-        let mediaRecorder, audioChunks = [];
-        let recordInterval;
+        var mediaRecorder, audioChunks = [], recordInterval;
         async function toggleVoiceRecord() {
             const btn = document.getElementById("voiceBtn");
             const timer = document.getElementById("recordTimer");
-
             if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-                btn.style.color = "";
-                timer.style.display = "none";
-                clearInterval(recordInterval);
-                return;
+                mediaRecorder.stop(); btn.style.color = ""; timer.style.display = "none"; clearInterval(recordInterval); return;
             }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                mediaRecorder.onstop = () => {
+                mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = function() {
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
                     const reader = new FileReader();
-                    reader.onload = ev => sendMessage(ev.target.result, 'audio');
+                    reader.onload = function(ev) { sendMessage(ev.target.result, 'audio'); };
                     reader.readAsDataURL(blob);
-                    stream.getTracks().forEach(t => t.stop());
+                    stream.getTracks().forEach(function(t){ t.stop(); });
                 };
-                
-                mediaRecorder.start();
-                btn.style.color = "var(--danger)";
-                
-                // Start Timer
-                timer.style.display = "inline";
-                timer.innerText = "0:00";
-                let seconds = 0;
-                clearInterval(recordInterval);
-                recordInterval = setInterval(() => {
-                    seconds++;
-                    const mins = Math.floor(seconds / 60);
-                    const secs = seconds % 60;
-                    timer.innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                }, 1000);
-
-            } catch (err) {
-                console.error("Microphone access denied", err);
-                alert("Microphone permission denied. Note: This requires a secure connection (localhost or HTTPS).");
-            }
+                mediaRecorder.start(); btn.style.color = "var(--danger)";
+                timer.style.display = "inline"; timer.innerText = "0:00";
+                var seconds = 0; clearInterval(recordInterval);
+                recordInterval = setInterval(function(){ seconds++; var m=Math.floor(seconds/60),s=seconds%60; timer.innerText=m+':'+(s<10?'0':'')+s; }, 1000);
+            } catch (err) { showToast('Microphone access denied', 'error'); }
         }
 
         function viewImage(src) {
-            const lb = document.getElementById("lightbox");
-            const img = document.getElementById("lightboxImg");
-            img.src = src;
-            lb.style.display = "flex";
+            document.getElementById("lightboxImg").src = src;
+            document.getElementById("lightbox").style.display = "flex";
         }
 
-        window.onload = async () => {
+        // ===================== WINDOW ONLOAD =====================
+        window.onload = async function() {
             await loadConversations();
-            
-            // Auto-start chat with inquiry if URL params exist
             const params = new URLSearchParams(window.location.search);
             const targetUserId = params.get('user');
-            const targetProduct = params.get('product');
+            const targetProductId = params.get('productId');
+            const targetProductName = params.get('productName') || params.get('product');
 
-            if (targetUserId && targetProduct) {
-                // Find or assume name
-                let name = "Wholesaler"; 
-                // Trigger inquiry API
-                try {
-                    await fetch('/api/products/inquiry-by-name', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                        body: JSON.stringify({ productName: targetProduct })
-                    });
-                } catch (e) { console.error("Inquiry error", e); }
-
-                await openChat(targetUserId, name);
-                document.getElementById("msgInput").value = "Hi, I would like to inquire about " + targetProduct;
+            if (targetUserId && targetProductId) {
+                await openChat(targetUserId, targetProductName ? decodeURIComponent(targetProductName) : 'Wholesaler');
+                openNewDealModal(targetUserId, targetProductId, targetProductName || '');
+            } else if (targetUserId) {
+                await openChat(targetUserId, 'Wholesaler');
             }
         };
+
+        // ===================== NEW DEAL MODAL =====================
+        function openNewDealModal(wholesalerId, productId, productName) {
+            document.getElementById('newDealWholesalerId').value = wholesalerId;
+            document.getElementById('newDealProductId').value = productId;
+            document.getElementById('newDealProductName').innerText = decodeURIComponent(productName || 'Product');
+            document.getElementById('newDealQty').value = 10;
+            document.getElementById('newDealPrice').value = '';
+            document.getElementById('newDealModal').style.display = 'flex';
+        }
+        function closeNewDealModal() { document.getElementById('newDealModal').style.display = 'none'; }
+
+        async function submitNewDeal() {
+            if (!user.emailVerified) {
+                showToast('Email verification required to send inquiries. Please verify in your Profile.', 'error');
+                return;
+            }
+            const wholesalerId = document.getElementById('newDealWholesalerId').value;
+            const productId = document.getElementById('newDealProductId').value;
+            const qty = parseInt(document.getElementById('newDealQty').value);
+            const price = parseFloat(document.getElementById('newDealPrice').value);
+            if (!qty || qty < 1) { showToast('Enter a valid quantity', 'error'); return; }
+            if (!price || price <= 0) { showToast('Enter your offered price per unit', 'error'); return; }
+            try {
+                const res = await fetch('/api/deals/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ wholesalerId: wholesalerId, productId: productId, quantity: qty, offeredPrice: price })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeNewDealModal();
+                    showToast('Deal inquiry sent! 🤝', 'success');
+                    openChat(wholesalerId, document.getElementById('chatTitle').innerText);
+                } else showToast(data.message || 'Failed to create deal', 'error');
+            } catch(e) { console.error(e); showToast('Network error', 'error'); }
+        }
+
+        // ===================== RATING MODAL =====================
+        var currentRatingVal = 0, currentRatingDealId = null, currentRatingWholesalerId = null;
+
+        function openRatingModal(wholesalerId, dealId) {
+            currentRatingDealId = dealId; currentRatingWholesalerId = wholesalerId; currentRatingVal = 0;
+            document.getElementById("reviewText").value = "";
+            document.querySelectorAll(".rating-stars i").forEach(function(s){ s.classList.remove('active'); s.style.color = ''; });
+            document.getElementById("ratingModal").style.display = "flex";
+        }
+        function closeRatingModal() { document.getElementById("ratingModal").style.display = "none"; }
+
+        document.querySelectorAll(".rating-stars i").forEach(function(star) {
+            star.addEventListener("click", function(e) {
+                currentRatingVal = parseInt(e.target.getAttribute("data-val"));
+                document.querySelectorAll(".rating-stars i").forEach(function(s){
+                    s.classList.toggle('active', parseInt(s.getAttribute("data-val")) <= currentRatingVal);
+                    s.style.color = parseInt(s.getAttribute("data-val")) <= currentRatingVal ? '#fbbf24' : '#cbd5e1';
+                });
+            });
+            star.addEventListener("mouseover", function(e) {
+                var val = parseInt(e.target.getAttribute("data-val"));
+                document.querySelectorAll(".rating-stars i").forEach(function(s){
+                    s.style.color = parseInt(s.getAttribute("data-val")) <= val ? '#fbbf24' : '#cbd5e1';
+                });
+            });
+            star.addEventListener("mouseout", function() {
+                document.querySelectorAll(".rating-stars i").forEach(function(s){
+                    s.style.color = parseInt(s.getAttribute("data-val")) <= currentRatingVal ? '#fbbf24' : '#cbd5e1';
+                });
+            });
+        });
+
+        async function submitRating() {
+            if (currentRatingVal === 0) { showToast('Please select a star rating', 'error'); return; }
+            const reviewText = document.getElementById("reviewText").value;
+            try {
+                const res = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ wholesalerId: currentRatingWholesalerId, dealId: currentRatingDealId, rating: currentRatingVal, reviewText: reviewText })
+                });
+                const data = await res.json();
+                if (data.success) { closeRatingModal(); showToast('Thank you for your review! ⭐', 'success'); }
+                else showToast(data.message || 'Could not submit review', 'error');
+            } catch (e) { console.error(e); }
+        }
     </script>
 </body>
 </html>

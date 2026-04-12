@@ -775,33 +775,7 @@
   </div>
 </div>
 
-<!-- ===== INQUIRY MODAL ===== -->
-<div class="modal-overlay" id="inquiryModal">
-  <div class="modal-box">
-    <div class="modal-hdr">
-      <h3><i class="fas fa-paper-plane" style="color:#4361ee; margin-right:8px;"></i>Send Inquiry</h3>
-      <button class="modal-cls" onclick="closeModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-bdy">
-      <div class="inq-product-card">
-        <img class="inq-prod-img" id="mImg" src="" alt="Product" onerror="this.style.display='none'">
-        <div class="inq-prod-info">
-          <h4 id="mName">Product</h4>
-          <div class="price" id="mPrice">₹0</div>
-          <div class="supplier" id="mSupplier">Wholesaler</div>
-        </div>
-      </div>
-      <label class="inq-label" for="inqMsg">Your Message</label>
-      <textarea class="inq-textarea" id="inqMsg" rows="4" placeholder="Hi, I'm interested in this product. Please share bulk pricing and availability."></textarea>
-    </div>
-    <div class="modal-ftr">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-send" id="sendBtn" onclick="sendInquiry()">
-        <i class="fas fa-paper-plane"></i> Send & Open Chat
-      </button>
-    </div>
-  </div>
-</div>
+<!-- Removed Inquiry Modal to align with items.html flow -->
 
 <!-- ===== AI Chatbot ===== -->
 <link rel="stylesheet" href="/css/chatbot.css">
@@ -812,6 +786,11 @@
   // ---- Auth ----
   const user  = JSON.parse(localStorage.getItem('user'));
   const token = localStorage.getItem('token');
+
+  // Restrict wholesaler access
+  if (user && user.role === 'wholesaler') {
+    location.href = 'wholesaler-dashboard.html';
+  }
 
   const loginBtn     = document.getElementById('loginBtn');
   const signupBtn    = document.getElementById('signupBtn');
@@ -1014,9 +993,9 @@
           </div>
         </div>
         <div class="p-actions">
-          <button class="btn-inquire" onclick="openModal('${p._id}')" ${isOOS ? 'disabled' : ''}>
+          <a href="#" class="btn-inquire ${isOOS ? 'disabled' : ''}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${encodeURIComponent(p.name)}'); return false;">
             <i class="fas fa-paper-plane"></i> Inquire
-          </button>
+          </a>
           <button class="btn-ws" onclick="location.href='items.html?id=${p.wholesalerId}'">
             <i class="fas fa-store"></i> View Wholesaler
           </button>
@@ -1025,78 +1004,27 @@
     });
   }
 
-  // ---- Modal ----
-  function openModal(pid) {
-    const p  = state.all.find(x => x._id === pid);
-    if (!p) return;
-    const ws = state.wsMap[p.wholesalerId?.toString()] || {};
-    activeInquiry = { product: p, wholesaler: ws };
-
-    document.getElementById('mImg').src      = p.image || '';
-    document.getElementById('mName').innerText    = p.name || 'Product';
-    document.getElementById('mPrice').innerText   = `₹${(p.pricePerUnit||0).toLocaleString('en-IN')} per ${p.unit||'unit'}`;
-    document.getElementById('mSupplier').innerText= `by ${ws.businessName || ws.name || 'Wholesaler'}`;
-    document.getElementById('inqMsg').value       = `Hi, I'm interested in "${p.name}" (MOQ: ${p.moq||1} units). Please share bulk pricing and availability.`;
-
-    document.getElementById('inquiryModal').classList.add('active');
-  }
-
-  function closeModal() {
-    document.getElementById('inquiryModal').classList.remove('active');
-    activeInquiry = null;
-  }
-
-  async function sendInquiry() {
-    if (!user || !token) { location.href = 'login.html'; return; }
-    if (!activeInquiry) return;
-
-    const { product, wholesaler } = activeInquiry;
-    const msg = document.getElementById('inqMsg').value.trim();
-    if (!msg) { showToast('Please write a message.', 'err'); return; }
-
-    const wsId = wholesaler._id || product.wholesalerId;
-    if (!wsId) { showToast('Wholesaler not found.', 'err'); return; }
-
-    const btn = document.getElementById('sendBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
-
-    try {
-      // Bump reserved stock
-      try {
-        await fetch(`/api/products/${product._id}/inquiry`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ qty: product.moq || 1 })
-        });
-      } catch (_) {}
-
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({
-          senderId: user._id,
-          receiverId: wsId,
-          message: msg,
-          type: 'text',
-          productName: product.name,
-          productData: { name: product.name, price: product.pricePerUnit, unit: product.unit, image: product.image, id: product._id }
-        })
-      });
-
-      const d = await res.json();
-      if (!d.success) throw new Error();
-
-      closeModal();
-      showToast('Inquiry sent! Redirecting to chat…', 'ok');
-      setTimeout(() => { location.href = `messages.html?user=${wsId}&product=${encodeURIComponent(product.name)}`; }, 1200);
-    } catch (e) {
-      showToast('Failed to send. Please try again.', 'err');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send & Open Chat';
+  function attemptInquire(e, wsId, pId, pName) {
+    e.preventDefault();
+    const u = JSON.parse(localStorage.getItem('user'));
+    if (!u) {
+      window.location.href = 'login.html'; return;
     }
+    if (u.role === 'wholesaler') {
+      showToast('Wholesalers cannot send inquiries.', 'error'); return;
+    }
+    if (!u.emailVerified) {
+      alert('Email verification required to send inquiries. Please verify your email from your Profile page.'); return;
+    }
+    
+    // Check OOS
+    if (e.currentTarget.classList.contains('disabled')) return;
+    
+    // Proceed
+    window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${pName}`;
   }
+
+  // Redundant modal logic removed to align with items.html flow
 
   // ---- Filters ----
   function setCat(cat, el) {
@@ -1148,9 +1076,7 @@
     });
   });
 
-  document.getElementById('inquiryModal').addEventListener('click', e => {
-    if (e.target === document.getElementById('inquiryModal')) closeModal();
-  });
+  // Modal click listener removed
 
   // ---- Init ----
   fetchProducts();
