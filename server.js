@@ -189,7 +189,9 @@ const dealSchema = new mongoose.Schema({
   listPrice: Number,
   quantity: { type: Number, default: 1 },
   offeredPrice: { type: Number, default: 0 },
-  status: { type: String, enum: ['pending', 'wholesaler_accepted', 'confirmed', 'rejected'], default: 'pending' },
+  moq: { type: Number, default: 1 },
+  stock: { type: Number, default: 0 },
+  status: { type: String, enum: ['pending', 'wholesaler_updated', 'wholesaler_accepted', 'confirmed', 'rejected'], default: 'pending' },
 }, { timestamps: true });
 
 const Deal = mongoose.model('Deal', dealSchema);
@@ -385,6 +387,79 @@ router.post('/auth/verify-otp', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Verify OTP error:', err);
     res.status(500).json({ success: false, message: 'Verification failed' });
+  }
+});
+
+// ---------- FORGOT PASSWORD FLOW ----------
+
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // For security, don't reveal if user exists or not, but in some B2B contexts it's fine.
+      // However, usually we say "If an account exists, an OTP has been sent."
+      // For this demo, we'll be explicit for better UX.
+      return res.status(404).json({ success: false, message: 'No account found with this email' });
+    }
+
+    const otp = generateOTP();
+    const hashedOtp = await bcrypt.hash(otp, 8);
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes for reset
+
+    user.otpCode = hashedOtp;
+    user.otpExpiry = expiry;
+    user.otpAttempts = 0;
+    user.otpRequestedAt = new Date();
+    await user.save();
+
+    await sendOTPEmail(user.email, otp, user.name);
+
+    res.json({ success: true, message: `Password reset OTP sent to ${user.email}` });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send reset OTP' });
+  }
+});
+
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Check expiry
+    if (!user.otpExpiry || new Date() > new Date(user.otpExpiry)) {
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Check OTP
+    const isMatch = await bcrypt.compare(otp.trim(), user.otpCode);
+    if (!isMatch) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      await user.save();
+      return res.status(400).json({ success: false, message: 'Incorrect OTP' });
+    }
+
+    // Success — update password and clear OTP
+    user.password = newPassword; // This will be hashed by the pre-save hook
+    user.otpCode = undefined;
+    user.otpExpiry = undefined;
+    user.otpAttempts = 0;
+    user.otpRequestedAt = undefined;
+    
+    await user.save();
+
+    res.json({ success: true, message: 'Password reset successfully! You can now login.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ success: false, message: 'Password reset failed' });
   }
 });
 
@@ -907,9 +982,28 @@ function buildDealMsgData(deal) {
     listPrice: deal.listPrice,
     quantity: deal.quantity,
     offeredPrice: deal.offeredPrice,
+    moq: deal.moq || 1,
+    stock: deal.stock || 0,
     status: deal.status
   };
 }
+
+// Get all deals for the logged-in user
+router.get('/deals', authMiddleware, async (req, res) => {
+  try {
+    const deals = await Deal.find({
+      $or: [{ retailerId: req.user.id }, { wholesalerId: req.user.id }]
+    })
+    .populate('retailerId', 'name mobileNumber')
+    .populate('wholesalerId', 'name businessName rating')
+    .sort({ createdAt: -1 });
+
+    res.json({ success: true, deals });
+  } catch (err) {
+    console.error('Fetch deals error:', err);
+    res.status(500).json({ success: false, message: 'Server error fetching deals' });
+  }
+});
 
 router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, res) => {
   try {
@@ -939,6 +1033,8 @@ router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, r
       listPrice: product.pricePerUnit || 0,
       quantity: reqQty,
       offeredPrice: reqPrice,
+      moq: product.moq || 1,
+      stock: product.stock || 0,
       status: 'pending'
     });
     await deal.save();
@@ -966,19 +1062,42 @@ router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, r
   }
 });
 
-// Update deal offer (quantity + price renegotiation)
+// Update deal offer (negotiation)
 router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
   try {
     const { quantity, offeredPrice } = req.body;
     const deal = await Deal.findById(req.params.id);
     if (!deal) return res.status(404).json({ success: false, message: 'Deal not found' });
-    if (String(deal.retailerId) !== req.user.id) return res.status(403).json({ success: false, message: 'Only retailer can update the offer' });
+    
+    const isRetailer = String(deal.retailerId) === req.user.id;
+    const isWholesaler = String(deal.wholesalerId) === req.user.id;
+    
+    if (!isRetailer && !isWholesaler) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to update this deal' });
+    }
+
     if (deal.status === 'confirmed' || deal.status === 'rejected') {
       return res.status(400).json({ success: false, message: 'Cannot renegotiate a finalised deal' });
     }
 
     const newQty = Math.max(1, parseInt(quantity) || deal.quantity);
     const newPrice = parseFloat(offeredPrice) || deal.offeredPrice;
+
+    // Strict validation for retailers only
+    if (isRetailer) {
+      if (newQty < (deal.moq || 1)) {
+        return res.status(400).json({ success: false, message: `Minimum order quantity is ${deal.moq || 1} units` });
+      }
+      const product = await Product.findById(deal.productId);
+      if (product) {
+        // Stock check: Retailer cannot exceed (product.stock + their current reservation)
+        const maxAllowed = (product.stock || 0) + (deal.quantity || 0);
+        if (newQty > maxAllowed) {
+          return res.status(400).json({ success: false, message: `Only ${product.stock} units available` });
+        }
+      }
+    }
+
     const diff = newQty - deal.quantity;
 
     if (diff !== 0) {
@@ -995,22 +1114,28 @@ router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
 
     deal.quantity = newQty;
     deal.offeredPrice = newPrice;
-    deal.status = 'pending'; // Reset to pending on re-negotiation
+    
+    // Logic: If wholesaler updates, status becomes 'wholesaler_updated'
+    // If retailer updates, status becomes 'pending'
+    deal.status = isWholesaler ? 'wholesaler_updated' : 'pending';
     await deal.save();
+
+    const actorLabel = isWholesaler ? 'Wholesaler' : 'Retailer';
+    const receiverId = isWholesaler ? deal.retailerId : deal.wholesalerId;
 
     // System message in chat
     const sysMsg = new Message({
-      senderId: deal.retailerId,
-      receiverId: deal.wholesalerId,
+      senderId: req.user.id,
+      receiverId: receiverId,
       type: 'system',
-      message: `Retailer updated offer: ${newQty} units at ₹${newPrice}/unit (Total: ₹${(newQty * newPrice).toLocaleString('en-IN')})`
+      message: `${actorLabel} updated offer: ${newQty} units at ₹${newPrice}/unit (Total: ₹${(newQty * newPrice).toLocaleString('en-IN')})`
     });
     await sysMsg.save();
 
     // Updated deal message
     const dealMsg = new Message({
-      senderId: deal.retailerId,
-      receiverId: deal.wholesalerId,
+      senderId: req.user.id,
+      receiverId: receiverId,
       type: 'deal',
       message: '',
       productData: buildDealMsgData(deal)
@@ -1020,8 +1145,10 @@ router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
     const payload = { sysMsg: sysMsg.toObject(), dealMsg: dealMsg.toObject(), deal: deal.toObject() };
-    if (onlineUsers.has(String(deal.wholesalerId))) io.to(onlineUsers.get(String(deal.wholesalerId))).emit('deal_updated', payload);
-    if (onlineUsers.has(req.user.id)) io.to(onlineUsers.get(req.user.id)).emit('deal_updated', payload);
+    
+    [deal.retailerId, deal.wholesalerId].forEach(uid => {
+      if (onlineUsers.has(String(uid))) io.to(onlineUsers.get(String(uid))).emit('deal_updated', payload);
+    });
 
     res.json({ success: true, deal, sysMsg, dealMsg });
   } catch (err) {
@@ -1042,35 +1169,57 @@ router.patch('/deals/:id/status', authMiddleware, requireEmailVerified, async (r
 
     const product = await Product.findById(deal.productId);
     const userId = req.user.id;
+    const isWholesaler = userId === String(deal.wholesalerId);
+    const isRetailer = userId === String(deal.retailerId);
 
-    if (status === 'wholesaler_accepted' && userId === String(deal.wholesalerId)) {
-      deal.status = 'wholesaler_accepted';
-    } else if (status === 'rejected' && (userId === String(deal.wholesalerId) || userId === String(deal.retailerId))) {
-      deal.status = 'rejected';
-      if (product) {
-        product.reservedStock = Math.max(0, (product.reservedStock || 0) - deal.quantity);
-        await product.save();
+    let finalStatus = null;
+
+    if (status === 'confirmed') {
+      // Logic for finalizing: 
+      // 1. Wholesaler confirms Retailer's offer (pending)
+      // 2. Retailer confirms Wholesaler's offer (wholesaler_updated)
+      // 3. Retailer confirms Wholesaler's acceptance (legacy wholesaler_accepted)
+      if (isWholesaler && deal.status === 'pending') {
+        finalStatus = 'confirmed';
+      } else if (isRetailer && (deal.status === 'wholesaler_updated' || deal.status === 'wholesaler_accepted')) {
+        finalStatus = 'confirmed';
+      } else {
+        return res.status(403).json({ success: false, message: 'Unauthorized to confirm at this stage' });
       }
-    } else if (status === 'confirmed' && userId === String(deal.retailerId)) {
-      deal.status = 'confirmed';
+    } else if (status === 'wholesaler_accepted' && isWholesaler && deal.status === 'pending') {
+      // Legacy "Acceptance" flow
+      finalStatus = 'wholesaler_accepted';
+    } else if (status === 'rejected' && (isWholesaler || isRetailer)) {
+      finalStatus = 'rejected';
+    } else {
+      return res.status(403).json({ success: false, message: 'Unauthorized action on deal' });
+    }
+
+    deal.status = finalStatus;
+    
+    // Inventory adjustments
+    if (finalStatus === 'confirmed') {
       if (product) {
         product.stock = Math.max(0, (product.stock || 0) - deal.quantity);
         product.reservedStock = Math.max(0, (product.reservedStock || 0) - deal.quantity);
         product.soldCount = (product.soldCount || 0) + deal.quantity;
         await product.save();
       }
-    } else {
-      return res.status(403).json({ success: false, message: 'Unauthorized action on deal' });
+    } else if (finalStatus === 'rejected') {
+      if (product) {
+        product.reservedStock = Math.max(0, (product.reservedStock || 0) - deal.quantity);
+        await product.save();
+      }
     }
 
     await deal.save();
 
-    const statusLabels = { wholesaler_accepted: 'accepted', rejected: 'rejected', confirmed: 'confirmed' };
-    const actor = userId === String(deal.wholesalerId) ? 'Wholesaler' : 'Retailer';
-    let msgText = `${actor} ${statusLabels[status]} the deal`;
-    if (status === 'rejected' && userId === String(deal.retailerId)) msgText = 'Retailer cancelled the deal';
+    const statusLabels = { wholesaler_accepted: 'accepted', rejected: 'rejected', confirmed: 'finalized/confirmed' };
+    const actor = isWholesaler ? 'Wholesaler' : 'Retailer';
+    let msgText = `${actor} ${statusLabels[deal.status] || deal.status} the deal`;
+    if (deal.status === 'rejected' && isRetailer) msgText = 'Retailer cancelled the deal';
 
-    const otherId = userId === String(deal.retailerId) ? deal.wholesalerId : deal.retailerId;
+    const otherId = isRetailer ? deal.wholesalerId : deal.retailerId;
     const sysMsg = new Message({
       senderId: userId,
       receiverId: otherId,

@@ -593,6 +593,9 @@
             <button class="nav-link" onclick="go('browse')">
                 <i class="fas fa-building"></i> Wholesalers
             </button>
+            <button class="nav-link" onclick="go('deals')">
+                <i class="fas fa-handshake"></i> Deals Record
+            </button>
             <button class="nav-link" onclick="go('messages')">
                 <i class="fas fa-comment-dots"></i> Messages
                 <span class="message-badge" id="msgBadge">2</span>
@@ -659,8 +662,34 @@
                 </div>
             </div>
         </div>
+        
+        <h2 style="font-size: 16px; margin-bottom: 15px; margin-top: 20px; color: var(--text-muted); font-weight: 600;">DEALS ANALYTICS</h2>
+        <!-- Deals Analytics Stats Grid -->
+        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card" style="cursor:pointer;" onclick="go('deals')">
+                <div class="stat-icon" style="background: rgba(67, 97, 238, 0.1); color: var(--primary);"><i class="fas fa-handshake"></i></div>
+                <div class="stat-details">
+                    <h3 id="statTotalDeals"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
+                    <p>Total Deals</p>
+                </div>
+            </div>
+            <div class="stat-card" style="cursor:pointer;" onclick="go('deals')">
+                <div class="stat-icon" style="background: rgba(252, 163, 17, 0.1); color: var(--warning);"><i class="fas fa-clock"></i></div>
+                <div class="stat-details">
+                    <h3 id="statPendingDeals"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
+                    <p>Pending Actions</p>
+                </div>
+            </div>
+            <div class="stat-card" style="cursor:pointer;" onclick="go('deals')">
+                <div class="stat-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-details">
+                    <h3 id="statCompletedDeals"><div class="skeleton skeleton-text short" style="height: 30px;"></div></h3>
+                    <p>Completed Deals</p>
+                </div>
+            </div>
+        </div>
 
-        <!-- Two Column Layout -->
+        <!-- Dashboard Layout -->
         <div class="dashboard-grid">
 
             <!-- Left Column -->
@@ -779,6 +808,7 @@
             if (p === "dashboard") location.href = "retailer-dashboard.html";
             if (p === "explore") location.href = "browse-products.html";
             if (p === "browse") location.href = "wholesalers.html";
+            if (p === "deals") location.href = "deals-record.html";
             if (p === "messages") location.href = "messages.html";
             if (p === "profile") location.href = "profile.html";
         }
@@ -815,6 +845,23 @@
 
                 const chatUsers = cData.users || [];
                 document.getElementById("statMessages").innerText = chatUsers.length;
+
+                // Fetch Deals for Analytics
+                try {
+                    const dealsRes = await fetch('/api/deals', { headers: { 'Authorization': `Bearer ${token}` } });
+                    const dealsData = await dealsRes.json();
+                    
+                    if (dealsData.success) {
+                        const allDeals = dealsData.deals;
+                        const totalDeals = allDeals.length;
+                        const pendingDeals = allDeals.filter(d => d.status === 'pending' || d.status === 'wholesaler_updated').length;
+                        const completedDeals = allDeals.filter(d => d.status === 'confirmed').length;
+                        
+                        document.getElementById('statTotalDeals').innerText = totalDeals;
+                        document.getElementById('statPendingDeals').innerText = pendingDeals;
+                        document.getElementById('statCompletedDeals').innerText = completedDeals;
+                    }
+                } catch (e) { console.error('Error fetching deals', e); }
 
                 // Populate recent chats
                 const chatContainer = document.getElementById("recentChats");

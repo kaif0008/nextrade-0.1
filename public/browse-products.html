@@ -993,7 +993,7 @@
           </div>
         </div>
         <div class="p-actions">
-          <a href="#" class="btn-inquire ${isOOS ? 'disabled' : ''}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${encodeURIComponent(p.name)}'); return false;">
+          <a href="#" class="btn-inquire ${isOOS ? 'disabled' : ''}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${encodeURIComponent(p.name)}', ${p.pricePerUnit || 0}, ${p.moq || 1}, ${p.stock || 0}); return false;">
             <i class="fas fa-paper-plane"></i> Inquire
           </a>
           <button class="btn-ws" onclick="location.href='items.html?id=${p.wholesalerId}'">
@@ -1004,7 +1004,7 @@
     });
   }
 
-  function attemptInquire(e, wsId, pId, pName) {
+  function attemptInquire(e, wsId, pId, pName, price, moq, stock) {
     e.preventDefault();
     const u = JSON.parse(localStorage.getItem('user'));
     if (!u) {
@@ -1021,7 +1021,7 @@
     if (e.currentTarget.classList.contains('disabled')) return;
     
     // Proceed
-    window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${pName}`;
+    window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${pName}&price=${price}&moq=${moq}&stock=${stock}`;
   }
 
   // Redundant modal logic removed to align with items.html flow

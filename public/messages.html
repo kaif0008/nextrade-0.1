@@ -325,6 +325,8 @@
                 <button onclick="closeOfferModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">&times;</button>
             </div>
             <input type="hidden" id="offerDealId">
+            <input type="hidden" id="offerMoq">
+            <input type="hidden" id="offerStock">
             <div style="margin-bottom:14px;">
                 <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Quantity (units)</label>
                 <input type="number" id="offerQty" min="1" placeholder="e.g. 50" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
@@ -349,10 +351,13 @@
             </div>
             <input type="hidden" id="newDealWholesalerId">
             <input type="hidden" id="newDealProductId">
+            <input type="hidden" id="newDealMoq">
+            <input type="hidden" id="newDealStock">
             <p id="newDealProductName" style="font-size:14px;font-weight:600;color:#1e293b;background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:16px;border-left:3px solid var(--primary);">Product</p>
             <div style="margin-bottom:14px;">
                 <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Quantity Required (units)</label>
-                <input type="number" id="newDealQty" min="1" value="10" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
+                <input type="number" id="newDealQty" min="1" value="1" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
+                <p id="newDealQtyHint" style="font-size:11px;color:#64748b;margin-top:4px;"></p>
             </div>
             <div style="margin-bottom:20px;">
                 <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Your Offered Price per Unit (&#8377;)</label>
@@ -387,7 +392,12 @@
         const sidebarNav = document.getElementById("sidebarNav");
         sidebarNav.innerHTML = `
             <button class="nav-link" onclick="location.href='${user.role}-dashboard.html'"><i class="fas fa-home"></i> Dashboard</button>
-            <button class="nav-link" onclick="location.href='${user.role === 'wholesaler' ? 'product-management.html' : 'wholesalers.html'}'"><i class="fas fa-box"></i> ${user.role === 'wholesaler' ? 'Inventory' : 'Wholesalers'}</button>
+            ${user.role === 'retailer' ? `
+                <button class="nav-link" onclick="location.href='browse-products.html'">
+                    <i class="fas fa-store"></i> Explore Products
+                </button>` : ''}
+            <button class="nav-link" onclick="location.href='${user.role === 'wholesaler' ? 'product-management.html' : 'wholesalers.html'}'"><i class="fas fa-box"></i> ${user.role === 'wholesaler' ? 'My Products' : 'Wholesalers'}</button>
+            <button class="nav-link" onclick="location.href='deals-record.html'"><i class="fas fa-handshake"></i> Deals Record</button>
             <button class="nav-link active"><i class="fas fa-comment-dots"></i> Messages</button>
             <button class="nav-link" onclick="location.href='profile.html'"><i class="fas fa-user"></i> Profile</button>
             <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -484,7 +494,7 @@
         }
 
         // ===================== DEAL CARD BUILDER =====================
-        const statusLabels = { pending: 'Pending', wholesaler_accepted: 'Accepted', confirmed: 'Confirmed', rejected: 'Rejected' };
+        const statusLabels = { pending: 'Pending', wholesaler_updated: 'Offer Updated', wholesaler_accepted: 'Accepted', confirmed: 'Confirmed', rejected: 'Rejected' };
         function fmtINR(n) { return '&#8377;' + Number(n || 0).toLocaleString('en-IN'); }
 
         function buildDealCard(d) {
@@ -497,17 +507,27 @@
             const statusLabel = statusLabels[d.status] || d.status;
 
             let actionsHtml = '';
+            const updateBtn = '<button class="deal-btn update" onclick="openOfferModal(\'' + d.dealId + '\', ' + (d.quantity||1) + ', ' + (d.offeredPrice||0) + ', ' + (d.moq||1) + ', ' + (d.stock||0) + ')"><i class="fas fa-edit"></i> Update Offer</button>';
+            const rejectBtn = '<button class="deal-btn cancel" onclick="changeDealStatus(\'' + d.dealId + '\', \'rejected\')"><i class="fas fa-times"></i> Reject</button>';
+
             if (d.status === 'pending') {
+                if (isWholesaler) {
+                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'confirmed\')"><i class="fas fa-check"></i> Accept & Finalize</button>' +
+                        updateBtn + rejectBtn;
+                } else if (isRetailer) {
+                    actionsHtml = updateBtn + '<button class="deal-btn cancel" onclick="changeDealStatus(\'' + d.dealId + '\', \'rejected\')"><i class="fas fa-times"></i> Cancel Inquiry</button>';
+                }
+            } else if (d.status === 'wholesaler_updated') {
                 if (isRetailer) {
-                    actionsHtml = '<button class="deal-btn update" onclick="openOfferModal(\'' + d.dealId + '\', ' + (d.quantity||1) + ', ' + (d.offeredPrice||0) + ')"><i class="fas fa-edit"></i> Update Offer</button>';
+                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'confirmed\')"><i class="fas fa-handshake"></i> Accept Offer</button>' +
+                        updateBtn + rejectBtn;
                 } else if (isWholesaler) {
-                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'wholesaler_accepted\')"><i class="fas fa-check"></i> Accept Offer</button>' +
-                        '<button class="deal-btn cancel" onclick="changeDealStatus(\'' + d.dealId + '\', \'rejected\')"><i class="fas fa-times"></i> Reject</button>';
+                    actionsHtml = updateBtn + rejectBtn;
                 }
             } else if (d.status === 'wholesaler_accepted') {
                 if (isRetailer) {
-                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'confirmed\')"><i class="fas fa-handshake"></i> Confirm Deal</button>' +
-                        '<button class="deal-btn cancel" onclick="changeDealStatus(\'' + d.dealId + '\', \'rejected\')"><i class="fas fa-times"></i> Cancel</button>';
+                    actionsHtml = '<button class="deal-btn confirm" onclick="changeDealStatus(\'' + d.dealId + '\', \'confirmed\')"><i class="fas fa-handshake"></i> Finalize Deal</button>' +
+                        rejectBtn;
                 } else if (isWholesaler) {
                     actionsHtml = '<div style="padding:6px;text-align:center;font-size:12px;color:#0369a1;font-weight:500;"><i class="fas fa-clock"></i> Awaiting retailer confirmation</div>';
                 }
@@ -573,10 +593,23 @@
         }
 
         // ===================== OFFER UPDATE MODAL =====================
-        function openOfferModal(dealId, curQty, curPrice) {
+        function openOfferModal(dealId, curQty, curPrice, moq, stock) {
             document.getElementById('offerDealId').value = dealId;
             document.getElementById('offerQty').value = curQty;
             document.getElementById('offerPrice').value = curPrice;
+            document.getElementById('offerMoq').value = moq || 1;
+            document.getElementById('offerStock').value = stock || 0;
+            
+            // Set input constraints for retailers
+            const qtyInput = document.getElementById('offerQty');
+            if (user.role === 'retailer') {
+                qtyInput.min = moq || 1;
+                qtyInput.max = (parseInt(stock) || 0) + (parseInt(curQty) || 0);
+            } else {
+                qtyInput.removeAttribute('min');
+                qtyInput.removeAttribute('max');
+            }
+            
             document.getElementById('offerModal').style.display = 'flex';
         }
         function closeOfferModal() { document.getElementById('offerModal').style.display = 'none'; }
@@ -585,8 +618,23 @@
             const dealId = document.getElementById('offerDealId').value;
             const qty = parseInt(document.getElementById('offerQty').value);
             const price = parseFloat(document.getElementById('offerPrice').value);
+            const moq = parseInt(document.getElementById('offerMoq').value) || 1;
+            const stock = parseInt(document.getElementById('offerStock').value) || 0;
+
             if (!qty || qty < 1) { showToast('Enter a valid quantity', 'error'); return; }
             if (!price || price <= 0) { showToast('Enter a valid price per unit', 'error'); return; }
+            
+            // Retailer-specific quantity validation
+            if (user.role === 'retailer') {
+                if (qty < moq) { showToast(`Minimum order quantity is ${moq} units`, 'error'); return; }
+                // Note: The total available for a retailer is current product stock + their already reserved amount
+                // But for simplicity and safety, we've already set 'max' on the input, so we check that.
+                const maxAllowed = document.getElementById('offerQty').max;
+                if (maxAllowed && qty > parseInt(maxAllowed)) {
+                    showToast('Wait, you are exceeding available stock limits', 'error'); return; 
+                }
+            }
+
             try {
                 const res = await fetch('/api/deals/' + dealId + '/update', {
                     method: 'PATCH',
@@ -668,7 +716,7 @@
             if (!sysMsg) return;
             if (currentUser === String(sysMsg.senderId) || currentUser === String(sysMsg.receiverId)) {
                 openChat(currentUser, document.getElementById("chatTitle").innerText);
-                var msgs = { wholesaler_accepted: 'Wholesaler accepted the deal! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal was rejected ❌' };
+                var msgs = { wholesaler_accepted: 'Wholesaler accepted the deal! ✅', confirmed: 'Deal confirmed! 🎉', rejected: 'Deal rejected ❌' };
                 showToast(msgs[deal && deal.status] || 'Deal status changed', deal && deal.status === 'confirmed' ? 'success' : deal && deal.status === 'rejected' ? 'error' : 'info');
             }
         });
@@ -807,22 +855,38 @@
             const targetUserId = params.get('user');
             const targetProductId = params.get('productId');
             const targetProductName = params.get('productName') || params.get('product');
+            const targetPrice = params.get('price');
+            const targetMoq = params.get('moq');
+            const targetStock = params.get('stock');
 
             if (targetUserId && targetProductId) {
                 await openChat(targetUserId, targetProductName ? decodeURIComponent(targetProductName) : 'Wholesaler');
-                openNewDealModal(targetUserId, targetProductId, targetProductName || '');
+                openNewDealModal(targetUserId, targetProductId, targetProductName || '', targetPrice, targetMoq, targetStock);
             } else if (targetUserId) {
                 await openChat(targetUserId, 'Wholesaler');
             }
         };
 
         // ===================== NEW DEAL MODAL =====================
-        function openNewDealModal(wholesalerId, productId, productName) {
+        function openNewDealModal(wholesalerId, productId, productName, price, moq, stock) {
             document.getElementById('newDealWholesalerId').value = wholesalerId;
             document.getElementById('newDealProductId').value = productId;
             document.getElementById('newDealProductName').innerText = decodeURIComponent(productName || 'Product');
-            document.getElementById('newDealQty').value = 10;
-            document.getElementById('newDealPrice').value = '';
+            
+            // Set dynamic values from params
+            const qtyInput = document.getElementById('newDealQty');
+            const dealMoq = parseInt(moq) || 1;
+            const dealStock = parseInt(stock) || 0;
+            
+            document.getElementById('newDealMoq').value = dealMoq;
+            document.getElementById('newDealStock').value = dealStock;
+            
+            qtyInput.value = dealMoq;
+            qtyInput.min = dealMoq;
+            qtyInput.max = dealStock;
+            document.getElementById('newDealQtyHint').innerText = `Allowed: ${dealMoq} to ${dealStock} units`;
+            
+            document.getElementById('newDealPrice').value = price || '';
             document.getElementById('newDealModal').style.display = 'flex';
         }
         function closeNewDealModal() { document.getElementById('newDealModal').style.display = 'none'; }
@@ -836,7 +900,12 @@
             const productId = document.getElementById('newDealProductId').value;
             const qty = parseInt(document.getElementById('newDealQty').value);
             const price = parseFloat(document.getElementById('newDealPrice').value);
+            const moq = parseInt(document.getElementById('newDealMoq').value) || 1;
+            const stock = parseInt(document.getElementById('newDealStock').value) || 0;
+
             if (!qty || qty < 1) { showToast('Enter a valid quantity', 'error'); return; }
+            if (qty < moq) { showToast(`Minimum order quantity is ${moq} units`, 'error'); return; }
+            if (qty > stock) { showToast(`Only ${stock} units available in stock`, 'error'); return; }
             if (!price || price <= 0) { showToast('Enter your offered price per unit', 'error'); return; }
             try {
                 const res = await fetch('/api/deals/create', {
@@ -848,6 +917,8 @@
                 if (data.success) {
                     closeNewDealModal();
                     showToast('Deal inquiry sent! 🤝', 'success');
+
+                    window.history.replaceState({}, document.title, "/messages.html");
                     openChat(wholesalerId, document.getElementById('chatTitle').innerText);
                 } else showToast(data.message || 'Failed to create deal', 'error');
             } catch(e) { console.error(e); showToast('Network error', 'error'); }

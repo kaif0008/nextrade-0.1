@@ -502,7 +502,10 @@
                 <i class="fas fa-home"></i> Dashboard
             </button>
             <button class="nav-link active" onclick="go('products')">
-                <i class="fas fa-box"></i> Inventory View
+                <i class="fas fa-box"></i> My Products
+            </button>
+            <button class="nav-link" onclick="go('deals')">
+                <i class="fas fa-handshake"></i> Deals Record
             </button>
             <button class="nav-link" onclick="go('messages')">
                 <i class="fas fa-comment-dots"></i> Messages
@@ -639,6 +642,7 @@
         function go(p){
             if(p === "dashboard") location.href = "wholesaler-dashboard.html";
             if(p === "products") location.href = "product-management.html";
+            if(p === "deals") location.href = "deals-record.html";
             if(p === "messages") location.href = "messages.html";
             if(p === "profile") location.href = "profile.html";
         }

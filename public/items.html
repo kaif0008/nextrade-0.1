@@ -932,6 +932,139 @@
     .f-socials a:hover {
       background: var(--primary);
     }
+
+    /* REVIEWS SECTION */
+    .reviews-section {
+      max-width: 1200px;
+      margin: 40px auto 80px;
+      padding: 0 20px;
+    }
+    .reviews-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .reviews-header h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 24px;
+      color: var(--navy);
+      margin: 0;
+    }
+    .reviews-summary {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: white;
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 30px;
+    }
+    .avg-number {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .avg-stars-container {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .stars-row {
+      color: #fbbf24;
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+    .total-reviews-count {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+    .review-card {
+      background: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border);
+      transition: 0.3s;
+    }
+    .review-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+    }
+    .rv-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .rv-author {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--navy);
+    }
+    .rv-date {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .rv-stars {
+      color: #fbbf24;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .rv-text {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.6;
+      font-style: italic;
+    }
+    .verified-deal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--success);
+      font-weight: 600;
+      background: #ecfdf5;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    .show-more-btn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 10px 25px;
+      background: white;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      border-radius: 25px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .show-more-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .no-reviews {
+      text-align: center;
+      padding: 40px;
+      background: white;
+      border-radius: var(--border-radius);
+      color: var(--text-muted);
+      border: 1px dashed #cbd5e1;
+    }
+    @media (max-width: 640px) {
+      .reviews-grid { grid-template-columns: 1fr; }
+      .reviews-summary { flex-direction: column; text-align: center; }
+    }
   </style>
 </head>
 
@@ -1040,6 +1173,19 @@
   <div class="grid-container" id="gridContainer">
     <!-- Skeletons render here first via JS -->
   </div>
+
+  <!-- REVIEWS SECTION -->
+  <section class="reviews-section" id="reviewsSection" style="display:none;">
+    <div class="reviews-header">
+      <h2>Reviews & Ratings</h2>
+    </div>
+    
+    <div id="reviewsSummaryContainer"></div>
+
+    <div id="reviewsList" class="reviews-grid"></div>
+    
+    <button id="showAllReviewsBtn" class="show-more-btn" style="display:none;" onclick="toggleAllReviews()">View All Reviews</button>
+  </section>
 
   <!-- QUICK VIEW MODAL -->
   <div class="modal-overlay" id="quickViewModal">
@@ -1225,7 +1371,7 @@
         inqBtn.style.background = "var(--navy)";
         inqBtn.style.pointerEvents = "auto";
         inqBtn.innerText = "Send Inquiry";
-        inqBtn.onclick = (e) => attemptInquire(e, p.wholesalerId, p._id, p.name);
+        inqBtn.onclick = (e) => attemptInquire(e, p.wholesalerId, p._id, p.name, p.pricePerUnit || p.price, p.moq || 1, p.stock || 0);
       }
 
       modal.classList.add("active");
@@ -1275,6 +1421,9 @@
 
         setupWholesalerBand();
         setupFiltersDOM();
+        
+        // Fetch Reviews
+        fetchReviews(wsId);
 
         // Find max price for sliders
         if (allData.length > 0) {
@@ -1293,6 +1442,103 @@
           </div>
         `;
       }
+    }
+
+    let allReviews = [];
+    let reviewsExpanded = false;
+
+    async function fetchReviews(wsId) {
+      try {
+        const res = await fetch(`/api/wholesalers/${wsId}/rating`);
+        const data = await res.json();
+        if (data.success) {
+          allReviews = data.reviews || [];
+          document.getElementById("reviewsSection").style.display = "block";
+          renderReviewsSummary(data.averageRating, data.reviewCount);
+          renderReviewsList();
+        }
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      }
+    }
+
+    function renderReviewsSummary(avg, count) {
+      const container = document.getElementById("reviewsSummaryContainer");
+      if (count === 0) {
+        container.innerHTML = `
+          <div class="no-reviews">
+            <i class="far fa-comment-dots" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+            No reviews yet for this wholesaler.
+          </div>
+        `;
+        document.getElementById("reviewsList").style.display = "none";
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="reviews-summary">
+          <div class="avg-number">${avg.toFixed(1)}</div>
+          <div class="avg-stars-container">
+            <div class="stars-row">${generateStars(avg)}</div>
+            <div class="total-reviews-count">Based on ${count} verified deal${count > 1 ? 's' : ''}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReviewsList() {
+      const list = document.getElementById("reviewsList");
+      const btn = document.getElementById("showAllReviewsBtn");
+      list.innerHTML = "";
+      
+      if (allReviews.length === 0) return;
+      
+      list.style.display = "grid";
+      const displayCount = reviewsExpanded ? allReviews.length : 3;
+      const reviewsToShow = allReviews.slice(0, displayCount);
+
+      reviewsToShow.forEach(rv => {
+        const name = rv.retailerId ? (rv.retailerId.businessName || rv.retailerId.name) : "Verified Retailer";
+        const date = new Date(rv.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        
+        list.innerHTML += `
+          <div class="review-card">
+            <div class="rv-top">
+              <span class="rv-author">${name}</span>
+              <span class="rv-date">${date}</span>
+            </div>
+            <div class="rv-stars">${generateStars(rv.rating)}</div>
+            <div class="rv-text">"${rv.reviewText || 'No comment provided.'}"</div>
+            <div class="verified-deal-badge">
+              <i class="fas fa-check-double"></i> Verified Deal
+            </div>
+          </div>
+        `;
+      });
+
+      if (allReviews.length > 3) {
+        btn.style.display = "block";
+        btn.innerText = reviewsExpanded ? "Show Less" : `View All ${allReviews.length} Reviews`;
+      } else {
+        btn.style.display = "none";
+      }
+    }
+
+    window.toggleAllReviews = function() {
+      reviewsExpanded = !reviewsExpanded;
+      renderReviewsList();
+    };
+
+    function generateStars(rating) {
+      const full = Math.floor(rating);
+      const half = rating % 1 >= 0.5;
+      let html = "";
+      for (let i = 1; i <= 5; i++) {
+        if (i <= full) html += '<i class="fas fa-star"></i>';
+        else if (i === full + 1 && half) html += '<i class="fas fa-star-half-alt"></i>';
+        else html += '<i class="far fa-star"></i>';
+      }
+      return html;
     }
 
     function setupWholesalerBand() {
@@ -1524,7 +1770,7 @@
               </div>
               
               <div class="p-footer" style="padding:15px 0 0; margin-top:auto;">
-                <a href="#" class="${inqClass}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${p.name}'); return false;">
+                <a href="#" class="${inqClass}" onclick="attemptInquire(event, '${p.wholesalerId}', '${p._id}', '${p.name}', ${p.pricePerUnit || p.price}, ${p.moq || 1}, ${p.stock || 0}); return false;">
                   ${isOos ? 'Unavailable' : 'Send Inquiry'}
                 </a>
               </div>
@@ -1535,7 +1781,7 @@
       grid.innerHTML = html;
     }
 
-    function attemptInquire(e, wsId, pId, pName) {
+    function attemptInquire(e, wsId, pId, pName, price, moq, stock) {
       e.preventDefault();
       const u = JSON.parse(localStorage.getItem('user'));
       if (!u) {
@@ -1550,7 +1796,7 @@
       
       if (e.currentTarget.classList.contains('disabled')) return;
       
-      window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${encodeURIComponent(pName)}`;
+      window.location.href = `messages.html?user=${wsId}&productId=${pId}&productName=${encodeURIComponent(pName)}&price=${price}&moq=${moq}&stock=${stock}`;
     }
 
   </script>

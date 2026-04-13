@@ -238,6 +238,98 @@
                 left: 0.8rem;
             }
         }
+
+        /* Forgot Password Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+        }
+
+        @keyframes modalSlideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: var(--gray);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-modal:hover { color: var(--dark); }
+
+        .reset-step { display: none; }
+        .reset-step.active { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .reset-step h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .reset-step p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .otp-field {
+            width: 45px;
+            height: 55px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 0;
+        }
+
+        .otp-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+        }
     </style>
 </head>
 
@@ -255,10 +347,64 @@
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" placeholder="Password" id="loginPassword" required />
                 </div>
+                <div style="text-align: right; margin-top: -10px;">
+                    <a href="#" id="forgotPasswordLink" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 500;">Forgot Password?</a>
+                </div>
                 <button type="submit" class="btn-primary">Login</button>
                 <p class="message">Don't have an account? <a href="signup.html">Sign Up</a></p>
                 <p id="loginStatus" class="status-msg"></p>
             </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="resetModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="close-modal" id="closeResetModal">&times;</span>
+            
+            <!-- Step 1: Request OTP -->
+            <div id="step1" class="reset-step active">
+                <h3>Reset Password</h3>
+                <p>Enter your email address to receive a verification code.</p>
+                <div class="input-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="resetEmail" placeholder="Email Address">
+                </div>
+                <button class="btn-primary" id="requestOtpBtn">Send Verification Code</button>
+            </div>
+
+            <!-- Step 2: Verify OTP -->
+            <div id="step2" class="reset-step">
+                <h3>Verify OTP</h3>
+                <p>We've sent a 6-digit code to <strong id="sentEmailDisplay"></strong></p>
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" class="otp-field">
+                    <input type="text" maxlength="1" class="otp-field">
+                    <input type="text" maxlength="1" class="otp-field">
+                    <input type="text" maxlength="1" class="otp-field">
+                    <input type="text" maxlength="1" class="otp-field">
+                    <input type="text" maxlength="1" class="otp-field">
+                </div>
+                <button class="btn-primary" id="verifyOtpBtn">Verify Code</button>
+                <p style="text-align: center; font-size: 0.85rem;">Didn't get the code? <a href="#" id="resendOtp" style="color: var(--primary); font-weight: 600;">Resend</a></p>
+            </div>
+
+            <!-- Step 3: New Password -->
+            <div id="step3" class="reset-step">
+                <h3>New Password</h3>
+                <p>Create a strong password for your account.</p>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="newPassword" placeholder="New Password">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-check-circle input-icon"></i>
+                    <input type="password" id="confirmPassword" placeholder="Confirm New Password">
+                </div>
+                <button class="btn-primary" id="resetPasswordBtn">Reset Password</button>
+            </div>
+
+            <p id="resetStatus" class="status-msg"></p>
         </div>
     </div>
 
@@ -324,6 +470,140 @@
             input.addEventListener('blur', () => {
                 input.parentElement.style.transform = 'scale(1)';
             });
+        });
+
+        // --- Forgot Password Logic ---
+        const resetModal = document.getElementById('resetModal');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const closeResetModal = document.getElementById('closeResetModal');
+        const resetStatus = document.getElementById('resetStatus');
+
+        function showStep(stepNum) {
+            document.querySelectorAll('.reset-step').forEach(step => step.classList.remove('active'));
+            document.getElementById(`step${stepNum}`).classList.add('active');
+            resetStatus.classList.remove('visible', 'error', 'success');
+        }
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            resetModal.style.display = 'flex';
+            showStep(1);
+        });
+
+        closeResetModal.addEventListener('click', () => {
+            resetModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === resetModal) resetModal.style.display = 'none';
+        });
+
+        // OTP inputs handling
+        const otpFields = document.querySelectorAll('.otp-field');
+        otpFields.forEach((field, index) => {
+            field.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < otpFields.length - 1) {
+                    otpFields[index + 1].focus();
+                }
+            });
+            field.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    otpFields[index - 1].focus();
+                }
+            });
+        });
+
+        function getOtpValue() {
+            return Array.from(otpFields).map(f => f.value).join('');
+        }
+
+        // Step 1 -> Step 2
+        document.getElementById('requestOtpBtn').addEventListener('click', async () => {
+            const email = document.getElementById('resetEmail').value;
+            if (!email) return alert('Please enter your email');
+
+            const btn = document.getElementById('requestOtpBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('sentEmailDisplay').textContent = email;
+                    showStep(2);
+                } else {
+                    resetStatus.textContent = data.message;
+                    resetStatus.classList.add('visible', 'error');
+                }
+            } catch (err) {
+                resetStatus.textContent = 'Failed to send OTP';
+                resetStatus.classList.add('visible', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Send Verification Code';
+            }
+        });
+
+        // Step 2 -> Step 3 (Verify OTP)
+        document.getElementById('verifyOtpBtn').addEventListener('click', () => {
+            const otp = getOtpValue();
+            if (otp.length < 6) return alert('Please enter the 6-digit code');
+            
+            // We'll actually verify in the final reset step to minimize round trips 
+            // OR verify now. Let's verify now for better UX.
+            // But my backend /reset-password takes email, otp, newPassword.
+            // I'll just move to step 3 and verify at the end.
+            showStep(3);
+        });
+
+        // Step 3 (Final Reset)
+        document.getElementById('resetPasswordBtn').addEventListener('click', async () => {
+            const email = document.getElementById('resetEmail').value;
+            const otp = getOtpValue();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!newPassword || newPassword.length < 6) return alert('Password must be at least 6 characters');
+            if (newPassword !== confirmPassword) return alert('Passwords do not match');
+
+            const btn = document.getElementById('resetPasswordBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+
+            try {
+                const res = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp, newPassword })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    resetStatus.textContent = data.message;
+                    resetStatus.classList.add('visible', 'success');
+                    setTimeout(() => {
+                        resetModal.style.display = 'none';
+                        // Optionally auto-fill login email
+                        document.getElementById('loginEmail').value = email;
+                    }, 2000);
+                } else {
+                    resetStatus.textContent = data.message;
+                    resetStatus.classList.add('visible', 'error');
+                    if (data.message.includes('OTP')) showStep(2); // Go back to OTP if it failed
+                }
+            } catch (err) {
+                resetStatus.textContent = 'Reset failed';
+                resetStatus.classList.add('visible', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Reset Password';
+            }
         });
     </script>
 
