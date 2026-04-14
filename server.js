@@ -198,7 +198,6 @@ const userSchema = new mongoose.Schema({
   otpRequestedAt: Date
 }, { timestamps: true });
 
-userSchema.index({ email: 1 });
 userSchema.index({ name: 1 });
 userSchema.index({ role: 1 });
 
