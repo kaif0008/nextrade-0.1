@@ -5,6 +5,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Force IPv4 as default to avoid ENETUNREACH (IPv6) errors on cloud providers like Render
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');
