@@ -31,10 +31,27 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ================= EMAIL TRANSPORTER (NODEMAILER) =================
 const emailTransporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Use SSL/TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false // Helps with some cloud hosting certificate issues
+  }
+});
+
+// Verify connection on startup
+emailTransporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Email Transporter Error:', error.message);
+    if (error.message.includes('Invalid login')) {
+      console.error('👉 TIP: Check your EMAIL_USER and ensure EMAIL_PASS is a 16-character App Password, not your regular password.');
+    }
+  } else {
+    console.log('✅ Email Transporter is ready to send messages');
   }
 });
 
@@ -74,7 +91,18 @@ async function sendOTPEmail(toEmail, otp, userName) {
       </html>
     `
   };
-  return emailTransporter.sendMail(mailOptions);
+  
+  try {
+    return await emailTransporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error('❌ Nodemailer Error Detail:', {
+      code: err.code,
+      command: err.command,
+      response: err.response,
+      stack: err.stack
+    });
+    throw err; 
+  }
 }
 
 // ================= CONSTANTS =================
@@ -2085,6 +2113,45 @@ router.get('/demand-insights', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Demand insights error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch demand insights' });
+  }
+});
+
+// ---------- DIAGNOSTIC: TEST EMAIL ----------
+// This endpoint is for troubleshooting deployment issues.
+router.get('/config/test-email', async (req, res) => {
+  try {
+    const testEmailSnippet = `
+      <div style="font-family:sans-serif; padding:20px; border:1px solid #4361ee; border-radius:10px;">
+        <h2 style="color:#4361ee;">NexTrade Diagnostic</h2>
+        <p>If you see this, your email configuration is working perfectly on Render!</p>
+        <p>Timestamp: ${new Date().toLocaleString()}</p>
+      </div>
+    `;
+
+    console.log('--- Starting Diagnostic Email Test ---');
+    console.log('Using EMAIL_USER:', process.env.EMAIL_USER ? 'SET (Redacted)' : 'NOT SET');
+    
+    await emailTransporter.sendMail({
+      from: `"NexTrade Diagnostic" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER, // Send to self
+      subject: 'NexTrade Diagnostic Test',
+      html: testEmailSnippet
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Test email sent successfully to ' + process.env.EMAIL_USER,
+      diagnostics: 'Connection verified and message accepted by Gmail.'
+    });
+  } catch (err) {
+    console.error('Test Email Failed:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message,
+      code: err.code,
+      response: err.response,
+      instruction: 'If you see "Invalid Login", please double check your App Password on Render.'
+    });
   }
 });
 
