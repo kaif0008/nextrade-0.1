@@ -32,15 +32,19 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // ================= EMAIL TRANSPORTER (NODEMAILER) =================
 const emailTransporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Use SSL/TLS
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
-    rejectUnauthorized: false // Helps with some cloud hosting certificate issues
-  }
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1.2'
+  },
+  connectionTimeout: 10000, // 10 seconds timeout
+  greetingTimeout: 10000,
+  socketTimeout: 15000
 });
 
 // Verify connection on startup
