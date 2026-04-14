@@ -37,11 +37,16 @@ const Groq = require('groq-sdk');
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ================= EMAIL TRANSPORTER (NODEMAILER) =================
+// Custom lookup to strictly force IPv4
+const ipv4Lookup = (hostname, options, callback) => {
+  return dns.lookup(hostname, { family: 4 }, callback);
+};
+
 const emailTransporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true, // Use SSL
-  family: 4,    // FORCE IPv4 to avoid ENETUNREACH on Render
+  secure: true,
+  lookup: ipv4Lookup, // FORCE IPv4 at the DNS level
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
