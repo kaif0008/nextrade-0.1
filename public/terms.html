@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service | NexTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/content-page.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                <div>
+                    <div class="logo-text">Nex<span>Trade</span></div>
+                    <div class="tagline">The Nexus of efficient Business</div>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="wholesalers.html">Wholesalers</a></li>
+                    <li><a href="browse-products.html">Explore Products</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html" class="btn-login" id="loginBtn">Login</a></li>
+                    <li><a href="signup.html" class="btn-nav btn-signup" id="signupBtn">Sign Up</a></li>
+                    <li><a href="dashboard.html" id="dashboardBtn" style="display:none;" class="btn-nav btn-signup">Dashboard</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="content-hero">
+        <div class="container">
+            <h1>Terms of Service</h1>
+            <p>Please read these terms carefully before using the NexTrade platform to manage your B2B operations.</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="content-wrap">
+            <h2>1. Acceptance of Terms</h2>
+            <p>By accessing or using NexTrade, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using this platform.</p>
+            
+            <h2>2. Use License</h2>
+            <p>NexTrade grants you a non-exclusive, non-transferable, revocable license to access the platform specifically for B2B trading purposes. You may not:</p>
+            <ul>
+                <li>Modify or copy platform materials.</li>
+                <li>Use the materials for any commercial purpose (other than bulk B2B trading).</li>
+                <li>Attempt to decompile or reverse engineer any software contained on NexTrade.</li>
+                <li>Remove any copyright or other proprietary notations from the materials.</li>
+            </ul>
+
+            <h2>3. User Roles & Verification</h2>
+            <p><strong>Wholesalers:</strong> Must provide accurate business documentation (GST) and are responsible for product accuracy.</p>
+            <p><strong>Retailers:</strong> Responsible for verifying the quality of products before finalizing bulk deals.</p>
+
+            <h2>4. Negotiations & Deals</h2>
+            <p>NexTrade is a marketplace facilitator. All negotiations conducted via the message portal or deal system are between the wholesaler and retailer. NexTrade is not a party to the actual sales contract but provides the platform for the agreement to take place.</p>
+
+            <h2>5. AI Assistant (Nexa)</h2>
+            <p>While Nexa provides data-driven insights and helps manage deals, all business decisions remain the sole responsibility of the user. NexTrade is not liable for business outcomes resulting from Nexa's suggestions.</p>
+
+            <h2>6. Governing Law</h2>
+            <p>These terms and conditions are governed by and construed in accordance with the laws of India and you irrevocably submit to the exclusive jurisdiction of the courts in Uttar Pradesh.</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html" class="logo">
+                        <i class="fas fa-arrow-trend-up logo-icon"></i>
+                        <div class="logo-text">Nex<span>Trade</span></div>
+                    </a>
+                    <p class="footer-tagline">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="blog.html">Blog</a></li>
+                            
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="help-center.html">Help Center</a></li>
+                            <li><a href="wholesaler-guide.html">Wholesaler Guide</a></li>
+                            <li><a href="shopkeeper-guide.html">Shopkeeper Guide</a></li>
+                            <li><a href="faq.html">FAQs</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="privacy.html">Privacy Policy</a></li>
+                            <li><a href="terms.html">Terms of Service</a></li>
+                            <li><a href="security.html">Security</a></li>
+                            <li><a href="cookie-policy.html">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NexTrade. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            const token = localStorage.getItem("token");
+            if (user && token) {
+                document.getElementById("loginBtn").style.display = "none";
+                document.getElementById("signupBtn").style.display = "none";
+                document.getElementById("dashboardBtn").style.display = "inline-block";
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <script src="/chatbot.js"></script>
+</body>
+</html>

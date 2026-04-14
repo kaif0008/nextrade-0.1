@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const userName = user && user.name ? user.name : '';
   const userRole = user && user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : '';
   
-  let greetingMessage = "Hello! I'm your NexTrade virtual assistant. How can I help you today?";
+  let greetingMessage = "Hello! I'm Nexa, your NexTrade AI assistant. How can I help you today?";
   if (userName && userRole) {
-    greetingMessage = `Hello ${userName}! I'm your specific ${userRole} Assistant. How can I help you?`;
+    greetingMessage = `Hello ${userName}! I'm Nexa, your personal ${userRole} Assistant. How can I help you?`;
   }
 
   // Inject HTML
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   container.innerHTML = `
     <div id="nt-chatbot-window">
       <div id="nt-chatbot-header">
-        <span>🤖 NexTrade AI</span>
+        <span>🤖 Nexa AI</span>
         <button id="nt-chatbot-close">&times;</button>
       </div>
       <div id="nt-chatbot-messages">
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     messagesDiv.appendChild(div);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
     
-    if(chatHistory.length > 20) chatHistory = chatHistory.slice(-20); // keep it reasonable
+    if(chatHistory.length > 30) chatHistory = chatHistory.slice(-30); // keep reasonable history
     chatHistory.push({ sender: role, text });
   }
 

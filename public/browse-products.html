@@ -768,7 +768,20 @@
   <div class="result-info" id="resultInfo">Loading products…</div>
 </div>
 
-<!-- ===== PRODUCTS GRID ===== -->
+<!-- ===== RECOMMENDED FOR YOU (Retailers only) ===== -->
+<div id="recSection" style="display:none; max-width:1200px; margin: 0 auto 28px; padding: 0 20px;">
+  <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;">
+    <h2 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:#0f172a; margin:0;">✨ Recommended for You</h2>
+    <span style="font-size:12px; color:#94a3b8; background:#f1f5f9; padding:3px 10px; border-radius:20px; font-weight:500;">AI Powered</span>
+  </div>
+  <div id="recStrip" style="display:flex; gap:14px; overflow-x:auto; padding-bottom:8px; scrollbar-width:thin; -webkit-overflow-scrolling:touch;">
+    <!-- Skeleton -->
+    <div style="min-width:180px;height:210px;border-radius:12px;" class="skeleton"></div>
+    <div style="min-width:180px;height:210px;border-radius:12px;" class="skeleton"></div>
+    <div style="min-width:180px;height:210px;border-radius:12px;" class="skeleton"></div>
+  </div>
+</div>
+
 <div class="products-section">
   <div class="products-grid" id="productsGrid">
     <!-- skeleton or cards rendered here -->
@@ -1080,6 +1093,44 @@
 
   // ---- Init ----
   fetchProducts();
+
+  // ---- Recommended For You (retailers only) ----
+  if (user && token && user.role === 'retailer') {
+    const recSection = document.getElementById('recSection');
+    const recStrip   = document.getElementById('recStrip');
+    recSection.style.display = 'block';
+
+    fetch('/api/recommendations', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success || !data.recommendations || data.recommendations.length === 0) {
+          recSection.style.display = 'none'; return;
+        }
+        const wsColors = ['#4361ee','#7209b7','#f72585','#e36414','#2bc155'];
+        recStrip.innerHTML = data.recommendations.map(r => {
+          const wsName = r.wholesalerId ? (r.wholesalerId.businessName || r.wholesalerId.name || 'Supplier') : 'Supplier';
+          const wsBg   = wsColors[(wsName.length) % wsColors.length];
+          const imgHTML = r.image
+            ? `<img src="${r.image}" style="width:100%;height:110px;object-fit:cover;display:block;">`
+            : `<div style="width:100%;height:110px;background:linear-gradient(135deg,#e0e7ff,#f0f4ff);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#4361ee;font-family:'Syne',sans-serif;">${(r.name||'P').charAt(0)}</div>`;
+          return `
+          <a href="browse-products.html" style="min-width:180px;max-width:180px;border-radius:12px;overflow:hidden;border:1.5px solid #f1f5f9;text-decoration:none;color:inherit;flex-shrink:0;background:white;transition:all 0.25s;display:flex;flex-direction:column;" onmouseover="this.style.borderColor='#4361ee';this.style.boxShadow='0 8px 24px rgba(67,97,238,0.15)';this.style.transform='translateY(-3px)'" onmouseout="this.style.borderColor='#f1f5f9';this.style.boxShadow='none';this.style.transform='none'">
+            ${imgHTML}
+            <div style="padding:10px;flex:1;display:flex;flex-direction:column;gap:3px;">
+              <div style="font-weight:700;font-size:12px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Syne',sans-serif;">${r.name}</div>
+              <div style="font-size:13px;font-weight:700;color:#4361ee;">&#8377;${r.pricePerUnit}<span style="font-size:10px;font-weight:400;color:#94a3b8;">/${r.unit}</span></div>
+              <div style="font-size:10px;color:#64748b;background:#f8fafc;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:2px;">${r.category || 'Product'}</div>
+              <div style="margin-top:6px;display:flex;align-items:center;gap:5px;">
+                <div style="width:18px;height:18px;border-radius:4px;background:${wsBg};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;">${wsName.charAt(0)}</div>
+                <span style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${wsName}</span>
+              </div>
+              <div style="margin-top:4px;font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(67,97,238,0.08);color:#4361ee;font-weight:600;display:inline-block;">&#10024; ${r.reason}</div>
+            </div>
+          </a>`;
+        }).join('');
+      })
+      .catch(() => { recSection.style.display = 'none'; });
+  }
 </script>
 
 </body>

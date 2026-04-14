@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Policy | NexTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/content-page.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                <div>
+                    <div class="logo-text">Nex<span>Trade</span></div>
+                    <div class="tagline">The Nexus of efficient Business</div>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="wholesalers.html">Wholesalers</a></li>
+                    <li><a href="browse-products.html">Explore Products</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html" class="btn-login" id="loginBtn">Login</a></li>
+                    <li><a href="signup.html" class="btn-nav btn-signup" id="signupBtn">Sign Up</a></li>
+                    <li><a href="dashboard.html" id="dashboardBtn" style="display:none;" class="btn-nav btn-signup">Dashboard</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="content-hero">
+        <div class="container">
+            <h1>Cookie Policy</h1>
+            <p>How we use cookies to improve your marketplace experience and optimize platform performance.</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="content-wrap">
+            <h2>What are Cookies?</h2>
+            <p>Cookies are small text files stored on your device that help us provide a better, faster, and safer experience. They allow our system (and Nexa) to remember your preferences and keep your session secure while you negotiate deals.</p>
+            
+            <h2>How NexTrade Uses Cookies</h2>
+            <ul>
+                <li><strong>Essential Cookies:</strong> Required for you to log in, access your dashboard, and use the message portal.</li>
+                <li><strong>Performance Cookies:</strong> These help us understand how users interact with our pages, which categories are popular, and how we can improve platform speed.</li>
+                <li><strong>Personalization Cookies:</strong> Used by Nexa to remember your recent searches and provide better product recommendations.</li>
+            </ul>
+
+            <h2>Managing Your Cookies</h2>
+            <p>Most browsers allow you to control cookies through their settings. However, if you disable essential cookies, many features of the NexTrade platform (including deal management and the AI consultant) may not function correctly.</p>
+
+            <h2>Updates to This Policy</h2>
+            <p>We may update our Cookie Policy from time to time to reflect changes in technology or data protection laws. Please check this page regularly for the latest information.</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html" class="logo">
+                        <i class="fas fa-arrow-trend-up logo-icon"></i>
+                        <div class="logo-text">Nex<span>Trade</span></div>
+                    </a>
+                    <p class="footer-tagline">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="blog.html">Blog</a></li>
+                            
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="help-center.html">Help Center</a></li>
+                            <li><a href="wholesaler-guide.html">Wholesaler Guide</a></li>
+                            <li><a href="shopkeeper-guide.html">Shopkeeper Guide</a></li>
+                            <li><a href="faq.html">FAQs</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="privacy.html">Privacy Policy</a></li>
+                            <li><a href="terms.html">Terms of Service</a></li>
+                            <li><a href="security.html">Security</a></li>
+                            <li><a href="cookie-policy.html">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NexTrade. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            const token = localStorage.getItem("token");
+            if (user && token) {
+                document.getElementById("loginBtn").style.display = "none";
+                document.getElementById("signupBtn").style.display = "none";
+                document.getElementById("dashboardBtn").style.display = "inline-block";
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <script src="/chatbot.js"></script>
+</body>
+</html>

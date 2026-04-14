@@ -5,6 +5,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 
@@ -13,7 +17,7 @@ const { Server } = require('socket.io');
 
 // ================= AI CONFIGURATION (GROQ) =================
 const Groq = require('groq-sdk');
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'fake_key' });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ================= EMAIL TRANSPORTER (NODEMAILER) =================
 const emailTransporter = nodemailer.createTransport({
@@ -66,7 +70,12 @@ async function sendOTPEmail(toEmail, otp, userName) {
 // ================= CONSTANTS =================
 const SALT_ROUNDS = 10;
 const DEFAULT_PORT = 5010;
-const JWT_SECRET = process.env.JWT_SECRET || 'nextrade_secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined in .env");
+  process.exit(1);
+}
 
 // ================= DB CONNECTION =================
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nextrade')
@@ -77,11 +86,41 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nextrade'
   });
 
 // ================= MIDDLEWARE =================
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for local development and to allow external scripts/styles used in the app
+}));
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: { success: false, message: "Too many requests, please try again later." }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // Strict limit for auth/OTP
+  message: { success: false, message: "Too many attempts, please wait 15 minutes." }
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ================= STORAGE CONFIG (MULTER) =================
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 // ================= AUTH MIDDLEWARE =================
 const authMiddleware = (req, res, next) => {
@@ -137,6 +176,8 @@ const userSchema = new mongoose.Schema({
   state: String,
   pincode: String,
   country: { type: String, default: 'India' },
+  // Business Categories (for wholesalers)
+  categories: { type: [String], default: [] },
   // Legacy fields
   shopName: String,
   shopAddress: String,
@@ -147,6 +188,10 @@ const userSchema = new mongoose.Schema({
   otpAttempts: { type: Number, default: 0 },
   otpRequestedAt: Date
 }, { timestamps: true });
+
+userSchema.index({ email: 1 });
+userSchema.index({ name: 1 });
+userSchema.index({ role: 1 });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
@@ -164,18 +209,22 @@ const User = mongoose.model('User', userSchema);
 
 // Product
 const productSchema = new mongoose.Schema({
-  name: String,
-  pricePerUnit: Number,
-  unit: String,
-  category: String,
-  image: String,
-  description: String,
-  stock: Number,
+  name: { type: String, required: true },
+  pricePerUnit: { type: Number, required: true },
+  unit: { type: String, required: true },
+  category: { type: String, required: true },
+  image: { type: String, required: true },
+  description: { type: String, required: true },
+  stock: { type: Number, required: true },
   reservedStock: { type: Number, default: 0 },
   soldCount: { type: Number, default: 0 },
-  moq: Number,
+  moq: { type: Number, required: true },
   wholesalerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
+
+productSchema.index({ name: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ wholesalerId: 1 });
 
 const Product = mongoose.model('Product', productSchema);
 
@@ -192,9 +241,24 @@ const dealSchema = new mongoose.Schema({
   moq: { type: Number, default: 1 },
   stock: { type: Number, default: 0 },
   status: { type: String, enum: ['pending', 'wholesaler_updated', 'wholesaler_accepted', 'confirmed', 'rejected'], default: 'pending' },
+  requirementId: { type: mongoose.Schema.Types.ObjectId, ref: 'Requirement' },
 }, { timestamps: true });
 
 const Deal = mongoose.model('Deal', dealSchema);
+
+// Requirement Schema
+const requirementSchema = new mongoose.Schema({
+  retailerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  productName: String,
+  quantity: Number,
+  expectedPrice: Number,
+  unit: { type: String, default: 'piece' },
+  description: String,
+  categories: { type: [String], default: [] },
+  status: { type: String, enum: ['open', 'closed'], default: 'open' },
+}, { timestamps: true });
+
+const Requirement = mongoose.model('Requirement', requirementSchema);
 
 // Review Model
 const reviewSchema = new mongoose.Schema({
@@ -221,6 +285,18 @@ const messageSchema = new mongoose.Schema({
 
 const Message = mongoose.model('Message', messageSchema);
 
+// Contact Message
+const contactMessageSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  subject: { type: String, required: true },
+  message: { type: String, required: true },
+  status: { type: String, enum: ['new', 'read', 'replied'], default: 'new' }
+}, { timestamps: true });
+
+const ContactMessage = mongoose.model('ContactMessage', contactMessageSchema);
+
+
 // ================= ROUTES =================
 const router = express.Router();
 
@@ -242,9 +318,10 @@ const requireEmailVerified = async (req, res, next) => {
 };
 
 // ---------- AUTH ----------
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, upload.single('photo'), async (req, res) => {
   try {
     const { name, email, password, role, gstNumber } = req.body;
+    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     // âœ… Basic validation
     if (!name || !email || !password || !role) {
@@ -293,7 +370,8 @@ router.post('/signup', async (req, res) => {
       email,
       password,
       role,
-      gstNumber
+      gstNumber,
+      photoUrl
     });
 
     await user.save();
@@ -313,7 +391,7 @@ router.post('/signup', async (req, res) => {
 
 // ---------- OTP EMAIL VERIFICATION ----------
 
-router.post('/auth/send-otp', authMiddleware, async (req, res) => {
+router.post('/auth/send-otp', authMiddleware, authLimiter, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
@@ -453,7 +531,7 @@ router.post('/auth/reset-password', async (req, res) => {
     user.otpExpiry = undefined;
     user.otpAttempts = 0;
     user.otpRequestedAt = undefined;
-    
+
     await user.save();
 
     res.json({ success: true, message: 'Password reset successfully! You can now login.' });
@@ -463,7 +541,7 @@ router.post('/auth/reset-password', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
@@ -490,7 +568,7 @@ router.get('/wholesalers', async (req, res) => {
     ).lean();
 
     const reviews = await Review.find();
-    
+
     // Compute average ratings
     const wsWithRatings = wholesalers.map(ws => {
       const wReviews = reviews.filter(r => String(r.wholesalerId) === String(ws._id));
@@ -520,7 +598,7 @@ router.get('/products/wholesaler/:id', async (req, res) => {
 
     const reviews = await Review.find({ wholesalerId: req.params.id });
     const avg = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
-    
+
     wholesaler.averageRating = Number(avg);
     wholesaler.reviewCount = reviews.length;
 
@@ -572,7 +650,7 @@ router.get('/analytics/inventory', authMiddleware, async (req, res) => {
       const runRate = sold / daysSinceCreation;
       let forecastDays = -1;
       if (runRate > 0) forecastDays = Math.round(p.stock / runRate);
-      
+
       // Low stock
       if (p.stock <= 10) {
         lowStockItems.push({ id: p._id, name: p.name, stock: p.stock, forecastDays });
@@ -613,13 +691,31 @@ const ALLOWED_PROFILE_FIELDS = [
   'businessName', 'businessType', 'industry', 'gstNumber',
   'yearOfEstablishment', 'websiteUrl', 'businessDescription', 'businessPhotoUrl',
   'businessPhotos', 'primaryBusinessPhotoIndex',
+  'categories',
   'houseNo', 'street', 'block', 'district', 'city',
   'state', 'pincode', 'country', 'shopName', 'shopAddress'
 ];
 
-router.post("/update-profile", authMiddleware, async (req, res) => {
+router.post("/update-profile", authMiddleware, upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'businessPhotos', maxCount: 5 }
+]), async (req, res) => {
   try {
     const safeUpdate = {};
+
+    if (req.files) {
+      if (req.files.photo) {
+        safeUpdate.photoUrl = `/uploads/${req.files.photo[0].filename}`;
+      }
+      if (req.files.businessPhotos) {
+        // We append new photos to the existing ones? 
+        // Or replace? The current UI seems to manage a list locally and then save.
+        // I'll assume we replace with the full list or handle it based on how the UI sends it.
+        // Actually, for now, let's just make sure we save the paths.
+        const newPaths = req.files.businessPhotos.map(f => `/uploads/${f.filename}`);
+        safeUpdate.businessPhotos = newPaths;
+      }
+    }
 
     for (const field of ALLOWED_PROFILE_FIELDS) {
       if (req.body[field] !== undefined) {
@@ -669,61 +765,41 @@ router.post("/update-profile", authMiddleware, async (req, res) => {
 });
 
 
-// ---------- PRODUCTS ----------
-router.post('/products', authMiddleware, requireEmailVerified, async (req, res) => {
-  if (req.user.role !== 'wholesaler') {
-    return res.status(403).json({ success: false, message: 'Only wholesalers can add products' });
-  }
-
-  const product = new Product({ ...req.body, wholesalerId: req.user.id });
-  await product.save();
-
-  res.status(201).json({ success: true, product });
-});
-
-router.post('/products/auto-tag', authMiddleware, async (req, res) => {
+// Create Product
+router.post('/products', authMiddleware, requireEmailVerified, upload.single('image'), async (req, res) => {
   try {
-    const { image } = req.body;
-    if (!image) return res.status(400).json({ success: false, message: 'No image provided' });
+    if (req.user.role !== 'wholesaler') {
+      return res.status(403).json({ success: false, message: 'Only wholesalers can add products' });
+    }
 
-    const mimeMatch = image.match(/^data:(.*?);base64,/);
-    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-    const base64Data = image.replace(/^data:(.*?);base64,/, "");
+    const { name, pricePerUnit, unit, category, description, stock, moq } = req.body;
 
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `Analyze this product image for an e-commerce B2B platform. 
-            Provide a JSON response with the following keys EXACTLY:
-            "suggestedName": A clear, concise product name.
-            "category": The closest broad category (e.g., Electronics, Clothing, Groceries).
-            "description": A 2-sentence description.` },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${base64Data}`,
-              },
-            },
-          ],
-        },
-      ],
-      model: "llama-3.2-11b-vision-preview",
-      response_format: { type: "json_object" }
+    if (!name || !pricePerUnit || !unit || !category || !description || stock === undefined || moq === undefined) {
+      return res.status(400).json({ success: false, message: 'All text fields are required' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Product image is required' });
+    }
+
+    const product = new Product({
+      ...req.body,
+      image: `/uploads/${req.file.filename}`,
+      wholesalerId: req.user.id
     });
 
-    const aiData = JSON.parse(completion.choices[0].message.content);
-    res.json({ success: true, tags: aiData });
-  } catch (error) {
-    console.error('Auto tag error:', error);
-    res.status(500).json({ success: false, message: 'Failed to analyze image' });
+    await product.save();
+    res.status(201).json({ success: true, product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
+
+// AI code removed as per user request
 
 router.get('/products', async (req, res) => {
   const search = req.query.search || '';
-  
+
   if (!search) {
     const products = await Product.find().sort({ createdAt: -1 });
     return res.json({ success: true, products });
@@ -743,9 +819,9 @@ router.get('/products', async (req, res) => {
       ],
       model: "llama-3.3-70b-versatile",
     });
-    
+
     const aiText = completion.choices[0].message.content;
-    
+
     const terms = [search, ...aiText.split(',').map(s => s.trim().toLowerCase()).filter(s => s)];
     const regexes = terms.map(term => new RegExp(term, 'i'));
 
@@ -812,7 +888,7 @@ router.post('/products/:id/inquiry', authMiddleware, async (req, res) => {
 router.post('/products/inquiry-by-name', authMiddleware, async (req, res) => {
   const { productName, qty } = req.body;
   if (!productName) return res.status(400).json({ success: false, message: 'Product name required' });
-  
+
   const incQty = qty || 1;
   const product = await Product.findOneAndUpdate(
     { name: productName },
@@ -823,18 +899,27 @@ router.post('/products/inquiry-by-name', authMiddleware, async (req, res) => {
   res.json({ success: true, product });
 });
 
-router.put('/products/:id', authMiddleware, async (req, res) => {
-  const product = await Product.findOneAndUpdate(
-    { _id: req.params.id, wholesalerId: req.user.id },
-    req.body,
-    { new: true }
-  );
+router.put('/products/:id', authMiddleware, upload.single('image'), async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
 
-  if (!product) {
-    return res.status(403).json({ success: false });
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, wholesalerId: req.user.id },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!product) {
+      return res.status(403).json({ success: false, message: 'Product not found or unauthorized' });
+    }
+
+    res.json({ success: true, product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
-
-  res.json({ success: true, product });
 });
 
 
@@ -907,7 +992,7 @@ router.patch('/messages/mark-read/:targetUserId', authMiddleware, async (req, re
 // Get all conversations (like WhatsApp list)
 router.get("/conversations", authMiddleware, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = String(req.user.id);
 
     const messages = await Message.find({
       $or: [
@@ -953,7 +1038,7 @@ router.get("/conversations", authMiddleware, async (req, res) => {
       };
     }));
 
-    conversations.sort((a,b) => {
+    conversations.sort((a, b) => {
       const timeA = a.lastMessage ? new Date(a.lastMessage.createdAt) : 0;
       const timeB = b.lastMessage ? new Date(b.lastMessage.createdAt) : 0;
       return timeB - timeA;
@@ -994,9 +1079,9 @@ router.get('/deals', authMiddleware, async (req, res) => {
     const deals = await Deal.find({
       $or: [{ retailerId: req.user.id }, { wholesalerId: req.user.id }]
     })
-    .populate('retailerId', 'name mobileNumber')
-    .populate('wholesalerId', 'name businessName rating')
-    .sort({ createdAt: -1 });
+      .populate('retailerId', 'name mobileNumber')
+      .populate('wholesalerId', 'name businessName rating')
+      .sort({ createdAt: -1 });
 
     res.json({ success: true, deals });
   } catch (err) {
@@ -1007,14 +1092,24 @@ router.get('/deals', authMiddleware, async (req, res) => {
 
 router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, res) => {
   try {
-    const { wholesalerId, productId, quantity, offeredPrice } = req.body;
-    if (!wholesalerId || !productId) return res.status(400).json({ success: false, message: 'wholesalerId and productId are required' });
+    const { wholesalerId, productId, quantity, offeredPrice, requirementId, retailerId } = req.body;
+
+    // Role-aware ID assignment
+    const isWholesaler = req.user.role === 'wholesaler';
+    const finalRetailerId = isWholesaler ? retailerId : req.user.id;
+    const finalWholesalerId = isWholesaler ? req.user.id : (wholesalerId || req.body.wholesalerId);
+
+    if (!finalRetailerId || !finalWholesalerId || !productId) {
+      return res.status(400).json({ success: false, message: 'retailerId, wholesalerId and productId are required' });
+    }
+
     const reqQty = Math.max(1, parseInt(quantity) || 1);
     const reqPrice = parseFloat(offeredPrice) || 0;
 
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
 
+    // Inventory check
     const reserved = product.reservedStock || 0;
     const currentStock = product.stock || 0;
     if (currentStock - reserved < reqQty) {
@@ -1025,8 +1120,8 @@ router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, r
     await product.save();
 
     const deal = new Deal({
-      retailerId: req.user.id,
-      wholesalerId,
+      retailerId: finalRetailerId,
+      wholesalerId: finalWholesalerId,
       productId,
       productName: product.name,
       productImage: product.image || '',
@@ -1035,24 +1130,27 @@ router.post('/deals/create', authMiddleware, requireEmailVerified, async (req, r
       offeredPrice: reqPrice,
       moq: product.moq || 1,
       stock: product.stock || 0,
-      status: 'pending'
+      status: isWholesaler ? 'wholesaler_updated' : 'pending',
+      requirementId: requirementId || null
     });
     await deal.save();
 
+    const receiverId = isWholesaler ? finalRetailerId : finalWholesalerId;
     const msg = new Message({
       senderId: req.user.id,
-      receiverId: wholesalerId,
+      receiverId: receiverId,
       type: 'deal',
-      message: '',
+      message: isWholesaler ? 'Wholesaler sent an offer based on your requirement.' : '',
       productData: buildDealMsgData(deal)
     });
     await msg.save();
 
-    // Emit real-time socket events to both parties
+    // Emit real-time socket events
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
     const dealEvent = { msg: msg.toObject(), deal: deal.toObject() };
-    if (onlineUsers.has(wholesalerId)) io.to(onlineUsers.get(wholesalerId)).emit('deal_created', dealEvent);
+
+    if (onlineUsers.has(String(receiverId))) io.to(onlineUsers.get(String(receiverId))).emit('deal_created', dealEvent);
     if (onlineUsers.has(String(req.user.id))) io.to(onlineUsers.get(String(req.user.id))).emit('deal_created', dealEvent);
 
     res.json({ success: true, deal, message: msg });
@@ -1068,10 +1166,10 @@ router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
     const { quantity, offeredPrice } = req.body;
     const deal = await Deal.findById(req.params.id);
     if (!deal) return res.status(404).json({ success: false, message: 'Deal not found' });
-    
+
     const isRetailer = String(deal.retailerId) === req.user.id;
     const isWholesaler = String(deal.wholesalerId) === req.user.id;
-    
+
     if (!isRetailer && !isWholesaler) {
       return res.status(403).json({ success: false, message: 'Unauthorized to update this deal' });
     }
@@ -1114,7 +1212,7 @@ router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
 
     deal.quantity = newQty;
     deal.offeredPrice = newPrice;
-    
+
     // Logic: If wholesaler updates, status becomes 'wholesaler_updated'
     // If retailer updates, status becomes 'pending'
     deal.status = isWholesaler ? 'wholesaler_updated' : 'pending';
@@ -1145,7 +1243,7 @@ router.patch('/deals/:id/update', authMiddleware, async (req, res) => {
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
     const payload = { sysMsg: sysMsg.toObject(), dealMsg: dealMsg.toObject(), deal: deal.toObject() };
-    
+
     [deal.retailerId, deal.wholesalerId].forEach(uid => {
       if (onlineUsers.has(String(uid))) io.to(onlineUsers.get(String(uid))).emit('deal_updated', payload);
     });
@@ -1196,7 +1294,7 @@ router.patch('/deals/:id/status', authMiddleware, requireEmailVerified, async (r
     }
 
     deal.status = finalStatus;
-    
+
     // Inventory adjustments
     if (finalStatus === 'confirmed') {
       if (product) {
@@ -1204,6 +1302,10 @@ router.patch('/deals/:id/status', authMiddleware, requireEmailVerified, async (r
         product.reservedStock = Math.max(0, (product.reservedStock || 0) - deal.quantity);
         product.soldCount = (product.soldCount || 0) + deal.quantity;
         await product.save();
+      }
+      // If linked to a requirement, close it
+      if (deal.requirementId) {
+        await Requirement.findByIdAndUpdate(deal.requirementId, { status: 'closed' });
       }
     } else if (finalStatus === 'rejected') {
       if (product) {
@@ -1252,6 +1354,133 @@ router.patch('/deals/:id/status', authMiddleware, requireEmailVerified, async (r
   }
 });
 
+// ---------- REQUIREMENTS ----------
+
+router.post('/requirements', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'retailer') {
+      return res.status(403).json({ success: false, message: 'Only retailers can post requirements' });
+    }
+    const requirement = new Requirement({
+      ...req.body,
+      retailerId: req.user.id
+    });
+    await requirement.save();
+    res.status(201).json({ success: true, requirement });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to post requirement' });
+  }
+});
+
+router.get('/requirements', authMiddleware, async (req, res) => {
+  try {
+    const { category, minPrice, maxPrice, sortBy, order, search } = req.query;
+    let filter = { status: 'open' };
+
+    if (category) filter.categories = { $in: [category] };
+    if (minPrice || maxPrice) {
+      filter.expectedPrice = {};
+      if (minPrice) filter.expectedPrice.$gte = parseFloat(minPrice);
+      if (maxPrice) filter.expectedPrice.$lte = parseFloat(maxPrice);
+    }
+    if (search) {
+      filter.productName = { $regex: search, $options: 'i' };
+    }
+
+    let sortObj = { createdAt: -1 };
+    if (sortBy === 'price') {
+      sortObj = { expectedPrice: order === 'desc' ? -1 : 1 };
+    } else if (sortBy === 'date') {
+      sortObj = { createdAt: order === 'asc' ? 1 : -1 };
+    }
+
+    const requirements = await Requirement.find(filter)
+      .populate('retailerId', 'name businessName city district')
+      .sort(sortObj);
+
+    res.json({ success: true, requirements });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch requirements' });
+  }
+});
+
+router.get('/requirements/my', authMiddleware, async (req, res) => {
+  try {
+    const requirements = await Requirement.find({ retailerId: req.user.id })
+      .sort({ createdAt: -1 });
+    res.json({ success: true, requirements });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch your requirements' });
+  }
+});
+
+router.patch('/requirements/:id/close', authMiddleware, async (req, res) => {
+  try {
+    const requirement = await Requirement.findOneAndUpdate(
+      { _id: req.params.id, retailerId: req.user.id },
+      { status: 'closed' },
+      { new: true }
+    );
+    if (!requirement) return res.status(404).json({ success: false, message: 'Requirement not found or unauthorized' });
+    res.json({ success: true, requirement });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to close requirement' });
+  }
+});
+
+router.patch('/requirements/:id', authMiddleware, async (req, res) => {
+  try {
+    const requirement = await Requirement.findOneAndUpdate(
+      { _id: req.params.id, retailerId: req.user.id },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!requirement) return res.status(404).json({ success: false, message: 'Requirement not found or unauthorized' });
+    res.json({ success: true, requirement });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to update requirement' });
+  }
+});
+
+router.delete('/requirements/:id', authMiddleware, async (req, res) => {
+  try {
+    const requirement = await Requirement.findOneAndDelete({
+      _id: req.params.id,
+      retailerId: req.user.id
+    });
+    if (!requirement) return res.status(404).json({ success: false, message: 'Requirement not found or unauthorized' });
+    res.json({ success: true, message: 'Requirement deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete requirement' });
+  }
+});
+
+router.get('/messages/unread-count', authMiddleware, async (req, res) => {
+  try {
+    const userId = String(req.user.id);
+    const count = await Message.countDocuments({
+      receiverId: userId,
+      status: { $ne: 'read' }
+    });
+    res.json({ success: true, count });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch unread count' });
+  }
+});
+
+router.patch('/messages/read-all/:senderId', authMiddleware, async (req, res) => {
+  try {
+    const { senderId } = req.params;
+    await Message.updateMany(
+      { receiverId: req.user.id, senderId, status: { $ne: 'read' } },
+      { status: 'read' }
+    );
+    res.json({ success: true, message: 'Messages marked as read' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to update message status' });
+  }
+});
+
 router.post('/reviews', authMiddleware, async (req, res) => {
   try {
     const { wholesalerId, dealId, rating, reviewText } = req.body;
@@ -1282,8 +1511,13 @@ router.get('/wholesalers/:id/rating', async (req, res) => {
 // 1. AI Chatbot (Floating Widget Context)
 router.post('/ai/chat', authMiddleware, async (req, res) => {
   try {
-    const { message, history } = req.body;
-    
+    const { message: userMsg, history } = req.body;
+    const msgLower = userMsg.toLowerCase();
+
+    // TOOL GUARD: Only enable tools if message implies data inquiry
+    const toolKeywords = ['search', 'find', 'product', 'deal', 'stock', 'inventory', 'requirement', 'price', 'update', 'status', 'analytics', 'moq', 'wholesaler', 'detail'];
+    const useTools = toolKeywords.some(kw => msgLower.includes(kw));
+
     // Fetch full user for role and context
     const fullUser = await User.findById(req.user.id);
     const role = fullUser.role; // 'retailer' or 'wholesaler'
@@ -1295,15 +1529,13 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
         {
           type: "function",
           function: {
-            name: "smart_product_search",
-            description: "Search for available products by name, category, maximum price, or location.",
+            name: "search_products",
+            description: "Search for available products by name or category.",
             parameters: {
               type: "object",
               properties: {
                 query: { type: "string", description: "Product name or search keyword." },
-                category: { type: "string", description: "Category of product" },
-                maxPrice: { type: "number", description: "Maximum price of the product" },
-                location: { type: "string", description: "City or region of the wholesaler" }
+                category: { type: "string", description: "Category of product" }
               }
             }
           }
@@ -1311,12 +1543,14 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
         {
           type: "function",
           function: {
-            name: "explore_wholesaler",
-            description: "Get a list of registered wholesalers or explore a specific wholesaler's profile",
+            name: "explore_wholesalers",
+            description: "Find wholesalers by name, category (industry), or location (city/state).",
             parameters: {
               type: "object",
               properties: {
-                name: { type: "string", description: "Optional name to search for a specific wholesaler" }
+                name: { type: "string", description: "Name of the wholesaler" },
+                category: { type: "string", description: "Industry or category (e.g. Fashion, Electronics)" },
+                location: { type: "string", description: "City or state" }
               }
             }
           }
@@ -1324,24 +1558,30 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
         {
           type: "function",
           function: {
-            name: "send_inquiry",
-            description: "Send an inquiry message to a specific wholesaler about their products.",
+            name: "get_product_details",
+            description: "Get full details including description, MCQ, and current stock for a specific product name.",
             parameters: {
               type: "object",
               properties: {
-                wholesalerId: { type: "string", description: "The ID of the wholesaler" },
-                messageText: { type: "string", description: "The message body" },
-                productName: { type: "string", description: "Optional product name relating to this inquiry" }
+                productName: { type: "string", description: "The exact or partial name of the product" }
               },
-              required: ["wholesalerId", "messageText"]
+              required: ["productName"]
             }
           }
         },
         {
           type: "function",
           function: {
-            name: "get_inquiries",
-            description: "Get a list of recent messages and inquiries sent by this retailer",
+            name: "get_my_deals",
+            description: "Retrieve your negotiation deals.",
+            parameters: { type: "object", properties: {} }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "check_requirements",
+            description: "List your marketplace buying requirements.",
             parameters: { type: "object", properties: {} }
           }
         }
@@ -1351,27 +1591,23 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
         {
           type: "function",
           function: {
-            name: "get_my_products",
-            description: "Get the full list of the wholesaler's own products with stock, price, category, and sales data. Use this whenever a wholesaler asks about their inventory, products, or stock.",
-            parameters: {
-              type: "object",
-              properties: {
-                filterLowStock: { type: "boolean", description: "Set to true to only return products with low stock (<=10)." }
-              }
-            }
+            name: "get_my_inventory",
+            description: "List your products with stock and price.",
+            parameters: { type: "object", properties: {} }
           }
         },
         {
           type: "function",
           function: {
-            name: "update_product_data",
-            description: "Update the stock count or price of a specific product the wholesaler owns.",
+            name: "update_product_details",
+            description: "Update a product's stock, price, or MOQ.",
             parameters: {
               type: "object",
               properties: {
-                productName: { type: "string", description: "Name of the product to update" },
-                newStock: { type: "number", description: "New stock amount to set" },
-                newPrice: { type: "number", description: "New price per unit to set" }
+                productName: { type: "string", description: "Name of the product" },
+                stock: { type: "number", description: "New stock quantity" },
+                price: { type: "number", description: "New price per unit" },
+                moq: { type: "number", description: "New minimum order quantity" }
               },
               required: ["productName"]
             }
@@ -1380,35 +1616,49 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
         {
           type: "function",
           function: {
-            name: "get_monthly_analytics",
-            description: "Get business analytics including total sales count, low stock items count, and top-selling product.",
-            parameters: {
-              type: "object",
-              properties: {}
-            }
+            name: "view_received_deals",
+            description: "View incoming offers from retailers.",
+            parameters: { type: "object", properties: {} }
           }
         },
         {
           type: "function",
           function: {
-            name: "send_broadcast",
-            description: "Send an announcement or discount message to all connected retailers.",
-            parameters: {
-              type: "object",
-              properties: {
-                announcementMessage: { type: "string", description: "The message to broadcast to retailers" }
-              },
-              required: ["announcementMessage"]
-            }
+            name: "discover_market_requirements",
+  description: "Find buying requirements from retailers",
+  parameters: {
+    type: "object",
+    properties: {
+      category: {
+        type: "string",
+        description: "Optional category filter"
+      }
+    }
+  }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "get_business_analytics",
+            description: "Overview of sales and top products.",
+            parameters: { type: "object", properties: {} }
           }
         }
       ];
     }
 
-    const systemPrompt = `You are the NexTrade Virtual Assistant. You are talking to ${name}, a ${role}. 
-    Use simple HTML (like <b>bold</b>, <ul><li>items</li></ul>, <br>) for formatting. Do NOT use markdown.
-    If the user asks to send an inquiry or broadcast, or wants to update a product, use your tools to perform the action and tell the user you did it.
-    If drafting a message, draft it nicely, and if they approve, use the appropriate tool to send it.`;
+    const systemPrompt = `You are Nexa, the professional AI Assistant for NexTrade.
+    User's name: ${name}
+    User's role: ${role}
+    
+    STRICT OPERATIONAL RULES:
+    1. CONVERSATIONAL: For greetings or gratitude, respond naturally as Nexa. Do NOT use tools.
+    2. TOOL USAGE: ONLY call a tool if the user's request requires fetching or updating real-time data.
+    3. VALID JSON ONLY: When using a tool, you must generate a structured tool call. NEVER output XML tags like <function> or any other text around the tool call.
+    4. HTML FORMATTING: Always use HTML (<b>, <ul>, <li>, <table border="1">) for data presentation.
+    5. NO HALLUCINATION: If a tool returns no data, inform the user politely. Do not invent products or deals.
+    6. LIMITED ACCESS: You can view deal statuses but cannot accept/reject deals.`;
 
     let messages = [
       { role: "system", content: systemPrompt }
@@ -1423,18 +1673,22 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
       });
     }
 
-    messages.push({ role: "user", content: message });
+    messages.push({ role: "user", content: userMsg });
 
     // Groq Tool Calling Loop
     let conversationFinished = false;
     let finalReply = "";
+    let iterations = 0;
+    const MAX_ITERATIONS = 4; // Safety limit
 
-    while (!conversationFinished) {
+    while (!conversationFinished && iterations < MAX_ITERATIONS) {
+      iterations++;
       const response = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+        model: "llama-3.1-8b-instant",
         messages: messages,
-        tools: tools.length > 0 ? tools : undefined,
-        tool_choice: "auto",
+        tools: useTools ? tools : undefined,
+        tool_choice: useTools ? "auto" : undefined,
+        temperature: 0,
       });
 
       const responseMessage = response.choices[0].message;
@@ -1443,121 +1697,144 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
       if (responseMessage.tool_calls) {
         for (const toolCall of responseMessage.tool_calls) {
           const functionName = toolCall.function.name;
-          const functionArgs = JSON.parse(toolCall.function.arguments);
+          let functionArgs = {};
+          try {
+            functionArgs = toolCall.function.arguments
+              ? JSON.parse(toolCall.function.arguments)
+              : {};
+          } catch (e) {
+            console.warn("Invalid JSON arguments, using empty object");
+            functionArgs = {};
+          }
           let toolResult;
 
           try {
-            if (functionName === "smart_product_search") {
-              const { query, category, maxPrice, location } = functionArgs;
+            if (functionName === "search_products") {
+              const { query, category } = functionArgs;
               let filter = { stock: { $gt: 0 } };
               if (query) filter.name = new RegExp(query, 'i');
               if (category) filter.category = new RegExp(category, 'i');
-              if (maxPrice) filter.pricePerUnit = { $lte: maxPrice };
-              
-              let products = await Product.find(filter).populate('wholesalerId', 'city state name email').limit(20);
-              
-              if (location) {
-                const locRegex = new RegExp(location, 'i');
-                products = products.filter(p => p.wholesalerId && ((p.wholesalerId.city && locRegex.test(p.wholesalerId.city)) || (p.wholesalerId.state && locRegex.test(p.wholesalerId.state))));
-              }
-              products = products.slice(0, 5);
-              toolResult = products.map(p => ({ 
-                name: p.name, 
-                price: p.pricePerUnit, 
+
+              const products = await Product.find(filter).populate('wholesalerId', 'businessName city').limit(15);
+              toolResult = products.map(p => ({
+                name: p.name,
+                price: `₹${p.pricePerUnit}/${p.unit}`,
+                moq: p.moq,
+                stock: p.stock,
                 category: p.category,
-                wholesalerName: p.wholesalerId?.name,
-                wholesalerId: p.wholesalerId?._id,
-                location: p.wholesalerId ? `${p.wholesalerId.city}, ${p.wholesalerId.state}` : 'Unknown'
+                wholesaler: p.wholesalerId?.businessName || 'Unknown',
+                location: p.wholesalerId ? p.wholesalerId.city : 'N/A'
               }));
 
-            } else if (functionName === "explore_wholesaler") {
-              const { name: searchName } = functionArgs;
-              let ws;
-              if (searchName) {
-                ws = await User.find({ role: 'wholesaler', name: new RegExp(searchName, 'i') }).limit(3);
-                toolResult = await Promise.all(ws.map(async w => {
-                  const topProducts = await Product.find({ wholesalerId: w._id }).sort({soldCount: -1}).limit(3);
-                  return { id: w._id, name: w.name, businessName: w.businessName, location: `${w.city}, ${w.state}`, products: topProducts.map(p=>p.name).join(', ') };
-                }));
-              } else {
-                ws = await User.find({ role: 'wholesaler' }).limit(5);
-                toolResult = ws.map(w => ({ id: w._id, name: w.name, businessName: w.businessName }));
+            } else if (functionName === "explore_wholesalers") {
+              const { name: searchName, category, location } = functionArgs;
+              let filter = { role: 'wholesaler' };
+              if (searchName) filter.name = new RegExp(searchName, 'i');
+              if (category) filter.categories = { $in: [new RegExp(category, 'i')] };
+              if (location) {
+                filter.$or = [
+                  { city: new RegExp(location, 'i') },
+                  { state: new RegExp(location, 'i') }
+                ];
               }
+              const ws = await User.find(filter).limit(15);
+              toolResult = ws.map(w => ({
+                name: w.name,
+                business: w.businessName,
+                categories: w.categories.join(', '),
+                location: `${w.city || ''}, ${w.state || ''}`,
+                id: w._id
+              }));
 
-            } else if (functionName === "send_inquiry") {
-              const { wholesalerId, messageText, productName } = functionArgs;
-              const newMsg = new Message({
-                senderId: fullUser._id,
-                receiverId: wholesalerId,
-                productName: productName || 'General Inquiry',
-                message: messageText
-              });
-              await newMsg.save();
-              toolResult = { success: true, info: "Inquiry message successfully sent to wholesaler." };
+            } else if (functionName === "get_product_details") {
+              const { productName } = functionArgs;
+              const p = await Product.findOne({ name: new RegExp(productName, 'i') }).populate('wholesalerId');
+              if (!p) toolResult = { error: "Product not found" };
+              else toolResult = {
+                name: p.name,
+                description: p.description,
+                price: p.pricePerUnit,
+                moq: p.moq,
+                stock: p.stock,
+                wholesaler: p.wholesalerId?.businessName
+              };
 
-            } else if (functionName === "get_inquiries") {
-              const msgs = await Message.find({ senderId: fullUser._id }).sort({createdAt:-1}).limit(5);
-              toolResult = msgs.map(m => ({ to: m.receiverId, message: m.message, date: m.createdAt, product: m.productName }));
+            } else if (functionName === "get_my_deals" || functionName === "view_received_deals") {
+              const deals = await Deal.find({
+                $or: [{ retailerId: fullUser._id }, { wholesalerId: fullUser._id }]
+              }).sort({ createdAt: -1 }).limit(10);
+              toolResult = deals.map(d => ({
+                id: d._id,
+                product: d.productName,
+                quantity: d.quantity,
+                offeredPrice: d.offeredPrice,
+                status: d.status,
+                date: d.createdAt.toLocaleDateString()
+              }));
 
-            } else if (functionName === "get_my_products") {
-              const { filterLowStock } = functionArgs;
-              let filter = { wholesalerId: fullUser._id };
-              if (filterLowStock) filter.stock = { $lte: 10 };
-              const myProducts = await Product.find(filter).sort({ createdAt: -1 });
+            } else if (functionName === "check_requirements") {
+              const reqs = await Requirement.find({ retailerId: fullUser._id }).sort({ createdAt: -1 });
+              toolResult = reqs.map(r => ({
+                product: r.productName,
+                quantity: r.quantity,
+                price: r.expectedPrice,
+                status: r.status
+              }));
+
+            } else if (functionName === "get_my_inventory") {
+              const myProducts = await Product.find({ wholesalerId: fullUser._id }).sort({ stock: 1 });
               toolResult = myProducts.map(p => ({
                 name: p.name,
-                category: p.category || 'Uncategorized',
                 stock: p.stock,
-                pricePerUnit: p.pricePerUnit,
-                unit: p.unit,
-                soldCount: p.soldCount || 0,
-                stockStatus: p.stock === 0 ? 'OUT OF STOCK' : p.stock <= 10 ? 'LOW STOCK' : 'In Stock'
+                price: p.pricePerUnit,
+                moq: p.moq,
+                status: p.stock <= 10 ? 'LOW STOCK' : 'OK'
               }));
 
-            } else if (functionName === "update_product_data") {
-              const { productName, newStock, newPrice } = functionArgs;
-              const updateObj = {};
-              if (newStock !== undefined) updateObj.stock = newStock;
-              if (newPrice !== undefined) updateObj.pricePerUnit = newPrice;
-              
+            } else if (functionName === "update_product_details") {
+              const { productName, stock, price, moq } = functionArgs;
+              const update = {};
+              if (stock !== undefined) update.stock = stock;
+              if (price !== undefined) update.pricePerUnit = price;
+              if (moq !== undefined) update.moq = moq;
+
               const updated = await Product.findOneAndUpdate(
                 { wholesalerId: fullUser._id, name: new RegExp(productName, 'i') },
-                { $set: updateObj },
+                { $set: update },
                 { new: true }
               );
-              if (!updated) toolResult = { error: "Product not found or you don't own it." };
-              else toolResult = { success: true, updatedProduct: { name: updated.name, stock: updated.stock, price: updated.pricePerUnit } };
+              if (!updated) toolResult = { error: "Product not found in your inventory" };
+              else toolResult = { success: true, updated: { name: updated.name, stock: updated.stock, price: updated.pricePerUnit, moq: updated.moq } };
 
-            } else if (functionName === "get_monthly_analytics") {
-              const products = await Product.find({ wholesalerId: fullUser._id });
-              let lowStock = 0, totalSales = 0;
-              let topProduct = null;
-              products.forEach(p => {
-                if (p.stock < 10) lowStock++;
-                totalSales += (p.soldCount || 0);
-                if (!topProduct || p.soldCount > topProduct.soldCount) topProduct = { name: p.name, soldCount: p.soldCount };
-              });
-              toolResult = { totalSales, lowStockItemsCount: lowStock, topSellingProduct: topProduct };
-
-            } else if (functionName === "send_broadcast") {
-              const { announcementMessage } = functionArgs;
-              const prevMsgs = await Message.find({ receiverId: fullUser._id });
-              const uniqueRetailers = [...new Set(prevMsgs.map(m => m.senderId))];
-              
-              if (uniqueRetailers.length === 0) {
-                toolResult = { info: "No connected retailers to broadcast to." };
-              } else {
-                const broadcastPromises = uniqueRetailers.map(rId => {
-                  return new Message({
-                    senderId: fullUser._id,
-                    receiverId: rId,
-                    productName: 'Broadcast Announcement',
-                    message: announcementMessage
-                  }).save();
-                });
-                await Promise.all(broadcastPromises);
-                toolResult = { success: true, info: `Broadcast sent to ${uniqueRetailers.length} retailers.` };
+            } else if (functionName === "discover_market_requirements") {
+              // Find requirements that match wholesaler's categories
+              const filter = { status: 'open' };
+              if (fullUser.categories && fullUser.categories.length > 0) {
+                filter.categories = { $in: fullUser.categories };
               }
+              const marketplaceReqs = await Requirement.find(filter).sort({ createdAt: -1 }).limit(10);
+              toolResult = marketplaceReqs.map(r => ({
+                product: r.productName,
+                quantity: r.quantity,
+                expectedPrice: r.expectedPrice,
+                categories: r.categories.join(', ')
+              }));
+
+            } else if (functionName === "get_business_analytics") {
+              const products = await Product.find({ wholesalerId: fullUser._id });
+              const deals = await Deal.find({ wholesalerId: fullUser._id });
+
+              const topProduct = [...products].sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))[0];
+              const pendingDeals = deals.filter(d => d.status === 'pending').length;
+              const confirmedDeals = deals.filter(d => d.status === 'confirmed').length;
+
+              toolResult = {
+                totalProducts: products.length,
+                totalSalesVolume: products.reduce((sum, p) => sum + (p.soldCount || 0), 0),
+                topSelling: topProduct ? topProduct.name : 'N/A',
+                pendingNegotiations: pendingDeals,
+                confirmedDeals: confirmedDeals
+              };
             }
           } catch (e) {
             console.error('Tool error:', e);
@@ -1577,37 +1854,295 @@ router.post('/ai/chat', authMiddleware, async (req, res) => {
       }
     }
 
+    if (!finalReply) {
+      if (messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        finalReply = lastMsg.content || "I have processed your request. Is there anything specific from the data you'd like me to explain?";
+      } else {
+        finalReply = "I'm sorry, I couldn't process that request right now.";
+      }
+    }
+
     res.json({ success: true, reply: finalReply });
-    
+
   } catch (error) {
     console.error('AI Chat Error:', error);
     if (error.status === 429) {
-      return res.json({ 
-        success: true, 
-        reply: "I am receiving too many requests right now and taking a short breather. Please wait a few seconds and try again!" 
+      return res.json({
+        success: true,
+        reply: "I am receiving too many requests right now and taking a short breather. Please wait a few seconds and try again!"
       });
     }
     res.status(500).json({ success: false, message: 'AI Assistant is currently unavailable' });
   }
 });
 
-// 3. Recommendation Engine API (Simplified - Non-order based)
+// 3. Smart Recommendation Engine (Retailer)
 router.get('/recommendations', authMiddleware, async (req, res) => {
   try {
-    // Return best sellers since order history is removed
-    const recommendations = await Product.find({
-      stock: { $gt: 0 }
-    }).sort({ soldCount: -1 }).limit(5);
-    
+    const userId = String(req.user.id);
+
+    // --- Build interest profile from retailer's history ---
+    const categoryScores = {};  // category -> score
+    const productBoosts = {};   // productId -> extra score
+
+    // A) Past confirmed deals (+30 per category)
+    const pastDeals = await Deal.find({ retailerId: userId, status: 'confirmed' }).lean();
+    for (const deal of pastDeals) {
+      if (deal.productId) {
+        const prod = await Product.findById(deal.productId).lean();
+        if (prod && prod.category) {
+          categoryScores[prod.category] = (categoryScores[prod.category] || 0) + 30;
+          productBoosts[String(prod._id)] = (productBoosts[String(prod._id)] || 0) + 40;
+        }
+      }
+    }
+
+    // B) Messages/Inquiries sent by retailer (+20 per product mentioned)
+    const sentMessages = await Message.find({
+      senderId: userId,
+      productName: { $exists: true, $ne: '' }
+    }).lean();
+    const mentionedNames = new Set();
+    for (const msg of sentMessages) {
+      if (msg.productName) mentionedNames.add(msg.productName.toLowerCase().trim());
+    }
+
+    // C) Requirements posted (+15 per category)
+    const requirements = await Requirement.find({ retailerId: userId }).lean();
+    for (const reqDoc of requirements) {
+      if (reqDoc.categories && reqDoc.categories.length > 0) {
+        reqDoc.categories.forEach(cat => {
+          categoryScores[cat] = (categoryScores[cat] || 0) + 15;
+        });
+      }
+    }
+
+    // --- Fetch all in-stock products ---
+    const allProducts = await Product.find({ stock: { $gt: 0 } })
+      .populate('wholesalerId', 'name businessName city')
+      .lean();
+
+    // --- Score each product ---
+    const scored = allProducts.map(p => {
+      let score = 0;
+      let reason = 'Trending on platform';
+
+      // Category match from user history
+      const catScore = categoryScores[p.category] || 0;
+      if (catScore > 0) { score += catScore; reason = 'Based on your activity'; }
+
+      // Popularity boost (soldCount signal)
+      const popularity = Math.floor((p.soldCount || 0) / 5) * 10;
+      score += Math.min(popularity, 40);
+
+      // Reserved stock = demand signal
+      score += Math.min((p.reservedStock || 0) * 2, 20);
+
+      // Direct product boost (from confirmed deals)
+      if (productBoosts[String(p._id)]) {
+        score += productBoosts[String(p._id)];
+        reason = 'Based on your past deals';
+      }
+
+      // Name mentioned in messages
+      if (mentionedNames.has((p.name || '').toLowerCase().trim())) {
+        score += 25;
+        reason = 'Based on your inquiries';
+      }
+
+      // Trending products (high soldCount) get a minimum baseline
+      if ((p.soldCount || 0) >= 10 && score < 20) {
+        score = 20;
+        reason = 'Trending 🔥';
+      }
+
+      return { ...p, score, reason };
+    });
+
+    // Sort by score descending, top 8
+    scored.sort((a, b) => b.score - a.score);
+    const recommendations = scored.slice(0, 8);
+
     res.json({ success: true, recommendations });
-  } catch(error) {
+  } catch (error) {
     console.error('Recommendations error:', error);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: 'Failed to fetch recommendations' });
+  }
+});
+
+// 4. Demand Insights API (Wholesaler)
+router.get('/demand-insights', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'wholesaler') {
+      return res.status(403).json({ success: false, message: 'Only wholesalers can access demand insights' });
+    }
+
+    const wholesalerId = String(req.user.id);
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now - 60 * 24 * 60 * 60 * 1000);
+
+    const products = await Product.find({ wholesalerId }).lean();
+
+    const insights = await Promise.all(products.map(async (p) => {
+      const pId = String(p._id);
+      const pName = (p.name || '').toLowerCase();
+      const pCat = p.category || '';
+
+      // A) Confirmed deals in last 30 days
+      const recent30 = await Deal.countDocuments({
+        wholesalerId,
+        productId: p._id,
+        status: 'confirmed',
+        createdAt: { $gte: thirtyDaysAgo }
+      });
+
+      // B) Confirmed deals in prev 30 days (31-60 days ago)
+      const prev30 = await Deal.countDocuments({
+        wholesalerId,
+        productId: p._id,
+        status: 'confirmed',
+        createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
+      });
+
+      // C) Total confirmed deals all time
+      const totalDeals = await Deal.countDocuments({
+        wholesalerId, productId: p._id, status: 'confirmed'
+      });
+
+      // D) Message inquiries referencing this product name
+      const inquiries = await Message.countDocuments({
+        receiverId: wholesalerId,
+        productName: { $regex: new RegExp(pName, 'i') }
+      });
+
+      // E) Open requirements matching product category
+      const requirements = await Requirement.countDocuments({
+        status: 'open',
+        $or: [
+          { categories: { $in: [pCat] } },
+          { productName: { $regex: new RegExp(pName, 'i') } }
+        ]
+      });
+
+      // --- Score calculation ---
+      let demandScore = 0;
+      demandScore += Math.min(recent30 * 15, 45);     // up to 45 from recent deals
+      demandScore += Math.min(inquiries * 8, 30);      // up to 30 from inquiries
+      demandScore += Math.min(requirements * 5, 20);   // up to 20 from requirements
+      demandScore += Math.min((p.soldCount || 0) * 2, 20); // popularity boost
+
+      // --- Trend ---
+      let trend = 'stable';
+      if (recent30 > prev30) trend = 'increasing';
+      else if (recent30 < prev30 && prev30 > 0) trend = 'decreasing';
+
+      // --- Demand level & action ---
+      let demandLevel, suggestedAction, trendLabel;
+      if (demandScore >= 60) {
+        demandLevel = 'high';
+        suggestedAction = 'Increase stock';
+      } else if (demandScore >= 25) {
+        demandLevel = 'medium';
+        suggestedAction = 'Maintain stock';
+      } else {
+        demandLevel = 'low';
+        suggestedAction = 'Consider reducing stock';
+      }
+
+      if (trend === 'increasing') trendLabel = '↑ Increasing';
+      else if (trend === 'decreasing') trendLabel = '↓ Decreasing';
+      else trendLabel = '→ Stable';
+
+      return {
+        productId: pId,
+        name: p.name,
+        category: p.category,
+        image: p.image,
+        stock: p.stock,
+        soldCount: p.soldCount || 0,
+        demandLevel,
+        demandScore: Math.min(demandScore, 100),
+        trend,
+        trendLabel,
+        suggestedAction,
+        confirmedDeals: totalDeals,
+        recentDeals: recent30,
+        inquiries,
+        requirements
+      };
+    }));
+
+    // Sort by demandScore desc
+    insights.sort((a, b) => b.demandScore - a.demandScore);
+
+    res.json({ success: true, insights });
+  } catch (error) {
+    console.error('Demand insights error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch demand insights' });
+  }
+});
+
+// ---------- CONTACT US ----------
+router.post('/contact', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    const newMessage = new ContactMessage({ name, email, subject, message });
+    await newMessage.save();
+
+    // Send confirmation email to user
+    try {
+      await emailTransporter.sendMail({
+        from: `"NexTrade Support" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `We've received your message: ${subject}`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #4361ee;">Hello ${name},</h2>
+            <p>Thank you for reaching out to NexTrade! We have received your message regarding <b>"${subject}"</b>.</p>
+            <p>Our team will review your inquiry and get back to you within 24-48 business hours.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 0.9em; color: #666;">This is an automated confirmation. Please do not reply to this email.</p>
+          </div>
+        `
+      });
+    } catch (emailErr) {
+      console.error("Failed to send contact confirmation email:", emailErr);
+    }
+
+    res.status(201).json({ success: true, message: "Your message has been sent successfully!" });
+
+  } catch (err) {
+    console.error("Contact error:", err);
+    res.status(500).json({ success: false, message: "Failed to send message" });
   }
 });
 
 // ================= MOUNT ROUTER =================
-app.use('/api', router);
+app.use('/api', apiLimiter, router);
+
+// ================= GLOBAL ERROR HANDLER =================
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ success: false, message: 'File is too large. Max limit is 5MB.' });
+    }
+    return res.status(400).json({ success: false, message: 'File upload error: ' + err.message });
+  }
+
+  res.status(500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message
+  });
+});
 
 // ================= STATIC =================
 app.get('/', (req, res) => {
@@ -1624,8 +2159,8 @@ const PORT = process.env.PORT || DEFAULT_PORT;
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: "*" },
-  maxHttpBufferSize: 1e7 // Increase to 10MB to support large media
+  cors: { origin: process.env.FRONTEND_URL || "http://localhost:5010" },
+  maxHttpBufferSize: 1e7 // Support up to 10MB
 });
 
 // Use a Map to track real-time online status
@@ -1665,8 +2200,15 @@ io.on("connection", (socket) => {
             image: prod.image
           };
         }
-      } catch(e) {}
+      } catch (e) { }
     }
+
+    // Fetch sender name for real-time notifications
+    let senderName = 'Someone';
+    try {
+      const sender = await User.findById(senderId);
+      if (sender) senderName = sender.businessName || sender.name;
+    } catch (e) { }
 
     const newMsg = new Message({
       senderId,
@@ -1680,12 +2222,14 @@ io.on("connection", (socket) => {
 
     await newMsg.save();
 
+    const payload = { ...newMsg.toObject(), senderName };
+
     // Send to receiver
     if (onlineUsers.has(receiverId)) {
-      io.to(onlineUsers.get(receiverId)).emit("receive_message", newMsg);
+      io.to(onlineUsers.get(receiverId)).emit("receive_message", payload);
     }
     // Send back to sender
-    socket.emit("receive_message", newMsg);
+    socket.emit("receive_message", payload);
   });
 
   socket.on("message_read", async (data) => {

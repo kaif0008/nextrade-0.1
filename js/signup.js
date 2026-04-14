@@ -7,12 +7,21 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
     const role = document.getElementById('role').value;
     
     try {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('email', email);
+        formData.append('password', password);
+        formData.append('role', role);
+        
+        // Handle photo if available (optional for signup usually, but I'll add the support)
+        const photoInput = document.getElementById('photo');
+        if (photoInput && photoInput.files[0]) {
+            formData.append('photo', photoInput.files[0]);
+        }
+
         const response = await fetch('/api/signup', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name, email, password, role })
+            body: formData
         });
         
         const data = await response.json();

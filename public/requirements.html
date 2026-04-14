@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NexTrade | Requirements Marketplace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="categories.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-hover: #3f37c9;
+            --bg-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --danger: #ef233c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; min-height: 100vh; }
+
+        /* Sidebar Styles (Simplified from Dashboard) */
+        .sidebar { width: 260px; background: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; padding: 24px 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); z-index: 100; transition: var(--transition); }
+        .logo { font-size: 24px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: 40px; }
+        .nav-links { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .nav-link { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: var(--border-radius); color: var(--text-muted); text-decoration: none; font-weight: 500; transition: var(--transition); border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 15px; }
+        .nav-link i { font-size: 18px; width: 24px; text-align: center; }
+        .nav-link:hover { background: rgba(67, 97, 238, 0.05); color: var(--primary); }
+        .nav-link.active { background: var(--primary); color: white; }
+        .logout-btn { margin-top: auto; color: var(--danger); }
+
+        .main-content { margin-left: 260px; flex: 1; padding: 40px; width: calc(100% - 260px); }
+
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-family: 'Syne', sans-serif; font-size: 28px; color: #0f172a; margin-bottom: 8px; }
+        .page-header p { color: var(--text-muted); }
+
+        /* Filters Bar */
+        .filters-bar { 
+            background: white; padding: 25px; border-radius: 16px; 
+            box-shadow: var(--shadow-sm); margin-bottom: 30px;
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 20px;
+            align-items: end;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 8px; }
+        .filter-group label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-input { padding: 12px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.2s; background: #f8fafc; }
+        .filter-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); }
+
+        /* Requirements Grid */
+        .req-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 25px; }
+        .req-card { 
+            background: white; border-radius: 20px; padding: 30px; 
+            border: 1px solid #f1f5f9; transition: 0.3s;
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+        .req-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary-light); }
+        
+        .req-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .req-new-badge { background: #22c55e; color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .req-cat-badge { background: #eff6ff; color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        
+        .req-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+        .req-row { display: flex; gap: 20px; margin-bottom: 15px; }
+        .req-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; }
+        .req-info i { color: var(--primary-light); }
+        .req-info b { color: #1e293b; }
+        
+        .req-desc { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 25px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .req-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 20px; border-top: 1px solid #f1f5f9; }
+        .req-retailer { display: flex; flex-direction: column; }
+        .req-retailer-name { font-size: 14px; font-weight: 600; color: #0f172a; }
+        .req-retailer-loc { font-size: 12px; color: #94a3b8; }
+        
+        .btn-offer { 
+            background: #0f172a; color: white; border: none; padding: 10px 20px; 
+            border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            text-decoration: none; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-offer:hover { background: var(--primary); transform: scale(1.05); }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; transform: translateY(100px); opacity: 0; transition: 0.3s; z-index: 1000; font-weight: 600; color: white; display: flex; align-items: center; gap: 10px; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.ok { background: #22c55e; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2); }
+        .toast.err { background: #ef233c; box-shadow: 0 10px 20px rgba(239, 35, 60, 0.2); }
+
+        @media (max-width: 1100px) {
+            .filters-bar { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 0; padding: 0; }
+            .main-content { margin-left: 0; width: 100%; padding: 20px; }
+            .filters-bar { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <a href="dashboard.html" class="logo"><i class="fas fa-arrow-trend-up"></i> NexTrade</a>
+        <nav class="nav-links" id="sidebarNav"></nav>
+        <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Requirements Marketplace</h1>
+            <p>Direct retailer requirements. Filter and send your best offers.</p>
+        </header>
+
+        <section class="filters-bar">
+            <div class="filter-group">
+                <label>Search Product</label>
+                <input type="text" id="filterSearch" class="filter-input" placeholder="e.g. Rice, Mouse, Shirts...">
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="filterCategory" class="filter-input">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Price Range</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="filterMinPrice" class="filter-input" placeholder="Min" style="width:50%;">
+                    <input type="number" id="filterMaxPrice" class="filter-input" placeholder="Max" style="width:50%;">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label>Sort By</label>
+                <select id="filterSort" class="filter-input">
+                    <option value="date-desc">Latest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                </select>
+            </div>
+        </section>
+
+        <div id="reqGrid" class="req-grid">
+            <!-- Loading Skeletons -->
+            <div style="text-align:center; padding:50px; grid-column:1/-1; color:#94a3b8;">
+                <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"><span id="toastMsg"></span></div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
+
+        if (!user || !token || user.role !== 'wholesaler') location.href = "login.html";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setupSidebar();
+            populateCategories();
+            loadRequirements();
+
+            // Add Event Listeners for Filters
+            document.getElementById('filterSearch').addEventListener('input', debounce(loadRequirements, 500));
+            document.getElementById('filterCategory').addEventListener('change', loadRequirements);
+            document.getElementById('filterMinPrice').addEventListener('input', debounce(loadRequirements, 500));
+            document.getElementById('filterMaxPrice').addEventListener('input', debounce(loadRequirements, 500));
+            document.getElementById('filterSort').addEventListener('change', loadRequirements);
+        });
+
+        function setupSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            const links = [
+                { name: 'Dashboard', icon: 'home', url: 'wholesaler-dashboard.html' },
+                { name: 'My Products', icon: 'box', url: 'product-management.html' },
+                { name: 'Deals Record', icon: 'handshake', url: 'deals-record.html' },
+                { name: 'Messages', icon: 'comment-dots', url: 'messages.html' },
+                { name: 'Live Requirements', icon: 'list-check', url: 'requirements.html', active: true },
+                { name: 'Profile', icon: 'user', url: 'profile.html' }
+            ];
+            nav.innerHTML = links.map(l => `
+                <a href="${l.url}" class="nav-link ${l.active ? 'active' : ''}">
+                    <i class="fas fa-${l.icon}"></i> ${l.name}
+                </a>
+            `).join('');
+        }
+
+        function populateCategories() {
+            const select = document.getElementById('filterCategory');
+            const categories = [
+                "Food", "Grocery", "Fruits & Vegetables", "Dairy Products", "Packaged Food & Beverages",
+                "Fashion & Apparel", "Footwear", "Electronics", "Mobile & Accessories", "Computers & IT",
+                "Home Appliances", "Furniture", "Home Decor", "Kitchenware", "Pharmacy & Medical",
+                "Ayurvedic & Herbal", "Beauty & Cosmetics", "Personal Care", "Hardware & Tools",
+                "Electrical Supplies", "Construction Materials", "Automobile Parts & Accessories",
+                "Tyres & Batteries", "Stationery & Office Supplies", "Books & Education", "Toys & Games",
+                "Gifts & Novelties", "Agriculture & Farming Supplies", "Seeds & Fertilizers", "Pet Supplies",
+                "Sports & Fitness", "Jewellery & Accessories", "General Store / Multi-category"
+            ];
+            categories.sort().forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadRequirements() {
+            const grid = document.getElementById('reqGrid');
+            const search = document.getElementById('filterSearch').value;
+            const category = document.getElementById('filterCategory').value;
+            const minPrice = document.getElementById('filterMinPrice').value;
+            const maxPrice = document.getElementById('filterMaxPrice').value;
+            const sortVal = document.getElementById('filterSort').value;
+            
+            const [sortBy, order] = sortVal.split('-');
+
+            let url = `/api/requirements?sortBy=${sortBy}&order=${order}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (category) url += `&category=${encodeURIComponent(category)}`;
+            if (minPrice) url += `&minPrice=${minPrice}`;
+            if (maxPrice) url += `&maxPrice=${maxPrice}`;
+
+            try {
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.requirements.length === 0) {
+                        grid.innerHTML = `
+                            <div style="grid-column:1/-1; text-align:center; padding:100px;">
+                                <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-state-4131584-3424169.png" style="width:200px; opacity:0.6; margin-bottom:20px;">
+                                <h3 style="color:#64748b;">No matching requirements found</h3>
+                                <p style="color:#94a3b8;">Try adjusting your filters or search terms.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    grid.innerHTML = data.requirements.map(req => {
+                        const postedDate = new Date(req.createdAt);
+                        const isNew = (new Date() - postedDate) < 24 * 60 * 60 * 1000;
+                        
+                        return `
+                            <div class="req-card">
+                                <div class="req-top">
+                                    <span class="req-cat-badge">${req.categories[0]}</span>
+                                    ${isNew ? '<span class="req-new-badge">NEW</span>' : ''}
+                                </div>
+                                <h3 class="req-title">${req.productName}</h3>
+                                <div class="req-row">
+                                    <div class="req-info"><i class="fas fa-cubes"></i> Qty: <b>${req.quantity}</b></div>
+                                    <div class="req-info"><i class="fas fa-tag"></i> Price: <b>₹${req.expectedPrice || 'N/A'}/${req.unit || 'piece'}</b></div>
+                                </div>
+                                <p class="req-desc">${req.description || 'No additional details provided for this requirement.'}</p>
+                                <div class="req-footer">
+                                    <div class="req-retailer">
+                                        <span class="req-retailer-name">${req.retailerId?.businessName || req.retailerId?.name || 'Retailer'}</span>
+                                        <span class="req-retailer-loc"><i class="fas fa-location-dot"></i> ${req.retailerId?.city || 'India'} • ${postedDate.toLocaleDateString()}</span>
+                                    </div>
+                                    <a href="messages.html?user=${req.retailerId?._id}&retailerId=${req.retailerId?._id}&requirementId=${req._id}&productName=${encodeURIComponent(req.productName)}&quantity=${req.quantity}&price=${req.expectedPrice || ''}" class="btn-offer">
+                                        Send Offer <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `<p style="color:var(--danger); grid-column:1/-1; text-align:center;">Failed to load requirements. Please try again.</p>`;
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.href = "login.html";
+        }
+
+        function showToast(msg, type='ok') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | NexTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/content-page.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                <div>
+                    <div class="logo-text">Nex<span>Trade</span></div>
+                    <div class="tagline">The Nexus of efficient Business</div>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="wholesalers.html">Wholesalers</a></li>
+                    <li><a href="browse-products.html">Explore Products</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html" class="btn-login" id="loginBtn">Login</a></li>
+                    <li><a href="signup.html" class="btn-nav btn-signup" id="signupBtn">Sign Up</a></li>
+                    <li><a href="dashboard.html" id="dashboardBtn" style="display:none;" class="btn-nav btn-signup">Dashboard</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="content-hero">
+        <div class="container">
+            <h1>Privacy Policy</h1>
+            <p>At NexTrade, we are committed to protecting your business and personal data through transparency and security.</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="content-wrap">
+            <h2>Introduction</h2>
+            <p>Last Updated: April 14, 2026</p>
+            <p>This Privacy Policy describes how NexTrade ("we", "us", or "our") collects, uses, and shares your information when you use our B2B marketplace platform. By using the platform, you agree to the collection and use of information in accordance with this policy.</p>
+            
+            <h2>Information We Collect</h2>
+            <ul>
+                <li><strong>Account Information:</strong> Name, business name, email, phone number, and password.</li>
+                <li><strong>Business Data:</strong> GST number, industry, business photos, and establishment details.</li>
+                <li><strong>Trading Data:</strong> Negotiated deals, product requirements, and chat history.</li>
+                <li><strong>Technical Data:</strong> IP address, browser type, and platform usage statistics via Nexa.</li>
+            </ul>
+
+            <h2>How We Use Your Information</h2>
+            <p>We use the data we collect to:</p>
+            <ul>
+                <li>Provide and maintain the NexTrade marketplace services.</li>
+                <li>Facilitate negotiations between wholesalers and shopkeepers.</li>
+                <li>Improve our AI assistant, Nexa, to better serve your business needs.</li>
+                <li>Verify the legitimacy of businesses on our platform to prevent fraud.</li>
+            </ul>
+
+            <h2>Data Security</h2>
+            <p>The security of your data is important to us. We use industry-standard encryption protocols to protect your sensitive business information. However, no method of transmission over the Internet is 100% secure.</p>
+
+            <h2>Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, please contact us at <strong>privacy@nextrade.com</strong>.</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html" class="logo">
+                        <i class="fas fa-arrow-trend-up logo-icon"></i>
+                        <div class="logo-text">Nex<span>Trade</span></div>
+                    </a>
+                    <p class="footer-tagline">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="blog.html">Blog</a></li>
+                            
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="help-center.html">Help Center</a></li>
+                            <li><a href="wholesaler-guide.html">Wholesaler Guide</a></li>
+                            <li><a href="shopkeeper-guide.html">Shopkeeper Guide</a></li>
+                            <li><a href="faq.html">FAQs</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="privacy.html">Privacy Policy</a></li>
+                            <li><a href="terms.html">Terms of Service</a></li>
+                            <li><a href="security.html">Security</a></li>
+                            <li><a href="cookie-policy.html">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NexTrade. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            const token = localStorage.getItem("token");
+            if (user && token) {
+                document.getElementById("loginBtn").style.display = "none";
+                document.getElementById("signupBtn").style.display = "none";
+                document.getElementById("dashboardBtn").style.display = "inline-block";
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <script src="/chatbot.js"></script>
+</body>
+</html>

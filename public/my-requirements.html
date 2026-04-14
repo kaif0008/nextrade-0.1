@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NexTrade | My Requirements</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-hover: #3f37c9;
+            --bg-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --card-bg: #ffffff;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+            --danger: #ef233c;
+            --success: #2bc155;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; padding: 24px 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); z-index: 1000; transition: var(--transition); }
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+        .logo { font-size: 24px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .logo i { color: var(--primary-light); }
+        .nav-links { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .nav-link { display: flex; align-items: center; gap: 15px; padding: 12px 16px; border-radius: var(--border-radius); color: var(--text-muted); text-decoration: none; font-weight: 500; transition: var(--transition); border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 15px; }
+        .nav-link i { font-size: 18px; width: 24px; text-align: center; }
+        .nav-link:hover { background: rgba(67, 97, 238, 0.05); color: var(--primary); }
+        .nav-link.active { background: var(--primary); color: white; }
+        .logout-btn { margin-top: auto; color: var(--danger); }
+        
+        .toggle-btn { background: none; border: none; font-size: 20px; color: var(--text-main); cursor: pointer; display: none; }
+
+        .main-content { margin-left: 260px; flex: 1; padding: 40px; width: calc(100% - 260px); transition: var(--transition); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h1 { font-size: 28px; font-weight: 700; color: #1e293b; }
+        
+        .top-nav-mobile { display: none; align-items: center; gap: 15px; margin-bottom: 20px; }
+
+        /* Table/List */
+        .req-card { background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow-sm); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        .req-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary-light); }
+        .req-info { flex: 1; }
+        .req-info h3 { font-size: 18px; color: #1e293b; margin-bottom: 5px; }
+        .req-meta { display: flex; gap: 15px; flex-wrap: wrap; font-size: 13px; color: #64748b; margin-top: 8px; }
+        .req-meta i { color: var(--primary-light); }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .status-open { background: #dcfce7; color: #166534; }
+        .status-closed { background: #fee2e2; color: #991b1b; }
+
+        .req-actions { display: flex; gap: 10px; }
+        .btn-action { padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-edit { background: #eff6ff; color: var(--primary); }
+        .btn-edit:hover { background: #dbeafe; }
+        .btn-delete { background: #fff1f2; color: var(--danger); }
+        .btn-delete:hover { background: #ffe4e6; }
+
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 480px; border-radius: 20px; padding: 30px; box-shadow: var(--shadow-md); position: relative; }
+        .modal-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 20px; color: #1e293b; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; }
+        .form-input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; outline: none; transition: 0.2s; font-size: 14px; }
+        .form-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(67,97,238,0.08); }
+        .modal-footer { display: flex; gap: 12px; margin-top: 30px; }
+        .btn-modal { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-save:hover { background: var(--primary-hover); }
+        .btn-cancel { background: #f1f5f9; color: #64748b; }
+
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-260px); }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0; width: 100%; padding: 30px 20px; }
+            .toggle-btn { display: block; }
+            .top-nav-mobile { display: flex; }
+            .req-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .req-actions { width: 100%; justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="retailer-dashboard.html" class="logo">
+                <i class="fas fa-chart-line"></i> NexTrade
+            </a>
+            <button class="toggle-btn" id="hideSidebar"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="nav-links" id="sidebarNav"></nav>
+        <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </aside>
+
+    <main class="main-content">
+        <div class="top-nav-mobile">
+            <button class="toggle-btn" id="showSidebar"><i class="fas fa-bars"></i></button>
+            <h2 style="font-size: 18px; font-weight: 700;">NexTrade</h2>
+        </div>
+
+        <header class="page-header">
+            <div>
+                <h1>My Requirements</h1>
+                <p style="color:var(--text-muted);">Manage your active demand posts and marketplace requirements</p>
+            </div>
+            <button class="btn-modal btn-save" style="width:auto; padding:12px 24px;" onclick="location.href='index.html?post=true'">
+                <i class="fas fa-plus"></i> Post New
+            </button>
+        </header>
+
+        <div id="reqList">
+            <div style="text-align:center; padding:50px; color:#94a3b8;">
+                <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Requirement</h2>
+                <i class="fas fa-times" style="cursor:pointer; color:#94a3b8;" onclick="closeModal()"></i>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="editName" class="form-input" required placeholder="e.g. Amul Milk 1L">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="editCategory" class="form-input" required></select>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Quantity</label>
+                        <input type="number" id="editQty" class="form-input" required min="1">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Expected Price (₹)</label>
+                        <input type="number" id="editPrice" class="form-input" step="0.01">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editDesc" class="form-input" rows="3" placeholder="Specify any details like brand, packaging, or urgent needs..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-modal btn-save">Update Requirement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
+
+        if (!user || user.role !== 'retailer') location.href = 'login.html';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setupSidebar();
+            loadMyRequirements();
+            populateCategories();
+            setupToggles();
+            
+            document.getElementById('editForm').addEventListener('submit', handleUpdate);
+        });
+
+        function setupToggles() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            document.getElementById('showSidebar').addEventListener('click', () => {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            });
+            
+            document.getElementById('hideSidebar').addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+            
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
+
+        function setupSidebar() {
+            const nav = document.getElementById('sidebarNav');
+            const links = [
+                { name: 'Dashboard', icon: 'home', url: 'retailer-dashboard.html' },
+                { name: 'Explore Products', icon: 'store', url: 'browse-products.html' },
+                { name: 'Wholesalers', icon: 'building', url: 'wholesalers.html' },
+                { name: 'My Requirements', icon: 'list-check', url: 'my-requirements.html', active: true },
+                { name: 'Deals Record', icon: 'handshake', url: 'deals-record.html' },
+                { name: 'Messages', icon: 'comment-dots', url: 'messages.html' },
+                { name: 'Profile', icon: 'user', url: 'profile.html' }
+            ];
+            nav.innerHTML = links.map(l => `
+                <a href="${l.url}" class="nav-link ${l.active ? 'active' : ''}">
+                    <i class="fas fa-${l.icon}"></i> ${l.name}
+                </a>
+            `).join('');
+        }
+
+        function populateCategories() {
+            const select = document.getElementById('editCategory');
+            const categories = [
+                "Food", "Grocery", "Fruits & Vegetables", "Dairy Products", "Packaged Food & Beverages",
+                "Fashion & Apparel", "Footwear", "Electronics", "Mobile & Accessories", "Computers & IT",
+                "Home Appliances", "Furniture", "Home Decor", "Kitchenware", "Pharmacy & Medical",
+                "Ayurvedic & Herbal", "Beauty & Cosmetics", "Personal Care", "Hardware & Tools",
+                "Electrical Supplies", "Construction Materials", "Automobile Parts & Accessories",
+                "Tyres & Batteries", "Stationery & Office Supplies", "Books & Education", "Toys & Games",
+                "Gifts & Novelties", "Agriculture & Farming Supplies", "Seeds & Fertilizers", "Pet Supplies",
+                "Sports & Fitness", "Jewellery & Accessories", "General Store / Multi-category"
+            ];
+            select.innerHTML = categories.sort().map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        async function loadMyRequirements() {
+            const list = document.getElementById('reqList');
+            try {
+                const res = await fetch('/api/requirements/my', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (data.requirements.length === 0) {
+                        list.innerHTML = `
+                        <div style="text-align:center; padding:100px; color:#94a3b8;">
+                            <i class="fas fa-clipboard-list fa-4x" style="opacity:0.2; margin-bottom: 20px;"></i>
+                            <h3>No requirements posted yet</h3>
+                            <button class="btn-modal btn-save" style="width:auto; margin-top:20px;" onclick="location.href='index.html?post=true'">Post Your First Requirement</button>
+                        </div>`;
+                        return;
+                    }
+
+                    list.innerHTML = data.requirements.map(req => `
+                        <div class="req-card">
+                            <div class="req-info">
+                                <div style="display:flex; align-items:center; gap:12px; margin-bottom:5px;">
+                                    <h3>${req.productName}</h3>
+                                    <span class="status-badge status-${req.status}">${req.status}</span>
+                                </div>
+                                <div class="req-meta">
+                                    <span><i class="fas fa-tag"></i> ${req.categories?.[0] || 'General'}</span>
+                                    <span><i class="fas fa-cubes"></i> Qty: ${req.quantity}</span>
+                                    <span><i class="fas fa-coins"></i> Expected: ₹${req.expectedPrice || 'N/A'}</span>
+                                    <span><i class="fas fa-calendar"></i> ${new Date(req.createdAt).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div class="req-actions">
+                                ${req.status === 'open' ? `
+                                    <button class="btn-action btn-edit" onclick="openEditModal('${req._id}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn-action btn-delete" onclick="deleteReq('${req._id}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                ` : '<span style="color:#64748b; font-size:13px; font-weight:600; background:#f1f5f9; padding:6px 12px; border-radius:8px;"><i class="fas fa-lock"></i> Closed for deals</span>'}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                list.innerHTML = `<p style="color:var(--danger); text-align:center; padding: 40px;">Failed to load requirements. Please try refreshing.</p>`;
+            }
+        }
+
+        async function openEditModal(id) {
+            try {
+                const res = await fetch('/api/requirements/my', { headers: { Authorization: `Bearer ${token}` } });
+                const data = await res.json();
+                const req = data.requirements.find(r => r._id === id);
+                if (!req) return;
+
+                document.getElementById('editId').value = req._id;
+                document.getElementById('editName').value = req.productName;
+                document.getElementById('editCategory').value = req.categories?.[0] || "General Store / Multi-category";
+                document.getElementById('editQty').value = req.quantity;
+                document.getElementById('editPrice').value = req.expectedPrice || '';
+                document.getElementById('editDesc').value = req.description || '';
+
+                document.getElementById('editModal').style.display = 'flex';
+            } catch (e) { console.error(e); }
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function handleUpdate(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const body = {
+                productName: document.getElementById('editName').value,
+                categories: [document.getElementById('editCategory').value],
+                quantity: document.getElementById('editQty').value,
+                expectedPrice: document.getElementById('editPrice').value,
+                description: document.getElementById('editDesc').value
+            };
+
+            try {
+                const res = await fetch(`/api/requirements/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal();
+                    loadMyRequirements();
+                } else alert(data.message || 'Update failed');
+            } catch (err) { console.error(err); }
+        }
+
+        async function deleteReq(id) {
+            if (!confirm('Are you sure you want to delete this requirement? This action cannot be undone.')) return;
+            try {
+                const res = await fetch(`/api/requirements/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) loadMyRequirements();
+                else alert(data.message || 'Delete failed');
+            } catch (err) { console.error(err); }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

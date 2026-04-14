@@ -351,9 +351,18 @@
             </div>
             <input type="hidden" id="newDealWholesalerId">
             <input type="hidden" id="newDealProductId">
+            <input type="hidden" id="newDealRequirementId">
             <input type="hidden" id="newDealMoq">
             <input type="hidden" id="newDealStock">
             <p id="newDealProductName" style="font-size:14px;font-weight:600;color:#1e293b;background:#f8fafc;padding:10px 14px;border-radius:8px;margin-bottom:16px;border-left:3px solid var(--primary);">Product</p>
+            
+            <!-- Product Selector for Wholesalers -->
+            <div id="wholesalerProductSelectGroup" style="display:none; margin-bottom:14px;">
+                <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Select Product from My Inventory</label>
+                <select id="newDealProductSelect" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;" onchange="onWholesalerProductChange()">
+                    <option value="">-- Choose Product --</option>
+                </select>
+            </div>
             <div style="margin-bottom:14px;">
                 <label style="font-size:13px;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Quantity Required (units)</label>
                 <input type="number" id="newDealQty" min="1" value="1" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;">
@@ -397,8 +406,16 @@
                     <i class="fas fa-store"></i> Explore Products
                 </button>` : ''}
             <button class="nav-link" onclick="location.href='${user.role === 'wholesaler' ? 'product-management.html' : 'wholesalers.html'}'"><i class="fas fa-box"></i> ${user.role === 'wholesaler' ? 'My Products' : 'Wholesalers'}</button>
+            ${user.role === 'retailer' ? `
+                <button class="nav-link" onclick="location.href='my-requirements.html'">
+                    <i class="fas fa-list-check"></i> My Requirements
+                </button>` : ''}
             <button class="nav-link" onclick="location.href='deals-record.html'"><i class="fas fa-handshake"></i> Deals Record</button>
             <button class="nav-link active"><i class="fas fa-comment-dots"></i> Messages</button>
+            ${user.role === 'wholesaler' ? `
+                <button class="nav-link" onclick="location.href='requirements.html'">
+                    <i class="fas fa-list-check"></i> Requirements
+                </button>` : ''}
             <button class="nav-link" onclick="location.href='profile.html'"><i class="fas fa-user"></i> Profile</button>
             <button class="nav-link logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
         `;
@@ -425,6 +442,17 @@
         }
 
         // ===================== CONVERSATIONS =====================
+        async function markAllAsRead(senderId) {
+            try {
+                await fetch('/api/messages/read-all/' + senderId, { 
+                    method: 'PATCH', 
+                    headers: { 'Authorization': 'Bearer ' + token } 
+                });
+            } catch (e) {
+                console.error('Error marking as read:', e);
+            }
+        }
+
         async function loadConversations() {
             try {
                 const res = await fetch("/api/conversations", { headers: { Authorization: "Bearer " + token } });
@@ -466,7 +494,7 @@
             document.querySelectorAll(".contact-item").forEach(function(i){ i.classList.remove("active"); });
             var ci = document.getElementById('user-' + id);
             if (ci) ci.classList.add("active");
-            fetch('/api/messages/mark-read/' + id, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
+            fetch('/api/messages/read-all/' + id, { method: 'PATCH', headers: { Authorization: "Bearer " + token } });
             try {
                 const res = await fetch('/api/messages/' + id, { headers: { Authorization: "Bearer " + token } });
                 const data = await res.json();
@@ -690,7 +718,10 @@
         socket.on("receive_message", function(data) {
             if (currentUser === data.senderId || currentUser === data.receiverId) {
                 addMessageToUI(data);
-                if (data.senderId === currentUser) socket.emit("message_read", { messageId: data._id, senderId: data.senderId });
+                if (data.senderId === currentUser) {
+                    socket.emit("message_read", { messageId: data._id, senderId: data.senderId });
+                    markAllAsRead(data.senderId); // Also update DB status via API
+                }
             } else { loadConversations(); }
         });
 
@@ -858,23 +889,60 @@
             const targetPrice = params.get('price');
             const targetMoq = params.get('moq');
             const targetStock = params.get('stock');
+            const requirementId = params.get('requirementId');
 
             if (targetUserId && targetProductId) {
-                await openChat(targetUserId, targetProductName ? decodeURIComponent(targetProductName) : 'Wholesaler');
-                openNewDealModal(targetUserId, targetProductId, targetProductName || '', targetPrice, targetMoq, targetStock);
+                await openChat(targetUserId, targetProductName ? decodeURIComponent(targetProductName) : 'Contact');
+                openNewDealModal(targetUserId, targetProductId, targetProductName || '', targetPrice, targetMoq, targetStock, requirementId);
+            } else if (targetUserId && requirementId) {
+                await openChat(targetUserId, targetProductName ? decodeURIComponent(targetProductName) : 'Retailer');
+                openNewDealModal(targetUserId, null, targetProductName || '', targetPrice, null, null, requirementId);
             } else if (targetUserId) {
-                await openChat(targetUserId, 'Wholesaler');
+                await openChat(targetUserId, 'Contact');
             }
         };
 
         // ===================== NEW DEAL MODAL =====================
-        function openNewDealModal(wholesalerId, productId, productName, price, moq, stock) {
+        async function openNewDealModal(wholesalerId, productId, productName, price, moq, stock, requirementId = null) {
             document.getElementById('newDealWholesalerId').value = wholesalerId;
-            document.getElementById('newDealProductId').value = productId;
+            document.getElementById('newDealProductId').value = productId || '';
+            document.getElementById('newDealRequirementId').value = requirementId || '';
             document.getElementById('newDealProductName').innerText = decodeURIComponent(productName || 'Product');
             
-            // Set dynamic values from params
+            const productSelectGroup = document.getElementById('wholesalerProductSelectGroup');
+            const productSelect = document.getElementById('newDealProductSelect');
             const qtyInput = document.getElementById('newDealQty');
+
+            if (user.role === 'wholesaler') {
+                productSelectGroup.style.display = 'block';
+                // Load wholesaler's products
+                try {
+                    const res = await fetch('/api/products/my', { headers: { Authorization: "Bearer " + token } });
+                    const data = await res.json();
+                    if (data.success) {
+                        productSelect.innerHTML = '<option value="">-- Choose Product --</option>';
+                        data.products.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p._id;
+                            opt.textContent = p.name;
+                            opt.dataset.price = p.pricePerUnit;
+                            opt.dataset.moq = p.moq;
+                            opt.dataset.stock = p.stock;
+                            productSelect.appendChild(opt);
+                        });
+                        
+                        // If we already have a productId (e.g. from URL), select it
+                        if (productId) {
+                            productSelect.value = productId;
+                            onWholesalerProductChange();
+                        }
+                    }
+                } catch (e) { console.error(e); }
+            } else {
+                productSelectGroup.style.display = 'none';
+            }
+
+            // Set dynamic values from params
             const dealMoq = parseInt(moq) || 1;
             const dealStock = parseInt(stock) || 0;
             
@@ -884,10 +952,27 @@
             qtyInput.value = dealMoq;
             qtyInput.min = dealMoq;
             qtyInput.max = dealStock;
-            document.getElementById('newDealQtyHint').innerText = `Allowed: ${dealMoq} to ${dealStock} units`;
+            document.getElementById('newDealQtyHint').innerText = stock ? `Allowed: ${dealMoq} to ${dealStock} units` : '';
             
             document.getElementById('newDealPrice').value = price || '';
             document.getElementById('newDealModal').style.display = 'flex';
+        }
+
+        function onWholesalerProductChange() {
+            const select = document.getElementById('newDealProductSelect');
+            const opt = select.selectedOptions[0];
+            if (!opt || !opt.value) return;
+
+            document.getElementById('newDealProductId').value = opt.value;
+            document.getElementById('newDealPrice').value = opt.dataset.price;
+            document.getElementById('newDealMoq').value = opt.dataset.moq;
+            document.getElementById('newDealStock').value = opt.dataset.stock;
+            
+            const qtyInput = document.getElementById('newDealQty');
+            qtyInput.min = opt.dataset.moq;
+            qtyInput.max = opt.dataset.stock;
+            qtyInput.value = opt.dataset.moq;
+            document.getElementById('newDealQtyHint').innerText = `Allowed: ${opt.dataset.moq} to ${opt.dataset.stock} units`;
         }
         function closeNewDealModal() { document.getElementById('newDealModal').style.display = 'none'; }
 
@@ -911,7 +996,14 @@
                 const res = await fetch('/api/deals/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ wholesalerId: wholesalerId, productId: productId, quantity: qty, offeredPrice: price })
+                    body: JSON.stringify({ 
+                        wholesalerId: user.role === 'wholesaler' ? user._id : wholesalerId, 
+                        retailerId: user.role === 'retailer' ? user._id : currentUser,
+                        productId: productId, 
+                        quantity: qty, 
+                        offeredPrice: price,
+                        requirementId: document.getElementById('newDealRequirementId').value || null
+                    })
                 });
                 const data = await res.json();
                 if (data.success) {

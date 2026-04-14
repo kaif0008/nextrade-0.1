@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopkeeper Guide | NexTrade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/content-page.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                <div>
+                    <div class="logo-text">Nex<span>Trade</span></div>
+                    <div class="tagline">The Nexus of efficient Business</div>
+                </div>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="wholesalers.html">Wholesalers</a></li>
+                    <li><a href="browse-products.html">Explore Products</a></li>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html" class="btn-login" id="loginBtn">Login</a></li>
+                    <li><a href="signup.html" class="btn-nav btn-signup" id="signupBtn">Sign Up</a></li>
+                    <li><a href="dashboard.html" id="dashboardBtn" style="display:none;" class="btn-nav btn-signup">Dashboard</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="content-hero">
+        <div class="container">
+            <h1>Shopkeeper Guide</h1>
+            <p>Your blueprint for sourcing products at the best bulk prices through the NexTrade network.</p>
+        </div>
+    </section>
+
+    <main class="container">
+        <div class="content-wrap">
+            <h2>Sourcing Like a Pro</h2>
+            <div class="guide-step">
+                <div class="step-num">1</div>
+                <div>
+                    <h3>Search & Explore</h3>
+                    <p>Use the "Explore Products" page to find specific items or browse by categories. You can also view Wholesalers directly to see their entire catalog.</p>
+                </div>
+            </div>
+
+            <div class="guide-step">
+                <div class="step-num">2</div>
+                <div>
+                    <h3>Post a Requirement</h3>
+                    <p>Can't find exactly what you need? Go to the <strong>Retailer Dashboard</strong> and post a "Requirement". Wholesalers will see your request and send you offers directly.</p>
+                </div>
+            </div>
+
+            <div class="guide-step">
+                <div class="step-num">3</div>
+                <div>
+                    <h3>Negotiate the Deal</h3>
+                    <p>Found a product? Start a "Deal". You can propose a price based on your quantity needs. The wholesaler can then accept your price or make a counter-offer.</p>
+                </div>
+            </div>
+
+            <h2>Using the Message Portal</h2>
+            <p>Every deal has a private conversation thread. Use this to:</p>
+            <ul>
+                <li>Request custom samples or detailed photos.</li>
+                <li>Discuss shipping costs and estimated delivery times.</li>
+                <li>Finalize packaging or branding requirements.</li>
+            </ul>
+
+            <h2>Mastering the Market with Nexa</h2>
+            <p><strong>Nexa</strong> is your personal assistant. Retailers who succeed on NexTrade use Nexa to:</p>
+            <ul>
+                <li><strong>Monitor Status:</strong> "Nexa, what is the status of my electronics deal?"</li>
+                <li><strong>Discovery:</strong> "Nexa, show me available products for summer inventory."</li>
+                <li><strong>Analysis:</strong> Nexa keeps your business organized by summarizing your active negotiations.</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <a href="index.html" class="logo">
+                        <i class="fas fa-arrow-trend-up logo-icon"></i>
+                        <div class="logo-text">Nex<span>Trade</span></div>
+                    </a>
+                    <p class="footer-tagline">Connecting shopkeepers with trusted wholesalers worldwide.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="blog.html">Blog</a></li>
+                            
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="help-center.html">Help Center</a></li>
+                            <li><a href="wholesaler-guide.html">Wholesaler Guide</a></li>
+                            <li><a href="shopkeeper-guide.html">Shopkeeper Guide</a></li>
+                            <li><a href="faq.html">FAQs</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Legal</h3>
+                        <ul>
+                            <li><a href="privacy.html">Privacy Policy</a></li>
+                            <li><a href="terms.html">Terms of Service</a></li>
+                            <li><a href="security.html">Security</a></li>
+                            <li><a href="cookie-policy.html">Cookie Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NexTrade. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const user = JSON.parse(localStorage.getItem("user"));
+            const token = localStorage.getItem("token");
+            if (user && token) {
+                document.getElementById("loginBtn").style.display = "none";
+                document.getElementById("signupBtn").style.display = "none";
+                document.getElementById("dashboardBtn").style.display = "inline-block";
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <script src="/chatbot.js"></script>
+</body>
+</html>
