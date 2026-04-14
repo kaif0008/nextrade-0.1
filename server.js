@@ -10,6 +10,16 @@ const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const fs = require('fs');
 
+// ================= CLOUDINARY CONFIG =================
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 const app = express();
 
 const http = require('http');
@@ -106,20 +116,19 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ================= STORAGE CONFIG (MULTER) =================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
+// ================= STORAGE CONFIG (CLOUDINARY) =================
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'nextrade_uploads',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    transformation: [{ width: 1000, height: 1000, crop: 'limit' }]
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
 });
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit for cloud
 });
 
 // ================= AUTH MIDDLEWARE =================
@@ -321,7 +330,7 @@ const requireEmailVerified = async (req, res, next) => {
 router.post('/signup', authLimiter, upload.single('photo'), async (req, res) => {
   try {
     const { name, email, password, role, gstNumber } = req.body;
-    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const photoUrl = req.file ? req.file.path : null;
 
     // âœ… Basic validation
     if (!name || !email || !password || !role) {
@@ -705,14 +714,10 @@ router.post("/update-profile", authMiddleware, upload.fields([
 
     if (req.files) {
       if (req.files.photo) {
-        safeUpdate.photoUrl = `/uploads/${req.files.photo[0].filename}`;
+        safeUpdate.photoUrl = req.files.photo[0].path;
       }
       if (req.files.businessPhotos) {
-        // We append new photos to the existing ones? 
-        // Or replace? The current UI seems to manage a list locally and then save.
-        // I'll assume we replace with the full list or handle it based on how the UI sends it.
-        // Actually, for now, let's just make sure we save the paths.
-        const newPaths = req.files.businessPhotos.map(f => `/uploads/${f.filename}`);
+        const newPaths = req.files.businessPhotos.map(f => f.path);
         safeUpdate.businessPhotos = newPaths;
       }
     }
@@ -784,7 +789,7 @@ router.post('/products', authMiddleware, requireEmailVerified, upload.single('im
 
     const product = new Product({
       ...req.body,
-      image: `/uploads/${req.file.filename}`,
+      image: req.file.path,
       wholesalerId: req.user.id
     });
 
@@ -903,7 +908,7 @@ router.put('/products/:id', authMiddleware, upload.single('image'), async (req, 
   try {
     const updateData = { ...req.body };
     if (req.file) {
-      updateData.image = `/uploads/${req.file.filename}`;
+      updateData.image = req.file.path;
     }
 
     const product = await Product.findOneAndUpdate(
@@ -2159,7 +2164,7 @@ const PORT = process.env.PORT || DEFAULT_PORT;
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: process.env.FRONTEND_URL || "http://localhost:5010" },
+  cors: { origin: "*" }, // Open for production, can be restricted later if needed
   maxHttpBufferSize: 1e7 // Support up to 10MB
 });
 
