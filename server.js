@@ -767,9 +767,24 @@ router.post("/update-profile", authMiddleware, upload.fields([
       if (req.files.photo) {
         safeUpdate.photoUrl = req.files.photo[0].path;
       }
+      
+      // Handle Business Gallery Merging
+      let existingPhotos = [];
+      if (req.body.existingBusinessPhotos) {
+        existingPhotos = Array.isArray(req.body.existingBusinessPhotos) 
+          ? req.body.existingBusinessPhotos 
+          : [req.body.existingBusinessPhotos];
+      }
+
+      let newPhotos = [];
       if (req.files.businessPhotos) {
-        const newPaths = req.files.businessPhotos.map(f => f.path);
-        safeUpdate.businessPhotos = newPaths;
+        newPhotos = req.files.businessPhotos.map(f => f.path);
+      }
+
+      // If either existing or new photos are present, update the gallery
+      // Note: If both are empty, it means the gallery was cleared (if it was sent)
+      if (req.body.existingBusinessPhotos !== undefined || (req.files && req.files.businessPhotos)) {
+        safeUpdate.businessPhotos = [...existingPhotos, ...newPhotos].slice(0, 5);
       }
     }
 

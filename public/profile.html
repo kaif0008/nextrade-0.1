@@ -1321,9 +1321,18 @@
             }
             
             if (cardId === 'cardBusiness') {
-                // For now, only handle core business details via FormData 
-                // To keep gallery working with local files, we'd need more logic
-                // But let's at least fix the basic profile fields
+                // To keep gallery working with Cloudinary, we convert base64 to Blobs 
+                // and send existing one as pointers.
+                businessPhotos.forEach((src, index) => {
+                    if (src.startsWith('data:')) {
+                        // It's a new base64 image (client-side resized)
+                        const blob = dataURLtoBlob(src);
+                        formData.append('businessPhotos', blob, `photo_${index}.jpg`);
+                    } else if (src.startsWith('http')) {
+                        // It's an existing Cloudinary URL
+                        formData.append('existingBusinessPhotos', src);
+                    }
+                });
                 formData.append('primaryBusinessPhotoIndex', primaryPhotoIndex);
             }
 
@@ -1690,6 +1699,15 @@
             }
 
             setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+        // ================= UTILS =================
+        function dataURLtoBlob(dataurl) {
+            var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], {type:mime});
         }
     </script>
   <!-- AI Chatbot -->
