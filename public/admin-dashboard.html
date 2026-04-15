@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nextrade Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-hover: #3a56d4;
+            --secondary: #f72585;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #1e1e2d;
+            --dark-menu: #151521;
+            --text-main: #b5b5c3;
+            --text-heading: #ffffff;
+            --bg-body: #f5f8fa;
+            --bg-card: #ffffff;
+            --border: #eff2f5;
+            --shadow: 0 0 20px 0 rgba(76, 87, 125, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #3f4254;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--dark);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            z-index: 100;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--dark-menu);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .sidebar-header h2 {
+            color: var(--text-heading);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #4361ee, #4cc9f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 15px;
+            font-weight: 500;
+            margin: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(67, 97, 238, 0.15);
+            color: var(--primary);
+        }
+
+        .nav-item i {
+            margin-right: 15px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            margin: 20px;
+            padding: 12px 24px;
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-btn i {
+            margin-right: 10px;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--danger);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex-grow: 1;
+            padding: 30px;
+            width: calc(100% - 260px);
+            transition: var(--transition);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #181c32;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4361ee, #f72585);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+        }
+
+        /* Section Containers */
+        .section-container {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .section-container.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Cards */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px 0 0 4px;
+        }
+
+        .stat-card:nth-child(2)::before { background: var(--success); }
+        .stat-card:nth-child(3)::before { background: var(--secondary); }
+        .stat-card:nth-child(4)::before { background: var(--warning); }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 20px;
+        }
+
+        .stat-card:nth-child(2) .stat-icon { background: rgba(46, 204, 113, 0.1); color: var(--success); }
+        .stat-card:nth-child(3) .stat-icon { background: rgba(247, 37, 133, 0.1); color: var(--secondary); }
+        .stat-card:nth-child(4) .stat-icon { background: rgba(243, 156, 18, 0.1); color: var(--warning); }
+
+        .stat-info h3 {
+            font-size: 14px;
+            color: #a1a5b7;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .stat-info .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #181c32;
+        }
+
+        /* Tables Container */
+        .table-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            border: 1px solid var(--border);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #f9f9f9;
+            transition: var(--transition);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a1a5b7;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .custom-table th {
+            padding: 15px;
+            color: #a1a5b7;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .custom-table td {
+            padding: 16px 15px;
+            vertical-align: middle;
+            border-bottom: 1px dashed var(--border);
+            font-size: 14px;
+            color: #3f4254;
+        }
+
+        .custom-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.admin { background: rgba(155, 89, 182, 0.1); color: #9b59b6; }
+        .badge.wholesaler { background: rgba(46, 204, 113, 0.1); color: #2ecc71; }
+        .badge.retailer { background: rgba(52, 152, 219, 0.1); color: #3498db; }
+        
+        .badge.pending { background: rgba(243, 156, 18, 0.1); color: #f39c12; }
+        .badge.confirmed { background: rgba(46, 204, 113, 0.1); color: #2ecc71; }
+        .badge.rejected { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #a1a5b7;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        .action-btn.view:hover {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        /* Loading Spinner */
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            width: 100%;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(67, 97, 238, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: var(--dark);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>NexTrade</h2>
+        </div>
+        <div class="nav-menu">
+            <a class="nav-item active" data-target="dashboard">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a class="nav-item" data-target="users">
+                <i class="fas fa-users"></i> Users
+            </a>
+            <a class="nav-item" data-target="products">
+                <i class="fas fa-box-open"></i> Products
+            </a>
+            <a class="nav-item" data-target="deals">
+                <i class="fas fa-handshake"></i> Deals
+            </a>
+            <a class="nav-item" data-target="requirements">
+                <i class="fas fa-clipboard-list"></i> Requirements
+            </a>
+            <a class="nav-item" data-target="reviews">
+                <i class="fas fa-star"></i> Reviews
+            </a>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="header-top">
+            <h1 class="page-title" id="pageTitle">Dashboard Analytics</h1>
+            <div class="admin-profile">
+                <div style="text-align: right;">
+                    <div style="font-weight: 600; color: #181c32;">Super Admin</div>
+                    <div style="font-size: 13px; color: #a1a5b7;">System Administrator</div>
+                </div>
+                <div class="admin-avatar">AD</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section-container active">
+            <div class="analytics-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Users</h3>
+                        <div class="value" id="stat-users">--</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-handshake"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Deals</h3>
+                        <div class="value" id="stat-deals">--</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+                    <div class="stat-info">
+                        <h3>Active Users</h3>
+                        <div class="value" id="stat-active">--</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-tags"></i></div>
+                    <div class="stat-info">
+                        <h3>Categories</h3>
+                        <div class="value" id="stat-cats">--</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Users Section -->
+        <section id="users" class="section-container">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; color: #181c32;">System Users</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchUsers" placeholder="Search users by name, email...">
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="section-container">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; color: #181c32;">Platform Products</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchProducts" placeholder="Search products...">
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Wholesaler</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Deals Section -->
+        <section id="deals" class="section-container">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; color: #181c32;">Trading Deals</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchDeals" placeholder="Search deals...">
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Retailer</th>
+                                <th>Wholesaler</th>
+                                <th>Product Name</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dealsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Requirements Section -->
+        <section id="requirements" class="section-container">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; color: #181c32;">Retailer Requirements</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Retailer</th>
+                                <th>Product Needed</th>
+                                <th>Quantity</th>
+                                <th>Expected Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reqsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reviews Section -->
+        <section id="reviews" class="section-container">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 style="font-size: 18px; color: #181c32;">Platform Reviews</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Reviewer</th>
+                                <th>Wholesaler</th>
+                                <th>Rating</th>
+                                <th>Review Text</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-info-circle"></i>
+        <span id="toastMessage">Message goes here</span>
+    </div>
+
+    <script>
+        // ---------------- AUTHENTICATION CHECK ----------------
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || user.role !== 'admin') {
+            window.location.href = 'login.html';
+        }
+
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // ---------------- UI LOGIC ----------------
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('.section-container');
+        const pageTitle = document.getElementById('pageTitle');
+
+        const titleMap = {
+            'dashboard': 'Dashboard Analytics',
+            'users': 'User Management',
+            'products': 'Product Management',
+            'deals': 'Deal Monitoring',
+            'requirements': 'Requirement Control',
+            'reviews': 'Review Moderation'
+        };
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                
+                const targetId = item.getAttribute('data-target');
+                sections.forEach(sec => sec.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+                pageTitle.textContent = titleMap[targetId];
+
+                // Load data based on tab
+                if(targetId === 'dashboard') loadAnalytics();
+                else if(targetId === 'users') loadUsers();
+                else if(targetId === 'products') loadProducts();
+                else if(targetId === 'deals') loadDeals();
+                else if(targetId === 'requirements') loadRequirements();
+                else if(targetId === 'reviews') loadReviews();
+            });
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            toast.className = `toast show ${type}`;
+            toast.querySelector('i').className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            toastMsg.textContent = message;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // ---------------- API CALLS ----------------
+        async function loadAnalytics() {
+            try {
+                const res = await fetch('/api/admin/analytics', { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('stat-users').textContent = data.analytics.totalUsers;
+                    document.getElementById('stat-deals').textContent = data.analytics.totalDeals;
+                    document.getElementById('stat-active').textContent = data.analytics.activeUsers;
+                    document.getElementById('stat-cats').textContent = data.analytics.topCategories;
+                }
+            } catch (e) {
+                console.error("Failed to load analytics");
+            }
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
+            try {
+                const res = await fetch('/api/admin/users', { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    window.allUsers = data.users; // store for search
+                    renderUsers(data.users);
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Failed to load users</td></tr>';
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                const date = new Date(user.createdAt).toLocaleDateString();
+                tr.innerHTML = `
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:35px;height:35px;border-radius:50%;background:#e0e6ed;display:flex;align-items:center;justify-content:center;color:#4361ee;font-weight:bold;">
+                                ${user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;color:#181c32;">${user.name}</div>
+                                ${user.role === 'wholesaler' && user.businessName ? `<div style="font-size:12px;color:#a1a5b7;">${user.businessName}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td>${user.email}</td>
+                    <td><span class="badge ${user.role}">${user.role}</span></td>
+                    <td>${date}</td>
+                    <td>
+                        ${user.role !== 'admin' ? `<button class="action-btn" title="Delete User" onclick="deleteEntity('users', '${user._id}')"><i class="fas fa-trash-alt"></i></button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadProducts() {
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
+            try {
+                const res = await fetch('/api/admin/products', { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    renderProducts(data.products);
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Failed to load products</td></tr>';
+            }
+        }
+
+        function renderProducts(products) {
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '';
+            products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+                            <div style="font-weight:600;color:#181c32;">${p.name}</div>
+                        </div>
+                    </td>
+                    <td><span style="background:rgba(67, 97, 238, 0.1);color:#4361ee;padding:4px 8px;border-radius:6px;font-size:12px;">${p.category}</span></td>
+                    <td style="font-weight:600;">₹${p.pricePerUnit}/${p.unit}</td>
+                    <td>${p.wholesalerId ? p.wholesalerId.name : 'Unknown'}</td>
+                    <td>
+                        <button class="action-btn" title="Delete Product" onclick="deleteEntity('products', '${p._id}')"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadDeals() {
+            const tbody = document.getElementById('dealsTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
+            try {
+                const res = await fetch('/api/admin/deals', { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    renderDeals(data.deals);
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5">Failed to load</td></tr>';
+            }
+        }
+
+        function renderDeals(deals) {
+            const tbody = document.getElementById('dealsTableBody');
+            tbody.innerHTML = '';
+            deals.forEach(d => {
+                const tr = document.createElement('tr');
+                const date = new Date(d.createdAt).toLocaleDateString();
+                // Ensure status doesn't break badge class
+                const safeStatus = d.status.replace('_', '-'); 
+                
+                tr.innerHTML = `
+                    <td>${d.retailerId ? d.retailerId.name : 'Unknown User'}</td>
+                    <td>${d.wholesalerId ? (d.wholesalerId.businessName || d.wholesalerId.name) : 'Unknown Wholesaler'}</td>
+                    <td style="font-weight:600;">${d.productName || 'Product'}</td>
+                    <td><span class="badge ${safeStatus}">${d.status}</span></td>
+                    <td>${date}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadRequirements() {
+            const tbody = document.getElementById('reqsTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
+            try {
+                const res = await fetch('/api/admin/requirements', { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    renderReqs(data.requirements);
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5">Failed</td></tr>';
+            }
+        }
+
+        function renderReqs(reqs) {
+            const tbody = document.getElementById('reqsTableBody');
+            tbody.innerHTML = '';
+            reqs.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.retailerId ? r.retailerId.name : 'Unknown User'}</td>
+                    <td style="font-weight:600;">${r.productName}</td>
+                    <td>${r.quantity} ${r.unit}s</td>
+                    <td>₹${r.expectedPrice}</td>
+                    <td>
+                        <button class="action-btn" title="Delete spam requirement" onclick="deleteEntity('requirements', '${r._id}')"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadReviews() {
+            const tbody = document.getElementById('reviewsTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loader-container"><div class="spinner"></div></td></tr>';
+            try {
+                const res = await fetch('/api/admin/reviews', { headers: getAuthHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    renderReviews(data.reviews);
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5">Failed</td></tr>';
+            }
+        }
+
+        function renderReviews(reviews) {
+            const tbody = document.getElementById('reviewsTableBody');
+            tbody.innerHTML = '';
+            reviews.forEach(r => {
+                const tr = document.createElement('tr');
+                const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
+                tr.innerHTML = `
+                    <td>${r.retailerId ? r.retailerId.name : 'Unknown User'}</td>
+                    <td>${r.wholesalerId ? r.wholesalerId.businessName : 'Unknown Wholesaler'}</td>
+                    <td style="color:#f39c12; letter-spacing:2px;">${stars}</td>
+                    <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.reviewText || '-'}</td>
+                    <td>
+                        <button class="action-btn" title="Delete Fake Review" onclick="deleteEntity('reviews', '${r._id}')"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ---------------- DELETE ACTION ----------------
+        async function deleteEntity(endpoint, id) {
+            if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
+            
+            try {
+                const res = await fetch(`/api/admin/${endpoint}/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast('Deleted successfully');
+                    // Reload current section
+                    if (endpoint === 'users') loadUsers();
+                    else if (endpoint === 'products') loadProducts();
+                    else if (endpoint === 'requirements') loadRequirements();
+                    else if (endpoint === 'reviews') loadReviews();
+                } else {
+                    showToast(data.message || 'Delete failed', 'error');
+                }
+            } catch (err) {
+                showToast('Network error occurred', 'error');
+            }
+        }
+
+        // Initialize Admin Dashboard
+        loadAnalytics();
+
+        // Search Handlers (Client-Side)
+        document.getElementById('searchUsers').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            if (window.allUsers) {
+                const filtered = window.allUsers.filter(u => 
+                    u.name.toLowerCase().includes(term) || 
+                    u.email.toLowerCase().includes(term)
+                );
+                renderUsers(filtered);
+            }
+        });
+    </script>
+</body>
+</html>

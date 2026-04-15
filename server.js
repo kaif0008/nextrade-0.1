@@ -204,6 +204,15 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+// ================= ADMIN MIDDLEWARE =================
+const adminMiddleware = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+};
+
 // ================= MODELS =================
 
 // User
@@ -2231,6 +2240,116 @@ router.post('/contact', async (req, res) => {
   } catch (err) {
     console.error("Contact error:", err);
     res.status(500).json({ success: false, message: "Failed to send message" });
+  }
+});
+
+// ================= ADMIN ROUTES =================
+router.get('/admin/analytics', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const activeUsers = totalUsers; // simplified
+    const totalDeals = await Deal.countDocuments();
+    const allProducts = await Product.find({}, 'category');
+    const categoriesSet = new Set(allProducts.map(p => p.category));
+    
+    res.json({
+      success: true,
+      analytics: {
+        totalUsers,
+        totalDeals,
+        activeUsers,
+        topCategories: categoriesSet.size
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
+  }
+});
+
+router.get('/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 });
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch users' });
+  }
+});
+
+router.delete('/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'User deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete user' });
+  }
+});
+
+router.get('/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const products = await Product.find().populate('wholesalerId', 'name email businessName').sort({ createdAt: -1 });
+    res.json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch products' });
+  }
+});
+
+router.delete('/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete product' });
+  }
+});
+
+router.get('/admin/deals', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const deals = await Deal.find()
+      .populate('retailerId', 'name email')
+      .populate('wholesalerId', 'name businessName')
+      .sort({ createdAt: -1 });
+    res.json({ success: true, deals });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch deals' });
+  }
+});
+
+router.get('/admin/requirements', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const reqs = await Requirement.find().populate('retailerId', 'name email').sort({ createdAt: -1 });
+    res.json({ success: true, requirements: reqs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch requirements' });
+  }
+});
+
+router.delete('/admin/requirements/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    await Requirement.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Requirement deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete requirement' });
+  }
+});
+
+router.get('/admin/reviews', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const reviews = await Review.find()
+      .populate('retailerId', 'name')
+      .populate('wholesalerId', 'businessName')
+      .sort({ createdAt: -1 });
+    res.json({ success: true, reviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews' });
+  }
+});
+
+router.delete('/admin/reviews/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    await Review.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Review deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete review' });
   }
 });
 

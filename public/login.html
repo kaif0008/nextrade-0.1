@@ -446,7 +446,9 @@
 
                 // ✅ CORRECT ROLE-BASED REDIRECT
                 setTimeout(() => {
-                    if (data.user.role === "wholesaler") {
+                    if (data.user.role === "admin") {
+                        window.location.href = "admin-dashboard.html";
+                    } else if (data.user.role === "wholesaler") {
                         window.location.href = "dashboard.html";
                     } else {
                         window.location.href = "index.html";
